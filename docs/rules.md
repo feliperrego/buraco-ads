@@ -1,6 +1,6 @@
 # Regras — Buraco Aberto, 1 contra 1
 
-> Status: **rascunho anotado** — 6 decisões fechadas, 25 pendências (seção 13)
+> Status: **rascunho anotado** — 10 decisões fechadas, 23 pendências (seção 13)
 > Escopo: [ADR-0001](decisions/0001-variante-buraco-aberto.md), [ADR-0002](decisions/0002-formato-individual-1v1.md), [ADR-0003](decisions/0003-canastras-especiais-500-1000.md)
 > Vocabulário: [glossary.md](glossary.md)
 > Última atualização: 2026-07-29
@@ -46,7 +46,7 @@ Nenhuma regra `[P]` pode virar código antes de ser confirmada.
 
 - **R2.1** `[F]` As 104 cartas são embaralhadas.
 - **R2.2** `[D]` Cada jogador recebe **11 cartas** na mão.
-- **R2.3** `[D]` São formados **dois mortos de 11 cartas** cada, virados para baixo. Cada jogador tem direito a **um**, não há disputa.
+- **R2.3** `[D]` São formados **dois mortos de 11 cartas** cada, virados para baixo. Os mortos **não têm dono**: formam um conjunto comum, e qualquer jogador pode pegar qualquer um deles. Um mesmo jogador pode pegar **os dois**, se esvaziar a mão duas vezes.
 - **R2.4** `[P]` ⚠️ **P2** — A rodada começa com o **lixo vazio**. Nenhuma carta é virada na preparação.
 - **R2.5** `[F]` As cartas restantes formam o **monte**, virado para baixo. Decorre de R2.2–R2.4: `104 − 22 − 22 = 60` cartas.
 - **R2.6** `[P]` ⚠️ **P3** — Na primeira rodada, o jogador inicial é **sorteado**. Nas rodadas seguintes, o início **alterna**.
@@ -72,16 +72,16 @@ Nenhuma regra `[P]` pode virar código antes de ser confirmada.
 - **R4.3** `[D]` No Buraco Aberto **todas as cartas do lixo são visíveis** a ambos os jogadores durante toda a rodada.
 - **R4.4** `[P]` ⚠️ **P7** — **Não há condição para pegar o lixo.** O jogador não precisa justificar a compra usando a carta do topo. (Essa exigência é do Buraco Fechado.)
 - **R4.5** `[P]` ⚠️ **P8** — Se o lixo estiver **vazio**, a única opção é comprar do monte.
-- **R4.6** `[D]` Se o **monte se esgotar** e ainda houver um **morto não reclamado**, esse morto **passa a ser o novo monte**. As 11 cartas são viradas para baixo e a rodada continua normalmente.
-- **R4.7** `[P]` ⚠️ **P28** — Se o monte se esgotar com os **dois mortos** ainda intactos, o morto convertido em monte é o do jogador **que não está na vez**.
+- **R4.6** `[D]` Se o **monte se esgotar** e ainda houver **morto não reclamado**, um desses mortos **passa a ser o novo monte**. As 11 cartas são viradas para baixo e a rodada continua normalmente.
+- **R4.7** `[D]` Não há ambiguidade sobre *qual* morto é convertido: como os mortos não têm dono (R2.3), são intercambiáveis.
 - **R4.8** `[P]` ⚠️ **P30** — Se o monte se esgotar e **não houver morto disponível**, a rodada termina imediatamente, sem batida. A pontuação é apurada normalmente (R11).
 
 > O lixo **nunca** é reembaralhado. No Buraco Aberto isso destruiria a informação pública
 > acumulada nele, que é a característica central da variante.
 >
 > **Consequência importante:** um morto convertido em monte deixa de existir como morto.
-> Seu dono nunca poderá pegá-lo. Por isso as exigências ligadas ao morto precisam ser
-> relaxadas — ver ⚠️ **P27** em R10.1/R11.5.
+> Quem ainda não tinha pegado morto pode ficar sem chance de pegar. Por isso as exigências
+> ligadas ao morto são relaxadas nesse caso — ver R10.1 e R11.5.
 
 ---
 
@@ -105,7 +105,7 @@ Nenhuma regra `[P]` pode virar código antes de ser confirmada.
 
 ### R6.5 — Regularizar o curinga ("limpar a canastra")
 
-- **R6.5** `[P]` ⚠️ **P14** — Um curinga já baixado **deixa de ser curinga** quando passa a ocupar sua **posição natural** na sequência. O curinga **permanece no jogo** — não volta para a mão.
+- **R6.5** `[D]` Um curinga já baixado **deixa de ser curinga** quando passa a ocupar sua **posição natural** na sequência. O curinga **permanece no jogo** — não volta para a mão.
 
 Só é possível quando as três condições valem ao mesmo tempo:
 
@@ -113,7 +113,7 @@ Só é possível quando as três condições valem ao mesmo tempo:
 2. **A sequência alcança a posição do 2** — o jogador estende a sequência até que ela contenha a casa entre o Ás e o 3 do naipe.
 3. **A carta substituída é reposta** — a carta natural que o curinga representava é acrescentada ao jogo.
 
-- **R6.6** `[P]` ⚠️ **P29** — Reposicionar o curinga dentro do próprio jogo é permitido **exclusivamente** nesta operação. É a única exceção a R6.4.
+- **R6.6** `[D]` Reposicionar o curinga dentro do próprio jogo é permitido **exclusivamente** nesta operação. É a única exceção a R6.4.
 
 > **Consequências desta regra:**
 >
@@ -132,7 +132,11 @@ Só é possível quando as três condições valem ao mesmo tempo:
 
 - **R7.1** `[F]` O turno termina com o jogador colocando **exatamente uma carta** da mão no lixo.
 - **R7.2** `[P]` ⚠️ **P15** — O jogador pode descartar qualquer carta da mão, inclusive uma que tenha acabado de comprar ou de pegar do lixo no mesmo turno.
-- **R7.3** `[P]` ⚠️ **P16** — O descarte é obrigatório **exceto na batida**, quando o jogador pode encerrar a rodada baixando ou aumentando com todas as cartas restantes, sem descartar.
+- **R7.3** `[D]` O descarte é obrigatório **exceto na batida**, quando o jogador pode encerrar a rodada baixando ou aumentando com todas as cartas restantes, sem descartar.
+
+> R7.3 dá ao turno **duas formas de terminar**: pelo descarte (caso normal) ou pela batida
+> (caso terminal). A engine precisa modelar as duas — não é possível assumir que todo turno
+> termina em descarte.
 
 ---
 
@@ -160,26 +164,32 @@ Só é possível quando as três condições valem ao mesmo tempo:
 
 ## R9 — Morto
 
-- **R9.1** `[D]` Cada jogador tem **um** morto de 11 cartas, exclusivo.
-- **R9.2** `[D]` O jogador pega o próprio morto no instante em que fica **sem cartas na mão**, seja após baixar, aumentar ou descartar.
-- **R9.3** `[D]` Pegar o morto **não encerra o turno**. As obrigações pendentes do turno continuam valendo.
-- **R9.4** `[D]` Em particular: se a mão zerar **durante a fase de baixar/aumentar**, o jogador pega o morto e **em seguida descarta** — só então o turno termina. Se a mão zerar **pelo próprio descarte**, o jogador pega o morto e o turno termina, pois nada resta a fazer.
-- **R9.5** `[F]` Um jogador só pode **bater** depois de ter pegado seu morto (R10.1), ressalvado ⚠️ **P27**.
-- **R9.6** `[F]` Terminar a rodada sem ter pegado o morto acarreta penalidade (R11.5), ressalvado ⚠️ **P27**.
+- **R9.1** `[D]` Os dois mortos formam um **conjunto comum, sem dono** (R2.3).
+- **R9.2** `[D]` Um jogador pega um morto no instante em que fica **sem cartas na mão**, desde que ainda haja morto disponível. Vale tanto se a mão zerou ao baixar/aumentar quanto ao descartar.
+- **R9.3** `[D]` Um mesmo jogador pode pegar **os dois mortos**, se esvaziar a mão duas vezes ao longo da rodada. Não há reserva para o adversário.
+- **R9.4** `[D]` Pegar um morto **não encerra o turno**. As obrigações pendentes continuam valendo: se a mão zerou **antes do descarte**, o jogador pega o morto e **em seguida descarta**. Se zerou **pelo próprio descarte**, o turno termina após pegar o morto.
+- **R9.5** `[D]` Só pode **bater** quem já pegou ao menos um morto — ressalvado R10.1.
+- **R9.6** `[D]` Terminar a rodada sem ter pegado nenhum morto acarreta a penalidade de R11.5 — ressalvada a mesma exceção.
 
-> R9.3 e R9.4 foram decididos em 2026-07-29, revertendo a proposta original (P21), que
-> encerrava o turno na hora de pegar o morto. A regra adotada mantém o turno com estrutura
-> única: **todo turno termina em descarte, sempre que houver carta na mão para descartar.**
-> É mais simples de especificar e de implementar do que uma saída antecipada.
+> **Mudança de 2026-07-29.** A versão anterior desta seção dizia que cada jogador tinha um
+> morto exclusivo — o que as fontes pesquisadas afirmam para o jogo 1 contra 1. A regra
+> adotada aqui é diferente: **os mortos são um recurso comum e disputado**. Isso muda a
+> natureza estratégica da rodada, porque esvaziar a mão primeiro passa a ser uma corrida,
+> não um direito garantido. Prevalece a regra da mesa, não a da fonte.
+>
+> R9.4 reverteu a proposta original (P21), que encerrava o turno ao pegar o morto.
 
 ---
 
 ## R10 — Batida
 
-- **R10.1** `[D]` Um jogador **bate** ao ficar sem cartas na mão, cumpridas duas condições: já ter pegado seu morto, **e** possuir ao menos uma canastra **limpa** na mesa. Ver ⚠️ **P27** quanto ao caso em que o morto foi convertido em monte (R4.6).
+- **R10.1** `[D]` Um jogador **bate** ao ficar sem cartas na mão, cumpridas duas condições: já ter pegado **ao menos um morto**, **e** possuir ao menos uma canastra **limpa** na mesa.
+- **R10.1.1** `[D]` **Exceção.** Se não houver mais morto disponível **por conversão em monte** (R4.6), a exigência de ter pegado morto **deixa de valer** para o jogador que não teve chance de pegar nenhum. Basta a canastra limpa.
+- **R10.1.2** `[P]` ⚠️ **P31** — Se não houver mais morto disponível **porque o adversário pegou os dois** (R9.3), a exigência **continua valendo**: o jogador sem morto não pode bater.
+- **R10.1.3** `[P]` ⚠️ **P32** — É **proibido** realizar uma jogada que esvazie a mão quando não há morto disponível e as condições de batida não estão satisfeitas. O jogador deve reter ao menos uma carta.
 - **R10.2** `[P]` ⚠️ **P22** — Para efeito de R10.1, as canastras `DE_500` e `DE_1000` **sem curinga** contam como limpas; com curinga, não contam.
 - **R10.3** `[F]` A batida **encerra a rodada imediatamente**. O adversário não joga mais nenhum turno.
-- **R10.4** `[P]` ⚠️ **P16** (mesma decisão de R7.3) — A batida pode ocorrer com ou sem descarte final.
+- **R10.4** `[D]` (mesma decisão de R7.3) — A batida pode ocorrer **com ou sem** descarte final.
 
 ---
 
@@ -202,7 +212,9 @@ Ao fim da rodada, cada jogador apura seu saldo somando os itens abaixo.
 
 - **R11.3** `[F]` Cartas **baixadas na mesa** contam **positivo**. Cartas que sobraram **na mão** contam **negativo**.
 - **R11.4** `[P]` ⚠️ **P24** — Quem bate recebe **+100 pontos** de bônus.
-- **R11.5** `[F]` Quem termina a rodada **sem ter pegado o morto** recebe **−100 pontos**. Ver ⚠️ **P27**.
+- **R11.5** `[D]` Quem termina a rodada **sem ter pegado nenhum morto** recebe **−100 pontos**.
+- **R11.5.1** `[D]` **Exceção.** A penalidade **não se aplica** ao jogador que ficou sem morto porque um morto foi convertido em monte (R4.6). Não se pune quem não teve escolha.
+- **R11.5.2** `[P]` ⚠️ **P33** — A penalidade **se aplica normalmente** ao jogador que ficou sem morto porque o adversário pegou os dois (R9.3). Aí houve disputa, e ele perdeu.
 - **R11.6** `[P]` ⚠️ **P25** — O saldo de uma rodada **pode ser negativo**, e o total acumulado da partida também.
 
 ---
@@ -221,13 +233,17 @@ Ao fim da rodada, cada jogador apura seu saldo somando os itens abaixo.
 | # | Regra | Decisão |
 |---|---|---|
 | **P6** | R3.4 | Confirmada: **sem pontuação mínima** para a primeira descida |
-| **P9** | R4.6 | **Reformulada.** O monte esgotado **não** encerra a rodada: um morto não reclamado vira o novo monte. Gerou P27, P28 e P30 |
-| **P14** | R6.5 | **Reformulada.** Regularizar o curinga, não trocá-lo. Reformulação pendente de conferência |
+| **P9** | R4.6 | **Reformulada.** Monte esgotado não encerra a rodada: um morto não reclamado vira o novo monte |
+| **P14** | R6.5 | **Reformulada e confirmada.** Regularizar o curinga na sua casa natural, não trocá-lo |
+| **P16** | R7.3, R10.4 | Confirmada: a batida pode ocorrer **sem** descarte final |
 | **P19** | R8.5 | Confirmada: categoria é **função derivada**, recalculada continuamente |
 | **P20** | R9.2 | Confirmada: pega o morto assim que a mão zera |
-| **P21** | R9.3–R9.4 | **Rejeitada.** Pegar o morto **não** encerra o turno; o descarte pendente continua obrigatório |
+| **P21** | R9.4 | **Rejeitada.** Pegar o morto **não** encerra o turno |
+| **P27** | R10.1.1, R11.5.1 | **Ambas** as exigências caem quando o morto foi convertido em monte |
+| **P28** | R2.3, R4.7 | **Dissolvida.** Os mortos **não têm dono** — são intercambiáveis, e um jogador pode pegar os dois |
+| **P29** | R6.6 | Confirmada: reposicionar o curinga é a única exceção a R6.4 |
 
-### 13.2 Abertas — 25 propostas
+### 13.2 Abertas — 23 propostas
 
 Pode responder por número: *"todas ok exceto P23 e P26"* é uma resposta completa.
 
@@ -244,9 +260,7 @@ Pode responder por número: *"todas ok exceto P23 e P26"* é uma resposta comple
 | **P11** | R5.6 | Sem valores repetidos, exceto os dois Ases da sequência de 14 |
 | **P12** | R6.3 | Pode aumentar canastra até 14 cartas |
 | **P13** | R6.4 | **Não pode reorganizar** cartas já baixadas (exceto R6.5) |
-| **P14** | R6.5 | **Reformulada** — conferir se a redação corresponde à regra da sua mesa |
 | **P15** | R7.2 | Pode descartar carta comprada no mesmo turno |
-| **P16** | R7.3, R10.4 | Descarte obrigatório **exceto na batida** |
 | **P17** | R8.3 | Precedência `DE_1000 → DE_500 → LIMPA → SUJA` |
 | **P18** | R8.4 | Canastras especiais **admitem** curinga |
 | **P22** | R10.2 | Especiais sem curinga contam como limpa para bater |
@@ -254,13 +268,13 @@ Pode responder por número: *"todas ok exceto P23 e P26"* é uma resposta comple
 | **P24** | R11.4 | Bônus de **+100** para quem bate |
 | **P25** | R11.6 | Saldo **pode ser negativo** |
 | **P26** | R12.2 | Verificação ao fim da rodada; empate → mais uma rodada |
-| **P27** | R9.5, R9.6, R10.1, R11.5 | **Qual exigência do morto cai** quando o morto virou monte: a penalidade de −100, o pré-requisito para bater, ou ambas? |
-| **P28** | R4.7 | Com os **dois mortos** intactos, vira monte o do jogador que **não está na vez** |
-| **P29** | R6.6 | Reposicionar o curinga é a **única** exceção à proibição de reorganizar |
 | **P30** | R4.8 | Monte esgotado **sem morto disponível** → rodada termina sem batida |
+| **P31** | R10.1.2 | Quem ficou sem morto **porque o adversário pegou os dois** continua impedido de bater |
+| **P32** | R10.1.3 | É **proibido esvaziar a mão** sem morto disponível e sem poder bater — deve reter uma carta |
+| **P33** | R11.5.2 | A penalidade de −100 **se aplica** a quem perdeu a disputa pelos dois mortos |
 
 ### 13.3 As que mais afetam o desenho da engine
 
-- **P27** — sem ela, a condição de batida fica indefinida no caso de borda do morto convertido
-- **P16** — define se o turno tem uma ou duas formas de terminar
+- **P31, P32 e P33** — o trio que decorre de os mortos serem um recurso disputado. Definem o que acontece com o jogador que fica de fora
 - **P17** — sem precedência explícita, a pontuação depende da ordem dos `if`
+- **P1** — limita o espaço de jogos válidos, e portanto todo o validador de sequências

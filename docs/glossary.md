@@ -49,7 +49,7 @@ Sem acentos e sem cedilha nos identificadores: `Sequencia`, não `Sequência`.
 | **Mão** | As cartas que um jogador tem consigo, visíveis apenas para ele. São 11 na distribuição inicial. | `Mao` |
 | **Monte** | A pilha de compra, virada para baixo. | `Monte` |
 | **Lixo** | A pilha de descarte. No Buraco Aberto **todas as cartas são visíveis**. | `Lixo` |
-| **Morto** | Conjunto reservado de 11 cartas. **Existem dois mortos, um por jogador**, mesmo em 1 contra 1. Cada jogador pega o *seu* ao ficar sem cartas na mão — não há disputa. | `Morto` |
+| **Morto** | Conjunto reservado de 11 cartas. Existem **dois mortos, sem dono**: formam um recurso comum e **disputado**. Um jogador pega um morto ao ficar sem cartas na mão, e **pode pegar os dois** se esvaziar a mão duas vezes. | `Morto` |
 | **Mesa** | Área onde ficam os jogos baixados, visível para todos. | `Mesa` |
 
 ---
@@ -124,10 +124,15 @@ Sinônimos que causam ambiguidade. Nunca usar em código, teste ou documento:
 
 ## 8. Confirmado em 2026-07-29
 
-Baralho de 104 sem Curingão · curinga é só o 2 · 11 cartas por jogador · dois mortos, um
-por jogador · Ás nas duas pontas sem dar a volta · limpa 200 / suja 100 · canastras de 500
-e 1000 · lixo levado inteiro · aumentar só os próprios jogos · bater exige morto e canastra
-limpa · vitória em 3000.
+Baralho de 104 sem Curingão · curinga é só o 2 · 11 cartas por jogador · **dois mortos sem
+dono, disputados** · Ás nas duas pontas sem dar a volta · limpa 200 / suja 100 · canastras
+de 500 e 1000 · lixo levado inteiro · aumentar só os próprios jogos · bater exige ao menos
+um morto e uma canastra limpa · vitória em 3000.
+
+> **Correção da mesma data.** A primeira versão deste glossário dizia que cada jogador
+> tinha um morto exclusivo, seguindo as fontes pesquisadas para o jogo 1 contra 1. A regra
+> adotada no projeto é outra: os mortos são um **recurso comum e disputado**. Ver `rules.md`
+> R2.3 e R9.1–R9.3.
 
 ## 9. Pendências para o `rules.md`
 
