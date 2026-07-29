@@ -18,8 +18,8 @@ estar aprovada.
 
 | Documento | Propósito | Status |
 |---|---|---|
-| [vision.md](vision.md) | Por que o produto existe, para quem, e o que ele **não** é | Rascunho |
-| glossary.md | Linguagem ubíqua: o vocabulário do Buraco que o código vai usar | Pendente |
+| [vision.md](vision.md) | Por que o produto existe, para quem, e o que ele **não** é | Escrito |
+| [glossary.md](glossary.md) | Linguagem ubíqua: o vocabulário do Buraco que o código vai usar | Escrito |
 | rules.md | Regras do jogo. **Fonte única de verdade do domínio** | Pendente |
 | requirements.md | Requisitos funcionais e não-funcionais do produto | Pendente |
 
@@ -55,3 +55,4 @@ estar aprovada.
 |---|---|
 | [0001](decisions/0001-variante-buraco-aberto.md) | Adotar Buraco Aberto como variante de referência |
 | [0002](decisions/0002-formato-individual-1v1.md) | Formato 1 contra 1 na v1 |
+| [0003](decisions/0003-canastras-especiais-500-1000.md) | Incluir as canastras de 500 e de 1000 (emenda o 0001) |

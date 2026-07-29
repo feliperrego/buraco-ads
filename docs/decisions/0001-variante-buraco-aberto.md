@@ -1,7 +1,12 @@
 # ADR-0001 — Adotar Buraco Aberto como variante de referência
 
-- **Status:** Aceita
+- **Status:** Aceita — **emendada em parte** por [ADR-0003](0003-canastras-especiais-500-1000.md)
 - **Data:** 2026-07-28
+
+> **Emenda (2026-07-29):** a afirmação de que o Buraco Aberto seria *"sem canastra de
+> 500/1000"*, usada abaixo como justificativa, estava incorreta. As canastras especiais
+> fazem parte da v1 — ver [ADR-0003](0003-canastras-especiais-500-1000.md). O restante
+> desta decisão permanece válido.
 
 ## Contexto
 
