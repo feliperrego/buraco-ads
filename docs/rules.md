@@ -1,6 +1,6 @@
 # Regras — Buraco Aberto, 1 contra 1
 
-> Status: **rascunho anotado** — 24 pendências na seção 13
+> Status: **rascunho anotado** — 26 pendências na seção 13
 > Escopo: [ADR-0001](decisions/0001-variante-buraco-aberto.md), [ADR-0002](decisions/0002-formato-individual-1v1.md), [ADR-0003](decisions/0003-canastras-especiais-500-1000.md)
 > Vocabulário: [glossary.md](glossary.md)
 > Última atualização: 2026-07-29
