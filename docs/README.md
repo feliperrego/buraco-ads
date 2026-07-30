@@ -14,14 +14,14 @@ A documentação se divide em dois tipos, e a distinção importa:
 Cada onda consome a anterior como entrada. Não escrevemos uma onda antes da anterior
 estar aprovada.
 
-### Onda 0 — Fundação
+### Onda 0 — Fundação ✅ completa
 
 | Documento | Propósito | Status |
 |---|---|---|
 | [vision.md](vision.md) | Por que o produto existe, para quem, e o que ele **não** é | Escrito |
 | [glossary.md](glossary.md) | Linguagem ubíqua: o vocabulário do Buraco que o código vai usar | Escrito |
 | [rules.md](rules.md) | Regras do jogo. **Fonte única de verdade do domínio** | Confirmado |
-| [requirements.md](requirements.md) | Requisitos funcionais e não-funcionais do produto | Rascunho anotado |
+| [requirements.md](requirements.md) | Requisitos funcionais e não-funcionais do produto | Confirmado |
 
 ### Onda 1 — Modelagem
 

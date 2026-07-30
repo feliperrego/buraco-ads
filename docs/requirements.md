@@ -1,6 +1,6 @@
 # Requisitos
 
-> Status: **rascunho anotado** — 22 pendências na seção 4
+> Status: **confirmado** — 22 propostas resolvidas, nenhuma pendência
 > Escopo: [vision.md](vision.md) · Regras do jogo: [rules.md](rules.md) · Vocabulário: [glossary.md](glossary.md)
 > Última atualização: 2026-07-29
 
@@ -21,6 +21,8 @@ de origem do `rules.md`:
 | `[D]` | Decisão já tomada por você |
 | `[P]` | **Proposta minha, não confirmada** — acompanhada de `⚠️ Qn` |
 
+Não resta nenhuma `[P]`. O histórico das 22 propostas está na seção 4.
+
 ---
 
 ## 1. Requisitos funcionais
@@ -28,37 +30,38 @@ de origem do `rules.md`:
 ### RF1 — Iniciar e encerrar partida
 
 - **RF1.1** `[D]` O jogo é acessível abrindo uma página, **sem cadastro, sem login e sem conexão a servidor**.
-- **RF1.2** `[P]` ⚠️ **Q1** — Existe uma **tela inicial** com uma única ação relevante: iniciar nova partida.
-- **RF1.3** `[P]` ⚠️ **Q2** — O jogador pode **abandonar** a partida em andamento e voltar à tela inicial, com confirmação antes de descartar o progresso.
+- **RF1.2** `[D]` Existe uma **tela inicial** com uma única ação relevante: iniciar nova partida.
+- **RF1.3** `[D]` O jogador pode **abandonar** a partida em andamento e voltar à tela inicial, com confirmação antes de descartar o progresso.
 - **RF1.4** `[D]` Não há persistência. O jogo **avisa antes de fechar ou recarregar** a janela com partida em andamento.
-- **RF1.5** `[P]` ⚠️ **Q3** — Ao fim da partida, o jogo anuncia o vencedor e oferece **nova partida**.
+- **RF1.5** `[D]` Ao fim da partida, o jogo anuncia o vencedor e oferece **nova partida**.
 
 ### RF2 — Jogar
 
-- **RF2.1** `[P]` ⚠️ **Q4** — O sistema **só permite jogadas válidas** segundo `rules.md`. Jogadas inválidas não são recusadas com mensagem de erro: simplesmente **não estão disponíveis** na interface.
-- **RF2.2** `[P]` ⚠️ **Q5** — A interface indica sempre **de quem é a vez** e **em que fase do turno** o jogador está (comprar, baixar, descartar).
-- **RF2.3** `[P]` ⚠️ **Q6** — Não há **desfazer**. Uma jogada confirmada é definitiva.
+- **RF2.1** `[D]` O sistema **só permite jogadas válidas** segundo `rules.md`. Jogadas inválidas não são recusadas com mensagem de erro: simplesmente **não estão disponíveis** na interface.
+- **RF2.2** `[D]` A interface indica sempre **de quem é a vez** e **em que fase do turno** o jogador está (comprar, baixar, descartar).
+- **RF2.3** `[D]` Não há **desfazer**. Uma jogada confirmada é definitiva.
 
-> **Q6 tem peso arquitetural.** Desfazer exige que a engine mantenha histórico de comandos
-> ou de estados, não apenas o estado atual. É uma decisão que muda o desenho do núcleo, não
-> um detalhe de interface — por isso está aqui e não em `screens.md`. Recomendo **não** ter
-> desfazer na v1: num jogo contra IA com informação oculta, desfazer permite explorar o
-> resultado da compra e recomeçar, o que quebra o jogo.
+> **RF2.3 tem peso arquitetural.** Desfazer exigiria que a engine mantivesse histórico de
+> comandos ou de estados, não apenas o estado atual — uma decisão que muda o desenho do
+> núcleo, não um detalhe de interface. Por isso está aqui e não em `screens.md`.
+>
+> Além do custo: num jogo com informação oculta, desfazer permite comprar uma carta, ver que
+> não serviu, desfazer e comprar de novo. **Desfazer quebraria o jogo**, não só o código.
 
 ### RF3 — Informação visível
 
 O que o jogador pode ver determina tanto a interface quanto o que a IA tem direito de saber.
 
 - **RF3.1** `[D]` O **lixo é sempre visível por inteiro**, para os dois jogadores (R4.3).
-- **RF3.2** `[P]` ⚠️ **Q7** — A **mão do adversário é oculta**, mas a **quantidade** de cartas nela é visível.
-- **RF3.3** `[P]` ⚠️ **Q8** — O **monte** é oculto, e a **quantidade** de cartas restantes é visível.
-- **RF3.4** `[P]` ⚠️ **Q9** — Os **mortos** são ocultos, e a quantidade de mortos **ainda não reclamados** é visível.
-- **RF3.5** `[P]` ⚠️ **Q10** — Todos os **jogos baixados** dos dois jogadores são visíveis, com sua **categoria de canastra** indicada (limpa, suja, 500, 1000).
+- **RF3.2** `[D]` A **mão do adversário é oculta**, mas a **quantidade** de cartas nela é visível.
+- **RF3.3** `[D]` O **monte** é oculto, e a **quantidade** de cartas restantes é visível.
+- **RF3.4** `[D]` Os **mortos** são ocultos, e a quantidade de mortos **ainda não reclamados** é visível.
+- **RF3.5** `[D]` Todos os **jogos baixados** dos dois jogadores são visíveis, com sua **categoria de canastra** indicada (limpa, suja, 500, 1000).
 
 ### RF4 — Pontuação
 
-- **RF4.1** `[P]` ⚠️ **Q11** — O **placar acumulado** da partida está sempre visível.
-- **RF4.2** `[P]` ⚠️ **Q12** — Ao fim de cada rodada, o jogo mostra a **apuração detalhada**: canastras por categoria, cartas na mesa, cartas na mão, penalidades e bônus — item por item, não apenas o total.
+- **RF4.1** `[D]` O **placar acumulado** da partida está sempre visível.
+- **RF4.2** `[D]` Ao fim de cada rodada, o jogo mostra a **apuração detalhada**: canastras por categoria, cartas na mesa, cartas na mão, penalidades e bônus — item por item, não apenas o total.
 
 > Q12 não é enfeite. A pontuação do Buraco tem seis componentes (R11.1 a R11.6); mostrar só
 > o total torna impossível para o jogador — e para nós, depurando — saber se a engine
@@ -68,8 +71,8 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 ### RF5 — Oponente de IA
 
 - **RF5.1** `[D]` A IA joga automaticamente no seu turno. **Nível único**, sem seletor de dificuldade.
-- **RF5.2** `[P]` ⚠️ **Q13** — A IA **não trapaceia**. Ela decide usando exclusivamente o que um jogador humano naquela posição poderia ver: a própria mão, o lixo, os jogos baixados e as contagens de RF3. **Nunca** o conteúdo do monte, dos mortos ou da mão do adversário.
-- **RF5.3** `[P]` ⚠️ **Q14** — A jogada da IA é apresentada com **ritmo perceptível**, não instantânea, para que o jogador acompanhe o que aconteceu.
+- **RF5.2** `[D]` A IA **não trapaceia**. Ela decide usando exclusivamente o que um jogador humano naquela posição poderia ver: a própria mão, o lixo, os jogos baixados e as contagens de RF3. **Nunca** o conteúdo do monte, dos mortos ou da mão do adversário.
+- **RF5.3** `[D]` A jogada da IA é apresentada com **ritmo perceptível**, não instantânea, para que o jogador acompanhe o que aconteceu.
 
 > Q13 é o requisito mais importante desta seção, e o mais fácil de violar por acidente. Se a
 > engine expõe o estado completo à IA, "não trapacear" passa a depender de disciplina do
@@ -85,7 +88,7 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 
 - **RNF1.1** `[D]` A engine **não importa** React, DOM, ou qualquer biblioteca de interface.
 - **RNF1.2** `[D]` O estado da partida é **serializável**, para que persistência e multiplayer sejam adições futuras e não reescritas.
-- **RNF1.3** `[P]` ⚠️ **Q15** — A engine é **determinística**: dada a mesma semente aleatória e a mesma sequência de jogadas, produz exatamente a mesma partida.
+- **RNF1.3** `[D]` A engine é **determinística**: dada a mesma semente aleatória e a mesma sequência de jogadas, produz exatamente a mesma partida.
 
 > **Q15 é o requisito não funcional de maior retorno do projeto.** Determinismo dá três
 > coisas de graça:
@@ -102,8 +105,8 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 
 ### RNF2 — Qualidade
 
-- **RNF2.1** `[P]` ⚠️ **Q16** — **Toda regra de `rules.md` tem ao menos um teste** que cita seu identificador no nome. A cobertura da engine é medida por regras cobertas, não só por linhas.
-- **RNF2.2** `[P]` ⚠️ **Q17** — A interface é testada em nível de comportamento, não de aparência. Não haverá testes de snapshot visual na v1.
+- **RNF2.1** `[D]` **Toda regra de `rules.md` tem ao menos um teste** que cita seu identificador no nome. A cobertura da engine é medida por regras cobertas, não só por linhas.
+- **RNF2.2** `[D]` A interface é testada em nível de comportamento, não de aparência. Não haverá testes de snapshot visual na v1.
 
 > Q16 inverte a métrica usual. "90% de cobertura de linhas" pode conviver com uma regra de
 > pontuação inteira sem teste. "65 de 65 regras cobertas" é uma afirmação verificável sobre
@@ -111,10 +114,10 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 
 ### RNF3 — Alcance e acesso
 
-- **RNF3.1** `[P]` ⚠️ **Q18** — O jogo funciona em **desktop e mobile**, com interação por mouse e por toque.
-- **RNF3.2** `[P]` ⚠️ **Q19** — Idioma único: **português do Brasil**. Sem infraestrutura de internacionalização na v1.
-- **RNF3.3** `[P]` ⚠️ **Q20** — Suporte às **versões atuais** de Chrome, Firefox, Safari e Edge. Sem suporte a navegadores legados.
-- **RNF3.4** `[P]` ⚠️ **Q21** — Acessibilidade: contraste adequado e **navegação completa por teclado**. Leitor de tela não é meta da v1.
+- **RNF3.1** `[D]` O jogo funciona em **desktop e mobile**, com interação por mouse e por toque.
+- **RNF3.2** `[D]` Idioma único: **português do Brasil**. Sem infraestrutura de internacionalização na v1.
+- **RNF3.3** `[D]` Suporte às **versões atuais** de Chrome, Firefox, Safari e Edge. Sem suporte a navegadores legados.
+- **RNF3.4** `[D]` Acessibilidade: contraste adequado e **navegação completa por teclado**. Leitor de tela não é meta da v1.
 
 > Q21 é uma escolha honesta de escopo, não desleixo. Um jogo de cartas com arrastar-e-soltar
 > exige trabalho real para funcionar em leitor de tela. Prometer e entregar mal é pior do
@@ -124,7 +127,7 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 ### RNF4 — Privacidade
 
 - **RNF4.1** `[D]` Sem backend, sem banco de dados, sem contas.
-- **RNF4.2** `[P]` ⚠️ **Q22** — **Nenhuma telemetria, análise de uso ou coleta de dados.** Nada sai do navegador.
+- **RNF4.2** `[D]` **Nenhuma telemetria, análise de uso ou coleta de dados.** Nada sai do navegador.
 
 ---
 
@@ -136,9 +139,18 @@ nativo estão **fora da v1**.
 
 ---
 
-## 4. Pendências
+## 4. Histórico das decisões
 
-| # | Requisito | Proposta |
+**Não há pendências.** As 22 propostas foram **confirmadas como escritas** em 2026-07-29 e
+incorporadas ao corpo do documento.
+
+Contraste com o `rules.md`, onde 5 de 33 propostas caíram: aqui nenhuma caiu. A diferença não
+é sorte. `rules.md` especifica um domínio que **você** conhece e eu não — meu palpite errava
+com frequência. `requirements.md` especifica software, que é o domínio onde eu tenho base
+para propor. Vale como calibragem: **desconfie das minhas propostas na proporção em que o
+assunto for seu, não meu.**
+
+| # | Requisito | Decisão confirmada |
 |---|---|---|
 | **Q1** | RF1.2 | Tela inicial com ação única de iniciar partida |
 | **Q2** | RF1.3 | Pode abandonar partida, com confirmação |
