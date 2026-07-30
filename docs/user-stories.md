@@ -1,6 +1,6 @@
 # Histórias de usuário
 
-> Status: **rascunho anotado** — 7 pendências na seção 5
+> Status: **confirmado** — 7 decisões, nenhuma pendência
 > Deriva de: [requirements.md](requirements.md) · [rules.md](rules.md) · [architecture.md](architecture.md)
 > Última atualização: 2026-07-29
 
@@ -32,7 +32,7 @@ convida a construí-la inteira antes de qualquer pixel. Três caminhos:
 | **B. Fatias verticais** | Cada história atravessa engine → estado → interface. Feedback real desde a primeira | As primeiras fatias são pesadas de engine. Alguma retrabalho de interface conforme ela cresce |
 | **C. Esqueleto vertical, depois engine em bloco** | Prova a integração cedo e depois concentra no domínio | Volta ao problema de A na parte grande do trabalho |
 
-- `[P]` ⚠️ **U1** — **Caminho B: fatias verticais.**
+- `[D]` **Caminho B: fatias verticais.**
 
 > O argumento decisivo não é feedback do jogador — é feedback sobre a **API**. O
 > [architecture.md](architecture.md) A4 afirma que interface e IA consomem a mesma superfície
@@ -49,7 +49,7 @@ convida a construí-la inteira antes de qualquer pixel. Três caminhos:
 
 ## 2. A IA entra na terceira história — de propósito
 
-- `[P]` ⚠️ **U2** — A IA aparece em **H3**, muito antes de ser competente. A primeira versão
+- `[D]` A IA aparece em **H3**, muito antes de ser competente. A primeira versão
   **escolhe um movimento aleatório** de `movimentosValidos`.
 
 Duas razões, e a segunda é a boa:
@@ -145,7 +145,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 | **H18** | Jogo com conforto no celular e navego pelo teclado | RNF3.1, RNF3.4 |
 | **H19** | A interface tem acabamento visual coerente | RNF3.1 |
 
-- `[P]` ⚠️ **U3** — H19 (acabamento visual) fica **por último**, depois de a partida
+- `[D]` H19 (acabamento visual) fica **por último**, depois de a partida
   funcionar de ponta a ponta.
 
 > Cada história do Marco I ao V entrega uma interface funcional e feia. Isso é deliberado: uma
@@ -157,18 +157,18 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 
 ## 4. Rastreabilidade
 
-- `[P]` ⚠️ **U4** — Toda regra de `rules.md` está citada por **ao menos uma** história. Uma
+- `[D]` Toda regra de `rules.md` está citada por **ao menos uma** história. Uma
   regra sem história é uma regra que ninguém vai implementar.
-- `[P]` ⚠️ **U5** — Uma história está **pronta** quando todas as regras e requisitos que ela
+- `[D]` Uma história está **pronta** quando todas as regras e requisitos que ela
   cita têm teste passando (RNF2.1), e o comportamento é observável na interface.
-- `[P]` ⚠️ **U6** — Cada história ganha uma **spec própria** em `docs/specs/` antes de virar
+- `[D]` Cada história ganha uma **spec própria** em `docs/specs/` antes de virar
   código. A história diz *o quê*; a spec diz *exatamente como se comporta*, incluindo casos
   de borda.
 
 > U6 é onde o ciclo SDD finalmente roda por fatia, e não por documento. `H1` vira
 > `specs/0001-mesa-inicial.md`, e é essa spec que os testes implementam.
 
-- `[P]` ⚠️ **U7** — A cobertura história ↔ regra é verificada por
+- `[D]` A cobertura história ↔ regra é verificada por
   [`scripts/verificar-cobertura.py`](../scripts/verificar-cobertura.py), que falha se alguma
   regra ficar órfã ou se alguma história citar regra inexistente. Entra no CI junto com o
   lint e os testes.
@@ -183,9 +183,11 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 
 ---
 
-## 5. Pendências
+## 5. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 7 decisões foram confirmadas em 2026-07-29.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **U1** | Fatiamento | **Fatias verticais** (caminho B), aceitando que as primeiras sejam pesadas de engine |
 | **U2** | IA | IA **aleatória em H3**, competente só em H15; a aleatória fica como ferramenta de teste |
@@ -195,11 +197,12 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 | **U6** | SDD por fatia | Cada história ganha spec em `docs/specs/` antes do código |
 | **U7** | Verificação | `scripts/verificar-cobertura.py` no CI — já achou 6 regras órfãs |
 
-### O que merece sua atenção
+### Notas de decisão
 
-- **U1** — define a ordem de todo o trabalho restante. É a decisão de maior alcance do documento.
-- **U2** — colocar a IA na terceira história parece precoce e é justamente o ponto: a fronteira que garante a RF5.2 é caríssima de instalar depois.
-- **U3** — significa aceitar meses de interface feia. Quero que seja escolha explícita.
+- **U1** foi a de maior alcance: define a ordem de todo o trabalho restante.
+- **U4** foi aprovada **depois de corrigida**. A primeira redação afirmava cobertura completa
+  sem verificação; a checagem encontrou 6 regras órfãs, atribuídas a H2, H4, H6 e H11.
+- **U3** significa aceitar interface feia do Marco I ao V. Escolha consciente.
 
 ### Ainda em aberto para a Onda 3
 
