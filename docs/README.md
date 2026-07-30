@@ -21,7 +21,7 @@ estar aprovada.
 | [vision.md](vision.md) | Por que o produto existe, para quem, e o que ele **não** é | Escrito |
 | [glossary.md](glossary.md) | Linguagem ubíqua: o vocabulário do Buraco que o código vai usar | Escrito |
 | [rules.md](rules.md) | Regras do jogo. **Fonte única de verdade do domínio** | Confirmado |
-| requirements.md | Requisitos funcionais e não-funcionais do produto | Pendente |
+| [requirements.md](requirements.md) | Requisitos funcionais e não-funcionais do produto | Rascunho anotado |
 
 ### Onda 1 — Modelagem
 
