@@ -34,7 +34,7 @@ estar aprovada.
 
 | Documento | Propósito | Status |
 |---|---|---|
-| user-stories.md | Fatias verticais de valor | Pendente |
+| [user-stories.md](user-stories.md) | Fatias verticais de valor | Rascunho anotado |
 | screens.md | Telas, fluxos e estados de interface | Pendente |
 | acceptance-tests.md | Critérios de aceite em Given/When/Then | Pendente |
 
