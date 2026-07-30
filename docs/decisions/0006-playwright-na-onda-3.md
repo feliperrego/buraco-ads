@@ -32,8 +32,8 @@ Playwright entra na **Onda 3**, quando existir uma partida jogável de ponta a p
 **Negativas**
 
 - Durante as Ondas 1 e 2 não haverá rede de segurança automatizada para a interface.
-- Existe o risco de "depois" nunca chegar. Mitigação: o Playwright é item explícito da Onda 3
-  no [roadmap.md](../roadmap.md), não uma intenção vaga.
+- Existe o risco de "depois" nunca chegar. Mitigação: o Playwright deve entrar como item
+  explícito da Onda 3 no `roadmap.md`, não como intenção vaga.
 
 **Neutras**
 
