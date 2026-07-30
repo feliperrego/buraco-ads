@@ -1,6 +1,6 @@
 # Telas e interação
 
-> Status: **rascunho anotado** — 11 pendências na seção 8
+> Status: **confirmado** — 11 decisões, nenhuma pendência
 > Deriva de: [user-stories.md](user-stories.md) · [requirements.md](requirements.md) · [rules.md](rules.md) · [architecture.md](architecture.md)
 > Última atualização: 2026-07-29
 
@@ -25,7 +25,7 @@ Pendências: `T1`…`Tn`. Marcação: `[D]` decidido, `[P]` proposto com `⚠️
 | **Fim de partida** | Vencedor e nova partida | H13, RF1.5 |
 | **Regras** | Consulta às 65 regras sem sair do jogo | H17, ADR-0005 |
 
-- `[P]` ⚠️ **T1** — A **apuração da rodada** (RF4.2, H12) não é tela: é um painel sobreposto
+- `[D]` A **apuração da rodada** (RF4.2, H12) não é tela: é um painel sobreposto
   à tela de partida, que o jogador fecha para seguir para a próxima rodada. A partida
   continua atrás dele, e não há navegação envolvida.
 
@@ -33,14 +33,14 @@ Pendências: `T1`…`Tn`. Marcação: `[D]` decidido, `[P]` proposto com `⚠️
 
 ## 2. Layout da tela de partida
 
-Recomendo a **Opção B — lixo em painel próprio**, e o motivo é uma característica única do
+Adotada a **Opção B — lixo em painel próprio**, e o motivo é uma característica única do
 Buraco Aberto.
 
 No Buraco Fechado, o descarte é uma pilha: um retângulo do tamanho de uma carta. No Buraco
 **Aberto**, a R4.3 exige que **todas** as cartas do lixo estejam visíveis — e o lixo cresce
 durante a rodada. Numa partida em que ninguém o pega, ele passa de 30 cartas.
 
-- `[P]` ⚠️ **T2** — O lixo ocupa **área própria e dimensionada para crescer**, não um espaço
+- `[D]` O lixo ocupa **área própria e dimensionada para crescer**, não um espaço
   dentro da mesa central.
 
 > Na Opção A, o lixo dentro da mesa central obriga a escolher entre duas coisas ruins: ou ele
@@ -50,7 +50,7 @@ durante a rodada. Numa partida em que ninguém o pega, ele passa de 30 cartas.
 >
 > Na Opção B ele cresce dentro do próprio painel. Monte, mortos, mão e jogos ficam parados.
 
-- `[P]` ⚠️ **T3** — O lixo é renderizado em **grade compacta**, na ordem de descarte, do mais
+- `[D]` O lixo é renderizado em **grade compacta**, na ordem de descarte, do mais
   antigo ao mais recente, com o topo destacado.
 
 > O topo importa mesmo sem a regra de compra justificada (R4.4 dispensou): é a informação de
@@ -58,7 +58,7 @@ durante a rodada. Numa partida em que ninguém o pega, ele passa de 30 cartas.
 
 ### 2.1 A interpretação da R4.3 em telas pequenas
 
-- `[P]` ⚠️ **T4** — Em telas estreitas, **todas as cartas do lixo continuam renderizadas**,
+- `[D]` Em telas estreitas, **todas as cartas do lixo continuam renderizadas**,
   em tamanho reduzido, com opção de ampliar. Nenhuma carta fica oculta atrás de interação.
 
 > A R4.3 é sobre **disponibilidade de informação**, não sobre tamanho de renderização. Mostrar
@@ -75,7 +75,7 @@ durante a rodada. Numa partida em que ninguém o pega, ele passa de 30 cartas.
 Para baixar, o jogador seleciona várias cartas e confirma. Mas `Partida` **não tem** o
 conceito de seleção parcial: ela só representa estados válidos ([domain.md](domain.md) M8).
 
-- `[P]` ⚠️ **T5** — Existe uma **máquina de estados de interface**, separada da máquina de
+- `[D]` Existe uma **máquina de estados de interface**, separada da máquina de
   estados do domínio, e ela mora em `ui/`. Nunca em `Partida`, nunca em `estado/`.
 
 ```mermaid
@@ -90,7 +90,7 @@ stateDiagram-v2
 
 O ponto crítico é o que acontece em `Selecionando`:
 
-- `[P]` ⚠️ **T6** — A interface **nunca valida jogadas**. Ela **filtra** `movimentosValidos`
+- `[D]` A interface **nunca valida jogadas**. Ela **filtra** `movimentosValidos`
   pela seleção atual. Uma carta fica selecionável se participa de ao menos um movimento
   válido; o botão de confirmar aparece quando a seleção corresponde exatamente a um.
 
@@ -105,7 +105,7 @@ Enumerar **todos** os comandos `baixar` válidos pode dar muitas combinações: 
 mão depois de pegar o lixo, cada naipe contribui com todas as sub-sequências de 3 ou mais
 cartas, multiplicadas pelas posições possíveis do curinga.
 
-- `[P]` ⚠️ **T7** — Começamos com **enumeração completa** e **medimos**. Se o custo for alto,
+- `[D]` Começamos com **enumeração completa** e **medimos**. Se o custo for alto,
   acrescentamos uma consulta `validar(comando)` usada só pela interface — mas a interface
   **continua sem implementar regra alguma**, apenas troca "me dê todos" por "este vale?".
 
@@ -116,7 +116,7 @@ cartas, multiplicadas pelas posições possíveis do curinga.
 
 ## 4. Modelo de interação
 
-- `[P]` ⚠️ **T8** — A interação primária é **tocar para selecionar e confirmar**, não
+- `[D]` A interação primária é **tocar para selecionar e confirmar**, não
   arrastar-e-soltar.
 
 | | Arrastar-e-soltar | Tocar e confirmar |
@@ -143,7 +143,7 @@ Deriva direto da máquina de estados do turno ([domain.md](domain.md) §1.3).
 | **Compra** | Monte, lixo | **A mão inteira** |
 | **Ação** | Mão, jogos próprios, lixo (como destino de descarte) | Jogos do adversário |
 
-- `[P]` ⚠️ **T9** — Na fase `Compra`, a mão está **visível e inerte**. Não é possível
+- `[D]` Na fase `Compra`, a mão está **visível e inerte**. Não é possível
   selecionar carta antes de comprar (R3.2).
 
 > Isso é a R3.2 expressa como ausência de afetação, não como mensagem de erro. O jogador não
@@ -160,7 +160,7 @@ própria interface: se a mão responde, é fase de ação.
 A interação mais difícil do jogo (H5). Quando o jogador inclui um 2 na seleção, é preciso
 saber **qual carta ele representa**.
 
-- `[P]` ⚠️ **T10** — A ambiguidade é resolvida pela **própria enumeração da engine**, não por
+- `[D]` A ambiguidade é resolvida pela **própria enumeração da engine**, não por
   lógica de interface:
 
 1. Se a seleção corresponde a **um só** comando `baixar`, o papel do 2 já está determinado —
@@ -179,7 +179,7 @@ saber **qual carta ele representa**.
 
 ## 7. Teclado e telas pequenas
 
-- `[P]` ⚠️ **T11** — Navegação por teclado (RNF3.4) em **zonas**: `Tab` circula entre mão,
+- `[D]` Navegação por teclado (RNF3.4) em **zonas**: `Tab` circula entre mão,
   jogos próprios, monte, lixo e jogos do adversário; setas movem dentro da zona; `Espaço`
   seleciona; `Enter` confirma; `Esc` cancela a seleção.
 
@@ -191,9 +191,11 @@ Acabamento visual, animações e responsividade fina ficam para H18 e H19.
 
 ---
 
-## 8. Pendências
+## 8. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 11 decisões foram confirmadas em 2026-07-29.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **T1** | Apuração | Painel sobreposto, não tela |
 | **T2** | Layout | **Opção B** — lixo em área própria, dimensionada para crescer |
@@ -207,9 +209,10 @@ Acabamento visual, animações e responsividade fina ficam para H18 e H19.
 | **T10** | Curinga | Ambiguidade resolvida pela enumeração, não por lógica de interface |
 | **T11** | Teclado | Navegação por zonas: `Tab`, setas, `Espaço`, `Enter`, `Esc` |
 
-### O que merece sua atenção
+### Notas de decisão
 
-- **T6** — a decisão que impede as regras de existirem em dois lugares. Tudo em T9 e T10 depende dela.
-- **T4** — é uma **interpretação de regra**, não só de layout. Estou definindo o que "visível" significa na R4.3.
-- **T2** — se você discordar do layout, é agora: T3, T4 e parte do T11 assumem essa disposição.
-- **T7** — o único ponto com risco técnico ainda não medido.
+- **T6** é a base de tudo: impede que as regras existam em dois lugares. T9 e T10 dependem dela.
+- **T4** é uma **interpretação da R4.3**, não só de layout — define que "visível" significa
+  disponibilidade de informação, não tamanho de renderização. Referenciada de `rules.md` R4.3.
+- **T7** é o único ponto com risco técnico ainda **não medido**. Fica como item a verificar
+  durante H4.

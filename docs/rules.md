@@ -72,7 +72,7 @@ regras novas nascerão como `[P]`.
 
 - **R4.1** `[F]` No início do turno o jogador escolhe **uma** das duas opções, exclusivamente: comprar **uma carta do monte**, ou **pegar o lixo**.
 - **R4.2** `[D]` Ao pegar o lixo, o jogador leva **todas** as cartas dele para a mão. Nunca uma parte.
-- **R4.3** `[D]` No Buraco Aberto **todas as cartas do lixo são visíveis** a ambos os jogadores durante toda a rodada.
+- **R4.3** `[D]` No Buraco Aberto **todas as cartas do lixo são visíveis** a ambos os jogadores durante toda a rodada. Sobre o que "visível" exige da interface, ver [screens.md](screens.md) T4: disponibilidade de informação, não tamanho de renderização.
 - **R4.4** `[D]` **Não há condição para pegar o lixo.** O jogador não precisa justificar a compra usando a carta do topo. (Essa exigência é do Buraco Fechado.)
 - **R4.5** `[D]` Se o lixo estiver **vazio**, a única opção é comprar do monte.
 - **R4.6** `[D]` Se o **monte se esgotar** e ainda houver **morto não reclamado**, um desses mortos **passa a ser o novo monte**. As 11 cartas são viradas para baixo e a rodada continua normalmente.
