@@ -36,7 +36,7 @@ estar aprovada.
 |---|---|---|
 | [user-stories.md](user-stories.md) | Fatias verticais de valor | Confirmado |
 | [screens.md](screens.md) | Telas, fluxos e estados de interface | Confirmado |
-| acceptance-tests.md | Critérios de aceite em Given/When/Then | Pendente |
+| [acceptance-tests.md](acceptance-tests.md) | Critérios de aceite em Given/When/Then | Rascunho anotado |
 
 ### Onda 3 — Execução
 
