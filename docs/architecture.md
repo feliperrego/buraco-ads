@@ -1,6 +1,6 @@
 # Arquitetura
 
-> Status: **rascunho anotado** — 13 pendências na seção 8
+> Status: **confirmado** — 13 decisões, nenhuma pendência
 > Deriva de: [domain.md](domain.md) · [requirements.md](requirements.md) · [vision.md](vision.md)
 > Última atualização: 2026-07-29
 
@@ -32,7 +32,7 @@ graph TD
     UI -.só tipos de leitura.-> ENGINE
 ```
 
-- `[P]` ⚠️ **A1** — Quatro camadas, e as setas só apontam para dentro. `engine/` é o
+- `[D]` Quatro camadas, e as setas só apontam para dentro. `engine/` é o
   centro e **não conhece ninguém**.
 
 | Camada | Responsabilidade | Pode importar |
@@ -42,7 +42,7 @@ graph TD
 | `estado/` | Guardar a `Partida` atual, despachar comandos, acionar a IA na vez dela | `engine/` e `ia/` |
 | `ui/` | Renderizar e capturar interação | `estado/`, e tipos de leitura de `engine/` |
 
-- `[P]` ⚠️ **A2** — A regra de dependência é **verificada por ESLint**
+- `[D]` A regra de dependência é **verificada por ESLint**
   (`no-restricted-imports` por diretório), não por disciplina. Uma violação quebra o CI.
 
 > A2 é o ponto que separa arquitetura documentada de arquitetura real. "A engine não importa
@@ -50,7 +50,7 @@ graph TD
 > lint sobrevive para sempre. Sempre que uma restrição arquitetural puder ser automatizada,
 > ela deve ser — caso contrário ela é uma intenção, não uma fronteira.
 
-- `[P]` ⚠️ **A3** — `ia/` **nunca** importa de `estado/` nem de `ui/`. A IA é uma
+- `[D]` `ia/` **nunca** importa de `estado/` nem de `ui/`. A IA é uma
   função de decisão, não um participante do ciclo de renderização. Isso a torna testável sem
   React e executável no futuro em worker, servidor ou aplicativo nativo.
 
@@ -78,7 +78,7 @@ engine.movimentosValidos(visao: VisaoDoJogador) → Comando[]
 A interface renderiza o que está nessa lista. Jogada inválida não é recusada com mensagem:
 **ela não aparece**. A mesma função alimenta a IA (2.1) e os testes.
 
-- `[P]` ⚠️ **A4** — Interface e IA consomem **exatamente a mesma API**:
+- `[D]` Interface e IA consomem **exatamente a mesma API**:
   `VisaoDoJogador` + `movimentosValidos`. Nenhuma das duas tem acesso privilegiado.
 
 > A4 tem uma consequência que vale explicitar: **a IA joga com as mesmas informações e as
@@ -88,7 +88,7 @@ A interface renderiza o que está nessa lista. Jogada inválida não é recusada
 
 ### 2.3 Aleatoriedade injetada (RNF1.3)
 
-- `[P]` ⚠️ **A5** — A engine **nunca** chama `Math.random()` nem `Date.now()`. Existe
+- `[D]` A engine **nunca** chama `Math.random()` nem `Date.now()`. Existe
   uma interface `Aleatorio`, implementada por um PRNG com semente, injetada ao iniciar a
   partida:
 
@@ -113,7 +113,7 @@ atual e disparar re-renderização. Três alternativas:
 | **Zustand** | Seleção granular, evita re-render em cascata, testável fora do React | Dependência nova para um problema que ainda não temos |
 | **TanStack Store** | Coerência com o resto da stack | Mesmo ponto do Zustand, com menos maturidade |
 
-- `[P]` ⚠️ **A6** — **`useReducer` + Context.** A engine já expõe exatamente a forma
+- `[D]` **`useReducer` + Context.** A engine já expõe exatamente a forma
   de um reducer; qualquer outra opção adiciona um adaptador para nada.
 
 > O risco real do Context é re-render em cascata. Duas razões para aceitá-lo agora: o jogo
@@ -125,7 +125,7 @@ atual e disparar re-renderização. Três alternativas:
 
 ## 4. Estrutura de pastas
 
-- `[P]` ⚠️ **A7** — A estrutura abaixo materializa as camadas. Cada pasta de primeiro
+- `[D]` A estrutura abaixo materializa as camadas. Cada pasta de primeiro
   nível dentro de `src/` é uma camada da §1.
 
 ```
@@ -149,11 +149,11 @@ tests/
   e2e/              Playwright — Onda 3
 ```
 
-- `[P]` ⚠️ **A8** — A engine expõe uma **API pública única** em `engine/index.ts`.
+- `[D]` A engine expõe uma **API pública única** em `engine/index.ts`.
   Nada fora de `engine/` importa de subpastas internas. Isso permite reorganizar o interior
   da engine sem tocar em nenhum consumidor.
 
-- `[P]` ⚠️ **A9** — **Testes unitários ficam ao lado do código** (`sequencia.test.ts`
+- `[D]` **Testes unitários ficam ao lado do código** (`sequencia.test.ts`
   junto de `sequencia.ts`). Só integração e E2E ficam em `tests/`.
 
 > A9 **divergindo do combinado.** A estrutura que você definiu no início prevê `tests/` para
@@ -169,7 +169,7 @@ tests/
 
 ## 5. O que não vamos construir
 
-- `[P]` ⚠️ **A10** — **Não existe camada de persistência na v1**, nem uma interface
+- `[D]` **Não existe camada de persistência na v1**, nem uma interface
   vazia à espera dela.
 
 > A RNF1.2 exige que o estado seja **serializável** — não que exista persistência. São coisas
@@ -190,7 +190,7 @@ Três itens da stack original que precisam de decisão formal. Cada um vira ADR 
 
 ### 6.1 TanStack Query — remover
 
-- `[P]` ⚠️ **A11** — **Remover o TanStack Query da stack.**
+- `[D]` **Remover o TanStack Query da stack.**
 
 O TanStack Query resolve cache, revalidação e sincronização de **estado de servidor**. A
 RNF4.1 estabelece que não há backend, banco nem contas. Não existe estado de servidor para
@@ -203,7 +203,7 @@ decisão futura precisa.
 
 ### 6.2 TanStack Router — manter
 
-- `[P]` ⚠️ **A12** — **Manter o TanStack Router.**
+- `[D]` **Manter o TanStack Router.**
 
 Este eu levantei como suspeito no primeiro dia e mudei de opinião ao escrever os requisitos.
 Três razões concretas:
@@ -221,7 +221,7 @@ e nenhuma rota, funciona — mas então a RF1.3 e a RF1.4 passam a ser trabalho 
 
 ### 6.3 Playwright — adiar para a Onda 3
 
-- `[P]` ⚠️ **A13** — **Playwright entra na Onda 3**, não agora.
+- `[D]` **Playwright entra na Onda 3**, não agora.
 
 E2E é o teste mais caro de escrever e manter, e o mais lento. Com a engine pura e coberta
 regra por regra em Vitest (RNF2.1), o Playwright cobre pouco que os testes de engine já não
@@ -249,9 +249,12 @@ O que **não** vamos importar de Clean Architecture:
 
 ---
 
-## 8. Pendências
+## 8. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 13 decisões foram confirmadas em 2026-07-29 e incorporadas ao
+corpo do documento.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **A1** | Camadas | Quatro camadas; setas só para dentro; `engine/` no centro |
 | **A2** | Fronteira | Regra de dependência **verificada por ESLint**, não por disciplina |
@@ -263,12 +266,13 @@ O que **não** vamos importar de Clean Architecture:
 | **A8** | Encapsulamento | API pública única em `engine/index.ts` |
 | **A9** | Testes | **Unitários ao lado do código** — diverge da estrutura combinada |
 | **A10** | Persistência | **Nenhuma camada**, nem interface vazia |
-| **A11** | Stack | **Remover TanStack Query** → ADR |
-| **A12** | Stack | **Manter TanStack Router** → ADR |
-| **A13** | Stack | **Playwright na Onda 3** → ADR |
+| **A11** | Stack | **Remover TanStack Query** → [ADR-0004](decisions/0004-remover-tanstack-query.md) |
+| **A12** | Stack | **Manter TanStack Router** → [ADR-0005](decisions/0005-manter-tanstack-router.md) |
+| **A13** | Stack | **Playwright na Onda 3** → [ADR-0006](decisions/0006-playwright-na-onda-3.md) |
 
-### As que merecem sua atenção
+### Notas de decisão
 
-- **A9** — é a única que **contraria** algo que você definiu. Quero que seja decisão sua.
-- **A11 e A12** — mexem na stack que você escolheu. A primeira remove, a segunda mantém algo que eu mesmo tinha questionado.
-- **A6** — a mais fácil de reverter, e por isso a que menos merece discussão longa.
+- **A9** foi a única proposta que **contrariou** a estrutura definida no briefing. Aprovada
+  conscientemente: unitários ao lado do código, `tests/` só para integração e E2E.
+- **A12** reverteu uma dúvida que eu mesmo havia levantado no início do projeto. O ADR-0005
+  registra por que a suspeita inicial estava errada.

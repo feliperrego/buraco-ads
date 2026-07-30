@@ -23,12 +23,12 @@ estar aprovada.
 | [rules.md](rules.md) | Regras do jogo. **Fonte única de verdade do domínio** | Confirmado |
 | [requirements.md](requirements.md) | Requisitos funcionais e não-funcionais do produto | Confirmado |
 
-### Onda 1 — Modelagem
+### Onda 1 — Modelagem ✅ completa
 
 | Documento | Propósito | Status |
 |---|---|---|
 | [domain.md](domain.md) | Entidades, agregados, invariantes, máquina de estados | Confirmado |
-| [architecture.md](architecture.md) | Camadas, fronteiras e regra de dependência | Rascunho anotado |
+| [architecture.md](architecture.md) | Camadas, fronteiras e regra de dependência | Confirmado |
 
 ### Onda 2 — Experiência
 
@@ -56,3 +56,6 @@ estar aprovada.
 | [0001](decisions/0001-variante-buraco-aberto.md) | Adotar Buraco Aberto como variante de referência |
 | [0002](decisions/0002-formato-individual-1v1.md) | Formato 1 contra 1 na v1 |
 | [0003](decisions/0003-canastras-especiais-500-1000.md) | Incluir as canastras de 500 e de 1000 (emenda o 0001) |
+| [0004](decisions/0004-remover-tanstack-query.md) | Remover o TanStack Query da stack |
+| [0005](decisions/0005-manter-tanstack-router.md) | Manter o TanStack Router |
+| [0006](decisions/0006-playwright-na-onda-3.md) | Playwright entra na Onda 3 |
