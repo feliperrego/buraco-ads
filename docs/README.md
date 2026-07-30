@@ -28,7 +28,7 @@ estar aprovada.
 | Documento | Propósito | Status |
 |---|---|---|
 | [domain.md](domain.md) | Entidades, agregados, invariantes, máquina de estados | Confirmado |
-| architecture.md | Camadas, fronteiras e regra de dependência | Pendente |
+| [architecture.md](architecture.md) | Camadas, fronteiras e regra de dependência | Rascunho anotado |
 
 ### Onda 2 — Experiência
 
