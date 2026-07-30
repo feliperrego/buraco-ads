@@ -76,7 +76,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 
 | # | História | Fecha |
 |---|---|---|
-| **H1** | Inicio uma partida e vejo minhas 11 cartas, o monte, o lixo vazio e os dois mortos | R1.1, R1.2, R2.1–R2.5, RF1.1, RF1.2, RNF1.3, M9 |
+| **H1** | Inicio uma partida e vejo minhas 11 cartas, o monte, o lixo vazio e os dois mortos | R1.1, R1.2, R2.1–R2.6, R3.1, RF1.1, RF1.2, RNF1.3, M9 |
 | **H2** | Compro uma carta do monte e descarto outra, encerrando meu turno | R3.1, R3.2, R4.1, R4.3, R7.1, R7.2, RF2.2, M10 |
 | **H3** | O oponente joga seu turno sozinho e a vez volta para mim | RF5.1, RF5.2, M11, M12 |
 

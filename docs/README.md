@@ -43,8 +43,29 @@ estar aprovada.
 | Documento | Propósito | Status |
 |---|---|---|
 | [testing-strategy.md](testing-strategy.md) | O que testar, em que nível, e por quê | Confirmado |
-| [roadmap.md](roadmap.md) | Ordem de entrega e marcos | Rascunho anotado |
-| `specs/` | Uma spec por fatia — é aqui que o ciclo SDD roda | Pendente |
+| [roadmap.md](roadmap.md) | Ordem de entrega e marcos | Confirmado |
+
+## Specs de fatia
+
+[`specs/`](specs/) é onde o ciclo SDD roda por funcionalidade em vez de por documento. Uma
+spec por história, escrita antes do código dela.
+
+Diferente dos documentos acima, uma spec é **descartável**: quando a história está pronta e
+testada, os testes passam a ser a especificação viva.
+
+| Spec | História | Status |
+|---|---|---|
+| [0001-mesa-inicial.md](specs/0001-mesa-inicial.md) | H1 — mesa inicial | Rascunho anotado |
+
+## Verificação
+
+[`scripts/verificar-cobertura.py`](../scripts/verificar-cobertura.py) confere três relações de
+rastreabilidade e falha o CI se alguma quebrar: toda regra citada por alguma história, nenhuma
+história citando regra inexistente, nenhum critério citando regra inexistente.
+
+```bash
+python3 scripts/verificar-cobertura.py
+```
 
 ## Decisões
 

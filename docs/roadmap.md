@@ -1,6 +1,6 @@
 # Roteiro
 
-> Status: **rascunho anotado** — 6 pendências na seção 5
+> Status: **confirmado** — 6 decisões, nenhuma pendência
 > Deriva de: [user-stories.md](user-stories.md) · [testing-strategy.md](testing-strategy.md) · [architecture.md](architecture.md)
 > Última atualização: 2026-07-29
 
@@ -36,7 +36,7 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 | **0.6** | `scripts/verificar-cobertura.py` no CI | E5, E9 |
 | **0.7** | TanStack Router com as quatro rotas vazias | ADR-0005, T1 |
 
-- `[P]` ⚠️ **RD1** — A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
+- `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
   lint falhar**. Escrevemos a violação, confirmamos a falha, e removemos.
 
 > RD1 parece exagero e não é. Uma regra de lint mal configurada não avisa que está mal
@@ -47,7 +47,7 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 > Vale para os três casos: `engine/` importando React, `ia/` importando de `estado/`, e
 > qualquer coisa fora de teste importando `engine/testing/`.
 
-- `[P]` ⚠️ **RD2** — A tarefa 0.7 cria as rotas **vazias**, sem conteúdo. É o esqueleto de
+- `[D]` A tarefa 0.7 cria as rotas **vazias**, sem conteúdo. É o esqueleto de
   navegação que a T1 e a RF1.3 vão usar, não as telas.
 
 ---
@@ -66,7 +66,7 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 | **V** | H15 | O oponente joga por heurística, não por sorteio |
 | **VI** | H16–H19 | Produto: abandono, regras, celular, acabamento |
 
-- `[P]` ⚠️ **RD3** — **Uma história por vez**, sem iteração de tamanho fixo. Cada história
+- `[D]` **Uma história por vez**, sem iteração de tamanho fixo. Cada história
   percorre o ciclo completo: spec em `docs/specs/` → critérios de aceite → testes → código →
   refatoração.
 
@@ -92,7 +92,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
 | Reintroduzir TanStack Query | **Se multiplayer entrar no escopo** | ADR-0004 |
 
-- `[P]` ⚠️ **RD4** — Cada gatilho acionado gera **decisão registrada**: ADR se mudar
+- `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
@@ -104,7 +104,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 ## 4. Como uma história vira código
 
-- `[P]` ⚠️ **RD5** — Sequência fixa, sem atalho:
+- `[D]` Sequência fixa, sem atalho:
 
 ```
 1. spec         docs/specs/NNNN-nome.md — comportamento e casos de borda
@@ -116,7 +116,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 7. commit       pequeno, mensagem descritiva
 ```
 
-- `[P]` ⚠️ **RD6** — Uma história só é considerada pronta com a **suíte inteira** verde, não
+- `[D]` Uma história só é considerada pronta com a **suíte inteira** verde, não
   apenas os testes dela.
 
 > O passo 3 antes do 4 é TDD, e aqui ele tem uma razão específica além das usuais: o critério
@@ -126,9 +126,11 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 ---
 
-## 5. Pendências
+## 5. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 6 decisões foram confirmadas em 2026-07-29.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **RD1** | Marco 0 | A regra de dependência só está pronta quando um import proibido **faz o lint falhar** |
 | **RD2** | Marco 0 | Rotas criadas **vazias**, só o esqueleto de navegação |
@@ -137,8 +139,8 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | **RD5** | Ciclo | Sete passos de spec a commit, sem atalho |
 | **RD6** | Pronto | Suíte **inteira** verde, não só os testes da história |
 
-### O que merece sua atenção
+### Notas de decisão
 
-- **RD1** — é a única tarefa do Marco 0 que exige verificar a própria ferramenta. Se você achar exagero, vale discutir: sem isso, a A2 é fé.
-- **RD3** — sem iteração fixa, o ritmo depende de nós dois. É coerente com "não temos pressa", mas é uma escolha.
-- A **tabela de gatilhos** é o conteúdo real deste documento. Se algum gatilho estiver mal definido, ele não vai disparar.
+- **RD1** é a única tarefa do Marco 0 que exige verificar a própria ferramenta. Sem ela, a A2 seria fé.
+- **RD3** faz o ritmo depender de nós dois, coerente com "não temos pressa".
+- A **tabela de gatilhos da seção 3** é o conteúdo real deste documento.
