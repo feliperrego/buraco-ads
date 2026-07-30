@@ -1,6 +1,7 @@
 # Modelo de domínio
 
-> Status: **rascunho anotado** — 12 pendências na seção 8
+> Status: **confirmado** — 12 decisões de modelagem, nenhuma pendência
+> Pronto para servir de base ao `architecture.md` e aos testes da engine
 > Deriva de: [rules.md](rules.md) · [requirements.md](requirements.md) · [glossary.md](glossary.md)
 > Última atualização: 2026-07-29
 
@@ -19,7 +20,10 @@ uma marca nova:
 | Marca | Significado |
 |---|---|
 | `[R]` | Decorre diretamente de uma regra, citada ao lado |
-| `[P]` | **Decisão de modelagem minha, não confirmada** — acompanhada de `⚠️ Mn` |
+| `[D]` | Decisão de modelagem confirmada |
+| `[P]` | Decisão de modelagem proposta, não confirmada — acompanhada de `⚠️ Mn` |
+
+Não resta nenhuma `[P]`. O histórico das 12 decisões está na seção 8.
 
 ---
 
@@ -39,7 +43,7 @@ Value Object. Mas três necessidades pedem identidade:
   distintos na tela; sem `id`, animações e reconciliação de lista quebram.
 - **Serialização e replay** (RNF1.2, RNF1.3) ficam ambíguos sem identidade.
 
-- `[P]` ⚠️ **M1** — `Carta` é uma **Entity imutável**: tem `id` que identifica a carta
+- `[D]` `Carta` é uma **Entity imutável**: tem `id` que identifica a carta
   física, além de `naipe` e `valor`. As **regras comparam apenas `naipe` e `valor`**; o `id`
   serve para rastreio, interface e serialização.
 
@@ -57,7 +61,7 @@ Portanto "curinga" não é um atributo de `Carta`. É um **papel que a carta exe
 uma sequência**. Modelar como propriedade da carta envenenaria o validador inteiro e tornaria
 a R6.5 inexprimível.
 
-- `[P]` ⚠️ **M2** — Uma `Sequencia` não é uma lista de cartas, e sim uma lista de
+- `[D]` Uma `Sequencia` não é uma lista de cartas, e sim uma lista de
   **posições**. Cada posição é uma de duas formas:
 
 | Forma | Conteúdo | Significado |
@@ -99,10 +103,10 @@ Três coisas que o diagrama deixa explícitas e a prosa esconderia:
 - **Existem duas saídas para `RodadaEncerrada`**, e uma delas parte de `Compra` — o caso da
   R4.8, que é fácil de esquecer.
 
-- `[P]` ⚠️ **M3** — **Pegar o morto não é fase nem comando.** É um **efeito
+- `[D]` **Pegar o morto não é fase nem comando.** É um **efeito
   automático**: sempre que a mão de um jogador zera e há morto disponível, a engine o entrega
   (R9.2, R9.4). O jogador nunca "pede" o morto.
-- `[P]` ⚠️ **M4** — **Bater também é automático.** O jogador escolhe uma jogada
+- `[D]` **Bater também é automático.** O jogador escolhe uma jogada
   (baixar, aumentar ou descartar); se ela zera a mão, não há morto disponível e as condições
   da R10.1 estão satisfeitas, a batida acontece. Não existe comando `bater`.
 
@@ -128,7 +132,7 @@ Imutáveis, sem identidade, comparados por valor.
 | `FaseDoTurno` | `Compra \| Acao` | R3.1 |
 | `Pontuacao` | Detalhamento por componente, não só total | R11, RF4.2 |
 
-- `[P]` ⚠️ **M5** — `Pontuacao` é um objeto com um campo por componente da R11
+- `[D]` `Pontuacao` é um objeto com um campo por componente da R11
   (canastras, cartas na mesa, cartas na mão, bônus de batida, penalidade de morto), não um
   número. O total é derivado. RF4.2 exige mostrar a apuração item por item, e um único
   número tornaria a regra mais complexa do sistema impossível de auditar.
@@ -169,7 +173,7 @@ Funções derivadas, nunca campos:
 - `categoria` = precedência `DE_1000 → DE_500 → LIMPA → SUJA` (R8.3)
 - `contaComoLimpaParaBatida` (R10.2)
 
-- `[P]` ⚠️ **M6** — A construção de `Jogo` é feita por uma função que retorna
+- `[D]` A construção de `Jogo` é feita por uma função que retorna
   **sucesso com o jogo, ou a lista de invariantes violadas**. Não existe construtor que
   produza um `Jogo` inválido, e não existe `Jogo` "a validar depois".
 
@@ -181,7 +185,7 @@ Funções derivadas, nunca campos:
 
 ## 5. Agregado e raiz
 
-- `[P]` ⚠️ **M7** — Existe **um único agregado**, com raiz em `Partida`. Todo o estado
+- `[D]` Existe **um único agregado**, com raiz em `Partida`. Todo o estado
   da partida é alcançável a partir dela, e nada de fora a modifica diretamente.
 
 ```
@@ -197,7 +201,7 @@ Partida
   numeroDaRodada
 ```
 
-- `[P]` ⚠️ **M8** — `Partida` é **imutável**. Comandos são funções puras:
+- `[D]` `Partida` é **imutável**. Comandos são funções puras:
   `aplicar(partida, comando) → Sucesso(nova partida, eventos[]) | Recusa(motivo)`.
 
 > M8 é o que entrega três requisitos ao mesmo tempo. Estado imutável torna a engine
@@ -207,7 +211,7 @@ Partida
 
 Um único invariante de agregado, e ele é conservativo:
 
-- `[P]` ⚠️ **M9** — **Conservação das cartas.** A soma de todas as cartas em mãos,
+- `[D]` **Conservação das cartas.** A soma de todas as cartas em mãos,
   jogos, monte, lixo e mortos é sempre exatamente **104**, sem repetição de `id`. Toda
   transição preserva isso.
 
@@ -230,7 +234,7 @@ Seis comandos, decorrentes de M3 e M4:
 | `regularizarCuringa` | `Acao` | R6.5, R6.6 |
 | `descartar` | `Acao` | R7.1, R7.2 |
 
-- `[P]` ⚠️ **M10** — A engine expõe `movimentosValidos(partida) → Comando[]`, que
+- `[D]` A engine expõe `movimentosValidos(partida) → Comando[]`, que
   enumera **todos** os comandos legais no estado atual.
 
 > M10 é a peça de desenho mais importante deste documento, porque **um único mecanismo
@@ -252,7 +256,7 @@ Seis comandos, decorrentes de M3 e M4:
 
 A RF5.2 exige que a IA não trapaceie, e a única garantia confiável é **estrutural**.
 
-- `[P]` ⚠️ **M11** — Existe `VisaoDoJogador`, uma **projeção** de `Partida`. A IA
+- `[D]` Existe `VisaoDoJogador`, uma **projeção** de `Partida`. A IA
   recebe `VisaoDoJogador` e **nunca** `Partida`.
 
 | Contém | Não contém |
@@ -270,14 +274,17 @@ A RF5.2 exige que a IA não trapaceie, e a única garantia confiável é **estru
 > Ganho secundário: `VisaoDoJogador` é exatamente o que a interface precisa renderizar. A
 > mesma projeção que impede a IA de trapacear impede a interface de vazar informação.
 
-- `[P]` ⚠️ **M12** — `movimentosValidos` opera sobre `VisaoDoJogador`, não sobre
+- `[D]` `movimentosValidos` opera sobre `VisaoDoJogador`, não sobre
   `Partida`. Assim é impossível que a lista de movimentos revele informação oculta.
 
 ---
 
-## 8. Pendências
+## 8. Histórico das decisões
 
-| # | Assunto | Decisão de modelagem proposta |
+**Não há pendências.** As 12 decisões de modelagem foram confirmadas como escritas em
+2026-07-29 e incorporadas ao corpo do documento.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **M1** | `Carta` | Entity imutável com `id`; regras comparam só naipe e valor |
 | **M2** | `Sequencia` | Lista de **posições** (`Natural` / `Curinga`), não de cartas |
@@ -298,8 +305,12 @@ A RF5.2 exige que a IA não trapaceie, e a única garantia confiável é **estru
 - **M2 (posições em vez de cartas)** — é a estrutura que torna a R6.5 exprimível. Errar aqui contamina o validador, a pontuação e a IA.
 - **M10 + M11** — juntos definem a fronteira entre engine, interface e IA. Mudar depois é mudar as três.
 
-### Ajuste pendente no glossário
+### Ajuste feito no glossário
 
-M3 e M4 tornaram `pegarMorto` e `bater` **operações internas**, não ações do jogador. O
-[glossary.md](glossary.md) §5 os lista junto aos comandos. Vou corrigir quando estas
-pendências forem confirmadas.
+M3 e M4 tornaram `pegarMorto` e `bater` **operações internas**, não comandos do jogador.
+O [glossary.md](glossary.md) §5 os listava junto aos comandos e foi reorganizado em duas
+tabelas: **comandos do jogador** (seis) e **operações automáticas** (duas).
+
+A modelagem corrigiu o vocabulário, não o contrário. Isso é esperado e saudável: `glossary.md`
+foi escrito antes de existir modelo, e a Onda 1 é justamente onde o modelo devolve precisão
+para a Onda 0.

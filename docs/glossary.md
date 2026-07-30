@@ -83,15 +83,32 @@ A regra de precedência entre elas está pendente — ver seção 9.
 
 ## 5. Ações do jogador
 
+### 5.1 Comandos
+
+O jogador emite estes seis comandos. São a superfície pública da engine.
+
 | Termo | Definição | Em código |
 |---|---|---|
-| **Comprar** | Pegar uma carta do monte. Primeira ação do turno. | `comprar` |
+| **Comprar** | Pegar uma carta do monte. Primeira ação do turno. | `comprarDoMonte` |
 | **Pegar o lixo** | Alternativa a comprar: levar o lixo **inteiro** para a mão. Nunca uma parte. | `pegarLixo` |
 | **Baixar** | Colocar um jogo novo na mesa. | `baixar` |
 | **Aumentar** | Acrescentar cartas a um jogo já baixado. Só nos **próprios** jogos, nunca nos do adversário. | `aumentar` |
+| **Regularizar o curinga** | Fazer o curinga baixado ocupar sua casa natural, limpando a canastra. | `regularizarCuringa` |
 | **Descartar** | Colocar uma carta no lixo. Última ação do turno. | `descartar` |
-| **Pegar o morto** | Receber o próprio morto ao ficar sem cartas na mão. | `pegarMorto` |
-| **Bater** | Encerrar a rodada ficando sem cartas. Exige ter pegado o morto **e** possuir ao menos uma canastra **limpa**. | `bater` |
+
+### 5.2 Operações automáticas
+
+Continuam sendo termos do domínio, mas **não são comandos**. O jogador nunca as solicita: a
+engine as executa como consequência de uma jogada que zerou a mão.
+
+| Termo | Definição | Em código |
+|---|---|---|
+| **Pegar o morto** | Receber um morto ao ficar sem cartas na mão, havendo morto disponível. | `pegarMorto` |
+| **Bater** | Encerrar a rodada ficando sem cartas, sem morto disponível e com ao menos uma canastra **limpa**. | `bater` |
+
+> A separação vem do modelo de domínio ([domain.md](domain.md) M3 e M4). Falar "eu bati" na
+> mesa é correto; oferecer um botão "bater" na interface seria errado — a batida é o
+> resultado de uma jogada, não uma jogada.
 
 ---
 
