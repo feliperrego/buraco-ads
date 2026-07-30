@@ -28,7 +28,7 @@ convida a construí-la inteira antes de qualquer pixel. Três caminhos:
 
 | Caminho | A favor | Contra |
 |---|---|---|
-| **A. Engine primeiro** | Foco total no domínio, sem distração de interface. Todas as 65 regras testadas antes de existir tela | Semanas construindo um núcleo que **nenhum jogador tocou**. A forma de `movimentosValidos` só é validada quando alguém a consome |
+| **A. Engine primeiro** | Foco total no domínio, sem distração de interface. Todas as regras testadas antes de existir tela | Semanas construindo um núcleo que **nenhum jogador tocou**. A forma de `movimentosValidos` só é validada quando alguém a consome |
 | **B. Fatias verticais** | Cada história atravessa engine → estado → interface. Feedback real desde a primeira | As primeiras fatias são pesadas de engine. Alguma retrabalho de interface conforme ela cresce |
 | **C. Esqueleto vertical, depois engine em bloco** | Prova a integração cedo e depois concentra no domínio | Volta ao problema de A na parte grande do trabalho |
 
@@ -102,7 +102,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 
 | # | História | Fecha |
 |---|---|---|
-| **H8** | Vejo minhas canastras e a categoria de cada uma | R8.1, R8.2, R8.3, R8.4, RF3.5 |
+| **H8** | Vejo minhas canastras e a categoria de cada uma | R8.1, R8.2, R8.3, R8.4, R8.6, RF3.5 |
 | **H9** | Estendo a sequência até o curinga ocupar sua casa e a canastra fica limpa | R6.5, R6.6, R8.5 |
 | **H10** | Fico sem cartas na mão e recebo um morto automaticamente | R2.3, R9.1–R9.4, M3 |
 | **H11** | Fico sem cartas com uma canastra limpa e bato, encerrando a rodada | R7.3, R9.5, R9.6, R10.1–R10.4, M4 |
@@ -173,9 +173,9 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
   regra ficar órfã ou se alguma história citar regra inexistente. Entra no CI junto com o
   lint e os testes.
 
-> **O script já se pagou.** A primeira versão desta seção afirmava que todas as 65 regras
-> estavam cobertas. Ao rodar a verificação, **6 estavam órfãs**: R3.3, R3.4, R4.3, R7.3, R9.5
-> e R9.6. Todas foram atribuídas a histórias (H2, H4, H6 e H11).
+> **O script já se pagou.** A primeira versão desta seção afirmava que todas as regras estavam
+> cobertas. Ao rodar a verificação, **6 estavam órfãs**: R3.3, R3.4, R4.3, R7.3, R9.5 e R9.6.
+> Todas foram atribuídas a histórias (H2, H4, H6 e H11).
 >
 > Vale registrar o padrão, porque é o terceiro deste tipo no projeto: eu escrevi uma
 > afirmação verificável e não a verifiquei. Foi o mesmo erro das contagens de pendência nos

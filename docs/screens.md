@@ -23,7 +23,7 @@ Pendências: `T1`…`Tn`. Marcação: `[D]` decidido, `[P]` proposto com `⚠️
 | **Inicial** | Uma ação relevante: iniciar partida | H1, RF1.2 |
 | **Partida** | Onde o jogo acontece | H1–H14 |
 | **Fim de partida** | Vencedor e nova partida | H13, RF1.5 |
-| **Regras** | Consulta às 65 regras sem sair do jogo | H17, ADR-0005 |
+| **Regras** | Consulta às regras sem sair do jogo | H17, ADR-0005 |
 
 - `[D]` A **apuração da rodada** (RF4.2, H12) não é tela: é um painel sobreposto
   à tela de partida, que o jogador fecha para seguir para a próxima rodada. A partida

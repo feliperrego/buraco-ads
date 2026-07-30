@@ -69,7 +69,7 @@ Sem acentos e sem cedilha nos identificadores: `Sequencia`, não `Sequência`.
 |---|---|---|---|
 | **Canastra limpa** | Canastra formada só por cartas naturais. | 200 | `LIMPA` |
 | **Canastra suja** | Canastra que contém ao menos um curinga. | 100 | `SUJA` |
-| **Canastra de 500** | Sequência completa de **Ás a Rei** — 13 cartas. | 500 | `DE_500` |
+| **Canastra de 500** | Sequência de **exatamente Ás a Rei** — 13 cartas. Uma sequência de 13 cartas do 2 ao Ás alto **não** é canastra de 500 (R8.6). | 500 | `DE_500` |
 | **Canastra de 1000** | Sequência de **Ás a Ás** — 14 cartas, com um Ás em cada ponta. | 1000 | `DE_1000` |
 
 As quatro categorias são **mutuamente exclusivas**: toda canastra recebe exatamente uma.

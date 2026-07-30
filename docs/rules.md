@@ -158,6 +158,17 @@ Só é possível quando as três condições valem ao mesmo tempo:
 - **R8.3** `[D]` A classificação segue a **precedência da tabela, de cima para baixo**: avalia-se `DE_1000`, depois `DE_500`, depois `LIMPA`, depois `SUJA`. A primeira que casar é a categoria da canastra.
 - **R8.4** `[D]` As canastras especiais **admitem curinga**. Uma sequência de Ás a Rei com um curinga ainda vale 500.
 - **R8.5** `[D]` A categoria é **recalculada continuamente**, não fixada no momento em que a canastra se forma. Uma canastra suja cujo curinga é regularizado (R6.5) passa a valer como limpa. A categoria é uma **função derivada** do conteúdo do jogo, nunca um campo armazenado.
+- **R8.6** `[D]` As categorias `DE_500` e `DE_1000` dependem da **posição** da sequência, não apenas do seu tamanho. `DE_500` exige **exatamente Ás a Rei**; `DE_1000` exige **Ás a Ás**. Uma sequência de 13 cartas que vá **do 2 ao Ás alto** (`2-3-…-K-A`) **não é** `DE_500`: é `LIMPA` ou `SUJA`, conforme contenha curinga.
+
+> R8.6 foi acrescentada em 2026-07-29. A redação anterior da R8.2 dizia apenas "sequência
+> completa de Ás a Rei — 13 cartas", o que admitia três leituras: por posição, por tamanho ou
+> por conjunto de valores distintos. A ambiguidade só apareceu ao escrever os critérios de
+> aceite ([acceptance-tests.md](acceptance-tests.md) C3), e a leitura adotada é a **literal**,
+> por posição.
+>
+> Consequência prática: `A…K` e `2…K-A` têm o mesmo tamanho e valores diferentes — 500 contra
+> 200. Não é arbitrário: `A…K` deixa a ponta alta livre para crescer até `DE_1000`, enquanto
+> `2…K-A` já está fechada nas duas pontas.
 
 > Sem P17 explícito, a pontuação passa a depender da ordem dos `if` na implementação — um
 > bug silencioso que nenhum teste pegaria por acaso. É exatamente o tipo de ambiguidade

@@ -1,6 +1,7 @@
 # Critérios de aceite
 
-> Status: **rascunho anotado** — 7 pendências na seção 6, uma delas é uma **ambiguidade em `rules.md`**
+> Status: **confirmado** — 7 decisões, nenhuma pendência
+> A ambiguidade C3 gerou a regra nova R8.6 em `rules.md`
 > Deriva de: [rules.md](rules.md) · [domain.md](domain.md) · [user-stories.md](user-stories.md)
 > Última atualização: 2026-07-29
 
@@ -22,7 +23,7 @@ Pendências: `C1`…`Cn`.
 
 ## 1. Formato
 
-- `[P]` ⚠️ **C1** — **Dado / Quando / Então**, em português, com a regra citada no nome do
+- `[D]` **Dado / Quando / Então**, em português, com a regra citada no nome do
   critério e no nome do teste.
 
 ```
@@ -38,41 +39,43 @@ O nome do teste em Vitest repete o identificador:
 ✓ CA-R5.3-4 — K-A-2 e invalida porque a sequencia nao passa do As alto
 ```
 
-- `[P]` ⚠️ **C2** — Este documento cobre os casos que **alguém erraria escrevendo de
+- `[D]` Este documento cobre os casos que **alguém erraria escrevendo de
   memória**. Os critérios exaustivos de cada história ficam na spec dela
   ([user-stories.md](user-stories.md) U6).
 
-> A escolha é deliberada. Um documento com os 300 critérios de todas as 65 regras não seria
+> A escolha é deliberada. Um documento com um critério para cada caso de cada regra não seria
 > lido, e cada spec de história precisa dos seus de todo modo. O que **não** pode ficar
 > espalhado é o conjunto abaixo: casos em que a leitura natural da regra leva à implementação
 > errada.
 
 ---
 
-## 2. Uma ambiguidade que apareceu ao escrever os critérios
+## 2. A ambiguidade que gerou uma regra nova
 
-- `[P]` ⚠️ **C3** — Preciso de uma decisão sua antes de fechar os critérios de R8.2/R8.3.
+Escrever os critérios de precedência revelou um caso que `rules.md` não resolvia.
 
-A R8.2 define `DE_500` como "sequência completa de **Ás a Rei** — 13 cartas". Mas existe outra
-sequência de 13 cartas: **do 2 ao Ás alto** (`2-3-4-…-K-A`).
+A R8.2 definia `DE_500` como "sequência completa de **Ás a Rei** — 13 cartas". Mas existe outra
+sequência de 13 cartas: **do 2 ao Ás alto** (`2-3-4-…-K-A`). A redação admitia três leituras:
 
-Pela letra da regra, ela **não** é `DE_500`, porque não começa no Ás. Seria `LIMPA` (200) ou
-`SUJA` (100). Consequência: duas canastras de 13 cartas, mesma dificuldade de montar, valendo
-500 e 200.
-
-Três leituras possíveis:
-
-| Leitura | `2…K-A` (13 cartas) vale |
+| Leitura | `2…K-A` (13 cartas) valeria |
 |---|---|
 | **Literal** — `DE_500` exige começar no Ás | 200 (`LIMPA`) |
-| **Por tamanho** — qualquer sequência de 13 é `DE_500` | 500 |
-| **Por completude** — só a que contém todos os 13 valores distintos | 500, pois `2…K-A` contém A e todos os demais |
+| Por tamanho — qualquer sequência de 13 é `DE_500` | 500 |
+| Por completude — contém todos os valores distintos | 500 |
 
-Minha inclinação é a **literal**, porque é o que `rules.md` diz hoje e porque `A…K` e `2…K-A`
-não são igualmente valiosas na prática — a primeira deixa a ponta alta livre para virar
-`DE_1000`. Mas isso é raciocínio meu sobre um jogo que você conhece melhor.
+- `[D]` **C3 — leitura literal.** `DE_500` exige **exatamente Ás a Rei**. Uma sequência de 13
+  cartas do 2 ao Ás alto é `LIMPA` ou `SUJA`. Decidido em 2026-07-29 e incorporado a
+  `rules.md` como **R8.6**.
 
-**Não vou decidir isso sozinho.** É regra do jogo, não critério de teste.
+> Duas coisas valem registrar sobre este episódio.
+>
+> A primeira: a ambiguidade **não apareceu ao escrever a regra, nem ao modelar o domínio**.
+> Apareceu ao escrever critérios de aceite — quando foi preciso dizer, para um caso concreto,
+> qual número sai. É o argumento prático a favor de escrever critérios antes de código:
+> eles forçam precisão que a prosa tolera.
+>
+> A segunda: a correção foi feita **na regra**, não só no critério. Ajustar apenas
+> `CA-R8.6-1` deixaria `rules.md` ainda ambíguo para o próximo leitor.
 
 ---
 
@@ -88,11 +91,11 @@ motivos que não têm nada a ver com a batida.
 | **B. Construtor livre de estado** | Direto e legível | Permite montar estado impossível — três Ases de copas — e validar comportamento sobre situação que nunca ocorre |
 | **C. Construtor validado** | Legível **e** impossível de produzir estado inválido | Não garante alcançabilidade |
 
-- `[P]` ⚠️ **C4** — **Alternativa C.** Existe um construtor declarativo de estado que, ao
+- `[D]` **Alternativa C.** Existe um construtor declarativo de estado que, ao
   final, roda **os mesmos invariantes que a engine usa**: conservação das 104 cartas (M9) e os
   sete invariantes de `Jogo` (domain.md §4). Descrição impossível faz o construtor falhar.
 
-- `[P]` ⚠️ **C5** — A alcançabilidade é coberta **pelo outro lado**: o teste de mil partidas
+- `[D]` A alcançabilidade é coberta **pelo outro lado**: o teste de mil partidas
   entre IAs aleatórias ([user-stories.md](user-stories.md) U2) só percorre estados alcançáveis
   por construção.
 
@@ -104,7 +107,7 @@ motivos que não têm nada a ver com a batida.
 
 ### 3.1 Onde o construtor mora
 
-- `[P]` ⚠️ **C6** — O construtor fica em `engine/testing/`, com **ponto de entrada próprio**.
+- `[D]` O construtor fica em `engine/testing/`, com **ponto de entrada próprio**.
   Não é exportado por `engine/index.ts` (A8), e o ESLint (A2) proíbe `ui/` e `ia/` de importá-lo.
 
 > Sem C6, o construtor viraria uma porta dos fundos: alguém na interface o usaria para
@@ -156,7 +159,9 @@ motivos que não têm nada a ver com a batida.
 | **CA-R8.3-5** | 7 cartas, sem curinga | `LIMPA` |
 | **CA-R8.3-6** | 7 cartas, com curinga | `SUJA` |
 | **CA-R8.3-7** | 6 cartas | não é canastra — nenhuma categoria |
-| **CA-R8.3-8** | `2…K-A` (13) | **depende de C3** |
+| **CA-R8.6-1** | `2…K-A` (13), sem curinga | `LIMPA` (200), **não** `DE_500` |
+| **CA-R8.6-2** | `2…K-A` (13), com curinga | `SUJA` (100) |
+| **CA-R8.6-3** | `A…K` (13) mais o segundo Ás | passa de `DE_500` a `DE_1000` |
 
 ### 4.4 Regularizar o curinga — R6.5, R6.6, R8.5
 
@@ -209,7 +214,7 @@ motivos que não têm nada a ver com a batida.
 
 ## 5. Rastreabilidade
 
-- `[P]` ⚠️ **C7** — `scripts/verificar-cobertura.py` passa a conferir **três** relações:
+- `[D]` `scripts/verificar-cobertura.py` passa a conferir **três** relações:
   regra ↔ história, regra ↔ critério, e critério ↔ regra existente. Um critério citando regra
   inexistente falha o CI, igual a uma regra órfã.
 
@@ -218,23 +223,25 @@ motivos que não têm nada a ver com a batida.
 
 ---
 
-## 6. Pendências
+## 6. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 7 decisões foram confirmadas em 2026-07-29.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **C1** | Formato | Dado/Quando/Então em português; identificador `CA-Rn-k` no nome do teste |
 | **C2** | Escopo | Aqui só os casos que se erraria de memória; o resto nas specs de história |
-| **C3** | **Regra** | **`2…K-A` (13 cartas) é `DE_500` ou `LIMPA`?** Preciso da sua decisão |
+| **C3** | **Regra** | Leitura **literal**: `2…K-A` (13 cartas) é `LIMPA`, não `DE_500`. Gerou **R8.6** |
 | **C4** | Estado inicial | Construtor declarativo **validado** pelos invariantes da engine |
 | **C5** | Alcançabilidade | Coberta pelas mil partidas aleatórias, não por fixture |
 | **C6** | Fronteira | Construtor em `engine/testing/`, proibido a `ui/` e `ia/` por ESLint |
 | **C7** | Verificação | Script confere as três relações de rastreabilidade |
 
-### O que merece sua atenção
+### Notas de decisão
 
-- **C3 é a única que eu não posso decidir.** É regra do jogo e afeta a pontuação. Se a leitura
-  literal estiver errada, R8.2 precisa ser reescrita e CA-R8.3-8 muda.
-- **C4 e C6** juntas evitam que o construtor de teste se torne uma porta dos fundos para
-  fabricar estado inválido em produção.
-- **C2** define o tamanho deste documento. Se você preferir os 300 critérios aqui em vez de
-  distribuídos nas specs, é uma escolha diferente e legítima — só bem mais longa.
+- **C3** foi a única que exigia decisão de domínio, e a única que **alterou `rules.md`**:
+  gerou a R8.6 e a precisão correspondente no `glossary.md`. As regras passaram de 65 para 66.
+- **C4 e C6** juntas evitam que o construtor de teste se torne porta dos fundos para fabricar
+  estado inválido em produção.
+- **C2** define o tamanho deste documento: 40 critérios sobre os casos difíceis, e os
+  exaustivos distribuídos nas specs de história.

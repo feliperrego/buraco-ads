@@ -209,7 +209,7 @@ Este eu levantei como suspeito no primeiro dia e mudei de opinião ao escrever o
 Três razões concretas:
 
 - São **quatro telas**, não duas: inicial (RF1.2), partida, fim de partida (RF1.5) e uma tela
-  de regras — que num jogo com 65 regras é conteúdo de verdade, não enfeite.
+  de regras — que num jogo com dezenas de regras é conteúdo de verdade, não enfeite.
 - A RF1.3 (abandonar partida com confirmação) e a RF1.4 (avisar antes de sair) são
   exatamente **bloqueio de navegação**. O router resolve isso; sem ele, seria código manual
   em dois lugares.

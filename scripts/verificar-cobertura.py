@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-"""Confere a rastreabilidade entre docs/rules.md e docs/user-stories.md.
+"""Confere a rastreabilidade entre os documentos de especificacao.
 
-Falha se alguma regra nao estiver citada por nenhuma historia, ou se alguma
-historia citar regra inexistente. Implementa docs/user-stories.md U7.
+Verifica tres relacoes, conforme docs/user-stories.md U7 e
+docs/acceptance-tests.md C7:
+
+  1. regra -> historia   toda regra de rules.md citada por alguma historia
+  2. historia -> regra   nenhuma historia citando regra inexistente
+  3. criterio -> regra   nenhum criterio CA-Rn-k citando regra inexistente
+
+Nao exige que toda regra tenha criterio em acceptance-tests.md: por decisao C2,
+aquele documento cobre so os casos dificeis, e os criterios exaustivos vivem nas
+specs de cada historia.
 
 Uso: python3 scripts/verificar-cobertura.py
 """
@@ -12,12 +20,15 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-REGRAS = RAIZ / "docs" / "rules.md"
-HISTORIAS = RAIZ / "docs" / "user-stories.md"
+DOCS = RAIZ / "docs"
+REGRAS = DOCS / "rules.md"
+HISTORIAS = DOCS / "user-stories.md"
+CRITERIOS = DOCS / "acceptance-tests.md"
 
 PADRAO_REGRA = re.compile(r"^- \*\*(R[\d.]+)\*\*", re.M)
-PADRAO_CITACAO = re.compile(r"R\d+(?:\.\d+)+")
+PADRAO_CITACAO = re.compile(r"\bR\d+(?:\.\d+)+")
 PADRAO_INTERVALO = re.compile(r"(R\d+\.\d+(?:\.\d+)?)[–-](R\d+\.\d+(?:\.\d+)?)")
+PADRAO_CRITERIO = re.compile(r"\bCA-(R\d+(?:\.\d+)+)-\d+")
 
 
 def ordem(regra):
@@ -40,29 +51,47 @@ def expandir_intervalos(texto):
 
 def main():
     regras = sorted(set(PADRAO_REGRA.findall(REGRAS.read_text())), key=ordem)
-    texto = HISTORIAS.read_text()
-    citadas = set(PADRAO_CITACAO.findall(texto)) | expandir_intervalos(texto)
+    conjunto_regras = set(regras)
+
+    texto_historias = HISTORIAS.read_text()
+    citadas = set(PADRAO_CITACAO.findall(texto_historias))
+    citadas |= expandir_intervalos(texto_historias)
+
+    texto_criterios = CRITERIOS.read_text()
+    regras_com_criterio = set(PADRAO_CRITERIO.findall(texto_criterios))
 
     orfas = [r for r in regras if r not in citadas]
-    inexistentes = sorted((c for c in citadas if c not in regras), key=ordem)
+    citadas_inexistentes = sorted(citadas - conjunto_regras, key=ordem)
+    criterios_inexistentes = sorted(regras_com_criterio - conjunto_regras, key=ordem)
 
-    print(f"regras em rules.md:            {len(regras)}")
-    print(f"cobertas por alguma historia:  {len(regras) - len(orfas)}")
+    print(f"regras em rules.md:                 {len(regras)}")
+    print(f"cobertas por alguma historia:       {len(regras) - len(orfas)}")
+    print(f"com criterio em acceptance-tests:   {len(regras_com_criterio)}")
+
+    falhas = 0
 
     if orfas:
-        print(f"\nREGRAS ORFAS ({len(orfas)}):")
+        falhas += 1
+        print(f"\nFALHA - regras orfas ({len(orfas)}):")
         for regra in orfas:
             print(f"  {regra} - nenhuma historia cita")
 
-    if inexistentes:
-        print(f"\nCITADAS MAS INEXISTENTES ({len(inexistentes)}):")
-        for citacao in inexistentes:
-            print(f"  {citacao} - nao existe em rules.md")
+    if citadas_inexistentes:
+        falhas += 1
+        print(f"\nFALHA - historias citam regra inexistente ({len(citadas_inexistentes)}):")
+        for citacao in citadas_inexistentes:
+            print(f"  {citacao}")
 
-    if orfas or inexistentes:
+    if criterios_inexistentes:
+        falhas += 1
+        print(f"\nFALHA - criterios citam regra inexistente ({len(criterios_inexistentes)}):")
+        for citacao in criterios_inexistentes:
+            print(f"  {citacao}")
+
+    if falhas:
         return 1
 
-    print("\nOK: rastreabilidade completa nos dois sentidos.")
+    print("\nOK: as tres relacoes de rastreabilidade estao consistentes.")
     return 0
 
 

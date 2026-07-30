@@ -7,7 +7,7 @@
 
 ## Como ler este documento
 
-Este documento traduz as 65 regras de `rules.md` em **estrutura**. Não introduz regra nova:
+Este documento traduz as regras de `rules.md` em **estrutura**. Não introduz regra nova:
 toda afirmação sobre comportamento cita o `Rn` de onde vem. Se algo aqui não tem citação, é
 decisão de modelagem — e essas vêm marcadas.
 

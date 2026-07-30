@@ -109,7 +109,7 @@ O que o jogador pode ver determina tanto a interface quanto o que a IA tem direi
 - **RNF2.2** `[D]` A interface é testada em nível de comportamento, não de aparência. Não haverá testes de snapshot visual na v1.
 
 > Q16 inverte a métrica usual. "90% de cobertura de linhas" pode conviver com uma regra de
-> pontuação inteira sem teste. "65 de 65 regras cobertas" é uma afirmação verificável sobre
+> pontuação inteira sem teste. "todas as regras cobertas" é uma afirmação verificável sobre
 > o domínio. O detalhamento fica em `testing-strategy.md`.
 
 ### RNF3 — Alcance e acesso

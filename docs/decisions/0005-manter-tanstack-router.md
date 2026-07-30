@@ -21,7 +21,7 @@ O TanStack Router **permanece** na stack.
 **Positivas**
 
 - **São quatro telas, não duas:** inicial (RF1.2), partida, fim de partida (RF1.5) e uma
-  tela de regras. Num jogo cujas regras têm 65 itens, a tela de regras é conteúdo de
+  tela de regras. Num jogo com dezenas de regras, a tela de regras é conteúdo de
   verdade, não enfeite.
 - **RF1.3 e RF1.4 são bloqueio de navegação.** Confirmar antes de abandonar a partida e
   avisar antes de fechar ou recarregar a janela são exatamente o problema que os *blockers*

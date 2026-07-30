@@ -30,13 +30,13 @@ estar aprovada.
 | [domain.md](domain.md) | Entidades, agregados, invariantes, máquina de estados | Confirmado |
 | [architecture.md](architecture.md) | Camadas, fronteiras e regra de dependência | Confirmado |
 
-### Onda 2 — Experiência
+### Onda 2 — Experiência ✅ completa
 
 | Documento | Propósito | Status |
 |---|---|---|
 | [user-stories.md](user-stories.md) | Fatias verticais de valor | Confirmado |
 | [screens.md](screens.md) | Telas, fluxos e estados de interface | Confirmado |
-| [acceptance-tests.md](acceptance-tests.md) | Critérios de aceite em Given/When/Then | Rascunho anotado |
+| [acceptance-tests.md](acceptance-tests.md) | Critérios de aceite em Given/When/Then | Confirmado |
 
 ### Onda 3 — Execução
 
