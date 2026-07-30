@@ -42,8 +42,8 @@ estar aprovada.
 
 | Documento | Propósito | Status |
 |---|---|---|
-| [testing-strategy.md](testing-strategy.md) | O que testar, em que nível, e por quê | Rascunho anotado |
-| roadmap.md | Ordem de entrega e marcos | Pendente |
+| [testing-strategy.md](testing-strategy.md) | O que testar, em que nível, e por quê | Confirmado |
+| [roadmap.md](roadmap.md) | Ordem de entrega e marcos | Rascunho anotado |
 | `specs/` | Uma spec por fatia — é aqui que o ciclo SDD roda | Pendente |
 
 ## Decisões

@@ -1,6 +1,6 @@
 # Estratégia de testes
 
-> Status: **rascunho anotado** — 10 pendências na seção 7
+> Status: **confirmado** — 10 decisões, nenhuma pendência
 > Deriva de: [requirements.md](requirements.md) · [acceptance-tests.md](acceptance-tests.md) · [architecture.md](architecture.md) · [domain.md](domain.md)
 > Última atualização: 2026-07-29
 
@@ -26,7 +26,7 @@ Pendências: `E1`…`En`.
 | **4. Componente de interface** | Comportamento, não aparência | Vitest + Testing Library | Dezenas | segundos |
 | **5. Ponta a ponta** | Uma partida real no navegador | Playwright | Duas ou três | minutos |
 
-- `[P]` ⚠️ **E1** — O **nível 2 não existe na pirâmide clássica** e é o de maior retorno neste
+- `[D]` O **nível 2 não existe na pirâmide clássica** e é o de maior retorno neste
   projeto. Não é um extra: é o nível que pega a classe de bug que os outros quatro não pegam.
 
 > Testes por regra verificam o que você **pensou em verificar**. O nível 2 verifica o que
@@ -42,7 +42,7 @@ Pendências: `E1`…`En`.
 
 ## 2. A engine não tem mocks
 
-- `[P]` ⚠️ **E2** — Nenhum teste de engine usa mock, spy ou dublê. Se algum precisar, é sinal
+- `[D]` Nenhum teste de engine usa mock, spy ou dublê. Se algum precisar, é sinal
   de que a fronteira está errada.
 
 > Isso não é disciplina, é consequência de decisões já tomadas. `Partida` é imutável e os
@@ -60,9 +60,9 @@ Pendências: `E1`…`En`.
 A RNF2.1 exige que toda regra tenha teste citando seu identificador. Isso precisa ser
 verificável, não declarado.
 
-- `[P]` ⚠️ **E3** — A métrica que **bloqueia** o CI é **cobertura por regra**: toda regra de
+- `[D]` A métrica que **bloqueia** o CI é **cobertura por regra**: toda regra de
   `rules.md` tem ao menos um teste cujo nome cita seu `Rn`. Meta: **100%**, sem exceção.
-- `[P]` ⚠️ **E4** — Cobertura de **linhas** é medida e reportada, com piso de **90% em
+- `[D]` Cobertura de **linhas** é medida e reportada, com piso de **90% em
   `engine/`**, mas **não é a métrica principal**.
 
 > A inversão é deliberada. "90% de linhas" convive tranquilamente com uma regra de pontuação
@@ -73,7 +73,7 @@ verificável, não declarado.
 > A cobertura de linhas continua útil como sinal invertido: se uma parte de `engine/` não é
 > executada por teste nenhum, provavelmente é código morto.
 
-- `[P]` ⚠️ **E5** — `scripts/verificar-cobertura.py` é estendido para ler os **nomes dos
+- `[D]` `scripts/verificar-cobertura.py` é estendido para ler os **nomes dos
   testes** e conferir a relação regra ↔ teste. Hoje ele confere regra ↔ história e
   regra ↔ critério; passará a fechar o ciclo até o código.
 
@@ -84,7 +84,7 @@ verificável, não declarado.
 O problema mais interessante do documento. Não se pode afirmar "a IA deve escolher esta
 jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 
-- `[P]` ⚠️ **E6** — A IA é verificada por **quatro propriedades**, nenhuma delas sobre jogadas
+- `[D]` A IA é verificada por **quatro propriedades**, nenhuma delas sobre jogadas
   específicas:
 
 | Propriedade | Verificação |
@@ -104,14 +104,14 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 > deliberada na interface, não lentidão da IA. Os 100 ms são o limite do cálculo real, para
 > que o ritmo seja escolha nossa e não consequência de ineficiência.
 
-- `[P]` ⚠️ **E7** — A **IA aleatória não é descartada** depois de H15. Ela é infraestrutura de
+- `[D]` A **IA aleatória não é descartada** depois de H15. Ela é infraestrutura de
   teste permanente: adversário do nível 2 e linha de base da força relativa.
 
 ---
 
 ## 5. O que não vamos testar
 
-- `[P]` ⚠️ **E8** — Fora de escopo, por decisão:
+- `[D]` Fora de escopo, por decisão:
 
 | Não testamos | Por quê |
 |---|---|
@@ -130,7 +130,7 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 
 ## 6. O que o CI roda
 
-- `[P]` ⚠️ **E9** — Na ordem, com falha rápida:
+- `[D]` Na ordem, com falha rápida:
 
 ```
 1. lint          ESLint, incluindo a regra de dependência (A2)
@@ -149,7 +149,7 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 > Colocar o rastreio (passo 3) antes dos testes é intencional: uma regra órfã é um defeito de
 > especificação, e descobrir isso depois de dez minutos de suíte é desperdício.
 
-- `[P]` ⚠️ **E10** — O passo 5 (mil partidas) roda com **sementes fixas** no CI e aceita um
+- `[D]` O passo 5 (mil partidas) roda com **sementes fixas** no CI e aceita um
   parâmetro para rodar com sementes aleatórias localmente.
 
 > Sementes fixas no CI mantêm o resultado reproduzível: uma falha é sempre a mesma falha.
@@ -161,9 +161,11 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 
 ---
 
-## 7. Pendências
+## 7. Histórico das decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 10 decisões foram confirmadas em 2026-07-29.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **E1** | Níveis | Cinco níveis, com o **nível 2** (invariante em volume) como o de maior retorno |
 | **E2** | Mocks | **Nenhum mock** em teste de engine; precisar de um indica fronteira errada |
@@ -176,8 +178,8 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 | **E9** | CI | Sete passos por custo crescente; rastreio **antes** dos testes |
 | **E10** | Sementes | Fixas no CI, aleatórias localmente; semente que acha bug entra na lista fixa |
 
-### O que merece sua atenção
+### Notas de decisão
 
-- **E3 e E4** — invertem a métrica usual. Se você preferir cobertura de linhas como gate principal, é uma escolha diferente e vou argumentar contra.
-- **E6** — o limiar de 70% é palpite meu, sem base empírica. Saberemos o número real depois de H15.
-- **E8, última linha** — teste de mutação é a exclusão de que menos tenho certeza. Registrei o gatilho de reavaliação.
+- **E3 e E4** invertem a métrica usual: cobertura por regra bloqueia, cobertura de linhas informa.
+- **E6** — o limiar de 70% é palpite sem base empírica. Reavaliação registrada no `roadmap.md`.
+- **E8** — teste de mutação fica fora da v1, com gatilho de reavaliação no `roadmap.md`.
