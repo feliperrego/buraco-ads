@@ -59,13 +59,18 @@ testada, os testes passam a ser a especificação viva.
 
 ## Verificação
 
-[`scripts/verificar-cobertura.py`](../scripts/verificar-cobertura.py) confere três relações de
-rastreabilidade e falha o CI se alguma quebrar: toda regra citada por alguma história, nenhuma
-história citando regra inexistente, nenhum critério citando regra inexistente.
+[`scripts/verificar-rastreabilidade.py`](../scripts/verificar-rastreabilidade.py) confere as
+relações de rastreabilidade e falha o CI se alguma quebrar: toda regra citada por alguma
+história, nenhuma história citando regra inexistente, nenhum critério citando regra
+inexistente.
 
 ```bash
-python3 scripts/verificar-cobertura.py
+python3 scripts/verificar-rastreabilidade.py
 ```
+
+A configuração fica em [`rastreio.json`](../rastreio.json) na raiz: qual arquivo define os
+itens numerados, com que padrão, e quais documentos os citam. O script é genérico — a mesma
+ferramenta serve para requisitos, endpoints ou qualquer conjunto de itens identificados.
 
 ## Decisões
 

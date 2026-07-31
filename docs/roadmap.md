@@ -33,7 +33,7 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 | **0.3** | ESLint + Prettier | Stack |
 | **0.4** | **Regra de dependência como configuração de ESLint** | A2, A3, C6 |
 | **0.5** | Vitest com relatório de cobertura | E4 |
-| **0.6** | `scripts/verificar-cobertura.py` no CI | E5, E9 |
+| **0.6** | `scripts/verificar-rastreabilidade.py` + `rastreio.json` no CI | E5, E9 |
 | **0.7** | TanStack Router com as quatro rotas vazias | ADR-0005, T1 |
 
 - `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
@@ -112,7 +112,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 3. testes       falhando, com o identificador CA-Rn-k no nome
 4. código       o mínimo para os testes passarem
 5. refatoração  com os testes verdes
-6. verificação  suíte completa + scripts/verificar-cobertura.py
+6. verificação  suíte completa + scripts/verificar-rastreabilidade.py
 7. commit       pequeno, mensagem descritiva
 ```
 

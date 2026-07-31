@@ -73,7 +73,7 @@ verificável, não declarado.
 > A cobertura de linhas continua útil como sinal invertido: se uma parte de `engine/` não é
 > executada por teste nenhum, provavelmente é código morto.
 
-- `[D]` `scripts/verificar-cobertura.py` é estendido para ler os **nomes dos
+- `[D]` `scripts/verificar-rastreabilidade.py` é estendido para ler os **nomes dos
   testes** e conferir a relação regra ↔ teste. Hoje ele confere regra ↔ história e
   regra ↔ critério; passará a fechar o ciclo até o código.
 
@@ -135,7 +135,7 @@ jogada" — isso congelaria a heurística e faria todo ajuste quebrar testes.
 ```
 1. lint          ESLint, incluindo a regra de dependência (A2)
 2. tipos         tsc --noEmit
-3. rastreio      scripts/verificar-cobertura.py
+3. rastreio      scripts/verificar-rastreabilidade.py
 4. unitário      Vitest — níveis 1 e 3
 5. invariante    Vitest — nível 2, mil partidas
 6. componente    Vitest + Testing Library — nível 4

@@ -1,0 +1,22 @@
+{
+  "fontes": [
+    {
+      "nome": "regras",
+      "arquivo": "docs/rules.md",
+      "padrao_definicao": "^- \\*\\*(R[\\d.]+)\\*\\*",
+      "padrao_citacao": "\\bR\\d+(?:\\.\\d+)+",
+      "expandir_intervalos": true,
+      "consumidores": [
+        {
+          "arquivo": "docs/user-stories.md",
+          "cobertura_obrigatoria": true
+        },
+        {
+          "arquivo": "docs/acceptance-tests.md",
+          "cobertura_obrigatoria": false,
+          "padrao_citacao": "\\bCA-(R\\d+(?:\\.\\d+)+)-\\d+"
+        }
+      ]
+    }
+  ]
+}

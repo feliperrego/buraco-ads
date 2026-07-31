@@ -169,7 +169,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 > `specs/0001-mesa-inicial.md`, e é essa spec que os testes implementam.
 
 - `[D]` A cobertura história ↔ regra é verificada por
-  [`scripts/verificar-cobertura.py`](../scripts/verificar-cobertura.py), que falha se alguma
+  [`scripts/verificar-rastreabilidade.py`](../scripts/verificar-rastreabilidade.py), que falha se alguma
   regra ficar órfã ou se alguma história citar regra inexistente. Entra no CI junto com o
   lint e os testes.
 
@@ -195,7 +195,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 | **U4** | Cobertura | Toda regra citada por ao menos uma história |
 | **U5** | Definição de pronto | Regras citadas com teste passando **e** comportamento observável |
 | **U6** | SDD por fatia | Cada história ganha spec em `docs/specs/` antes do código |
-| **U7** | Verificação | `scripts/verificar-cobertura.py` no CI — já achou 6 regras órfãs |
+| **U7** | Verificação | `scripts/verificar-rastreabilidade.py` no CI — já achou 6 regras órfãs |
 
 ### Notas de decisão
 

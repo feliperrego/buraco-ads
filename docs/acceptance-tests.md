@@ -214,7 +214,7 @@ motivos que não têm nada a ver com a batida.
 
 ## 5. Rastreabilidade
 
-- `[D]` `scripts/verificar-cobertura.py` passa a conferir **três** relações:
+- `[D]` `scripts/verificar-rastreabilidade.py` confere **três** relações:
   regra ↔ história, regra ↔ critério, e critério ↔ regra existente. Um critério citando regra
   inexistente falha o CI, igual a uma regra órfã.
 
