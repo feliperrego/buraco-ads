@@ -1,0 +1,39 @@
+name: verificar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Um push novo cancela a execução anterior do mesmo branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # Os verificadores de fronteira e de rastreabilidade são Python.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # lint, formato, tipos, fronteiras, rastreio, teste — na ordem de custo
+      # crescente definida em docs/testing-strategy.md E9.
+      - name: Verificar
+        run: npm run verificar
+
+      - name: Construir
+        run: npm run build

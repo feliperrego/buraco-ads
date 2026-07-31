@@ -33,7 +33,7 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 | **0.3** | ESLint + Prettier, **proibindo asserção de não-nulo** | Stack, ADR-0007 |
 | **0.4** | **Regra de dependência como configuração de ESLint** | A2, A3, C6 |
 | **0.5** | Vitest em dois projetos, com relatório e limiar de cobertura | E4 |
-| **0.6** | `scripts/verificar-rastreabilidade.py` + `rastreio.json` no CI | E5, E9 |
+| **0.6** | CI no GitHub Actions rodando `npm run verificar` e `npm run build` | E5, E9 |
 | **0.7** | TanStack Router com as quatro rotas vazias | ADR-0005, T1 |
 
 - `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
@@ -57,6 +57,14 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 
 - `[D]` A tarefa 0.7 cria as rotas **vazias**, sem conteúdo. É o esqueleto de
   navegação que a T1 e a RF1.3 vão usar, não as telas.
+
+> **Nota sobre a 0.6, concluída em 2026-07-31.** É a única tarefa do Marco 0 que **não foi
+> verificada antes de entregue**. Todo o resto foi executado localmente; um workflow do
+> GitHub Actions só se prova no primeiro push.
+>
+> O que deu para verificar: o YAML analisa, e os comandos que ele invoca — `npm ci`,
+> `npm run verificar`, `npm run build` — passam nesta máquina. O que resta são as versões das
+> actions e o comportamento do runner.
 
 ---
 
