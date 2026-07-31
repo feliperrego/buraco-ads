@@ -91,6 +91,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Teste de mutação | **Se aparecer bug em regra que tinha teste passando** | E8 |
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
 | Reintroduzir TanStack Query | **Se multiplayer entrar no escopo** | ADR-0004 |
+| `strictTypeChecked` do typescript-eslint | **Ao terminar o Marco I** — se o atrito estiver alto, avaliar `recommendedTypeChecked` | tarefa 0.3 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.

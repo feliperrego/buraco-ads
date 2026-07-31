@@ -1,0 +1,8 @@
+dist
+coverage
+node_modules
+package-lock.json
+
+# Documentação é formatada à mão: quebra em ~100 colunas e tabelas alinhadas.
+# Reformatar automaticamente produz diffs enormes sem ganho de legibilidade.
+**/*.md
