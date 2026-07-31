@@ -106,6 +106,46 @@ devolver 404. Só então o arquivo entra, e a mesma rota deve devolver 200 com `
 Sem o passo do 404, não saberíamos se o 200 vem do *rewrite* ou de um comportamento padrão da
 plataforma — e o arquivo poderia ser cerimônia. Este ADR só se sustenta se o 404 aparecer.
 
+### Resultado medido em 2026-07-31
+
+O parágrafo acima foi escrito **antes** de medir. O resultado, contra
+`https://buraco-ads.vercel.app`:
+
+| Caminho | Sem `vercel.json` | Com `vercel.json` |
+|---|---|---|
+| `/` | `200 text/html` | `200 text/html` |
+| `/regras` | `404 text/plain` | `200 text/html` |
+| `/rota-aleatoria-27970-15761` | — | `200 text/html`, 459 B |
+| `/assets/index-BubSSeen.js` | — | `200 application/javascript`, 190 KB |
+| `/favicon.svg` | — | `200 image/svg+xml` |
+
+O 404 apareceu. O *rewrite* tem função comprovada e o arquivo não é cerimônia.
+
+A precedência do sistema de arquivos, afirmada acima a partir da documentação, foi confirmada
+por medição: CSS, JS e SVG continuam com seus tipos corretos.
+
+### Uma consequência que não previmos
+
+A mesma bateria revelou algo ausente da lista de consequências negativas, e é assim que fica
+registrado — a lista acima não foi editada, para preservar o que sabíamos ao decidir:
+
+```
+/assets/nao-existe.js  →  200 text/html, 459 bytes
+```
+
+Um asset **inexistente** deixa de dar 404 e passa a devolver o `index.html`. O `/(.*)` não
+distingue "rota do cliente" de "arquivo que deveria existir e não existe".
+
+Na prática isso importa num caso concreto: alguém com a página aberta durante um deploy tem
+no HTML referências a hashes antigos. Ao buscá-los, recebe HTML onde esperava JavaScript, e o
+erro no console vira `Unexpected token '<'` em vez de um 404 legível. É a classe de bug que
+custa uma hora porque a mensagem aponta para o lugar errado.
+
+**Não corrigimos agora.** A correção seria excluir `/assets/` do padrão
+(`"/((?!assets/).*)"`), o que é barato, mas a invariante 3 pede caso concreto antes de
+abstração — e hoje não há usuários nem deploys concorrentes. Fica na tabela de gatilhos do
+[roadmap.md](../roadmap.md) §3, com o sintoma que faz reabrir.
+
 ## Nota para o futuro
 
 Se este ADR estiver sendo lido porque passou a existir servidor: o motivo da decisão foi o

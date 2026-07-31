@@ -104,6 +104,26 @@ A configuração fica em [`rastreio.json`](../rastreio.json) na raiz: qual arqui
 itens numerados, com que padrão, e quais documentos os citam. O script é genérico — a mesma
 ferramenta serve para requisitos, endpoints ou qualquer conjunto de itens identificados.
 
+### O que fica de fora
+
+Uma coisa **não** é coberta por `npm run verificar`, e vale saber qual: o *rewrite* de SPA do
+[`vercel.json`](../vercel.json), que faz uma rota digitada direto na URL devolver a aplicação
+em vez de 404.
+
+Ele só existe em produção, e o preview local **não serve como prova** — medimos que o
+`vite preview` faz *fallback* sozinho e devolve `200 text/html` com ou sem configuração. Um
+teste local dele passaria sempre, inclusive com o arquivo apagado.
+
+A verificação é contra a URL publicada:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://buraco-ads.vercel.app/rota-que-nao-existe
+```
+
+Deve devolver **200**. Se devolver 404, o *rewrite* se perdeu. O raciocínio completo, incluindo
+a medição do 404 antes do arquivo existir, está no
+[ADR-0008](decisions/0008-publicar-na-vercel-com-integracao-git.md).
+
 ## Decisões
 
 [`decisions/`](decisions/) guarda os ADRs (*Architecture Decision Records*). São

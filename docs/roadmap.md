@@ -54,6 +54,20 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 > `200 text/html` com ou sem configuração de hospedagem. Verificar deep link localmente é
 > exatamente o verificador que sempre passa.
 
+> **0.8a e 0.8 concluídas em 2026-07-31.** Repositório em
+> [feliperrego/buraco-ads](https://github.com/feliperrego/buraco-ads), publicado em
+> [buraco-ads.vercel.app](https://buraco-ads.vercel.app).
+>
+> A sequência do 404 foi cumprida: antes do `vercel.json`, `/regras` devolvia `404 text/plain`;
+> depois, `200 text/html`. O *rewrite* não é cerimônia.
+>
+> **A 0.8a fechou a 0.6 junto.** O push do `430a748` disparou a primeira execução do workflow
+> — `conclusao=success`. O CI escrito na 0.6 saiu de "no disco" para "executado".
+>
+> A verificação revelou uma consequência não prevista: `/assets/nao-existe.js` devolve
+> `200 text/html` em vez de 404. Registrada no [ADR-0008](decisions/0008-publicar-na-vercel-com-integracao-git.md)
+> e com gatilho na §3.
+
 - `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
   lint falhar**. Escrevemos a violação, confirmamos a falha, e removemos.
 
@@ -137,6 +151,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
 | Reintroduzir TanStack Query | **Se multiplayer entrar no escopo** | ADR-0004 |
 | `strictTypeChecked` do typescript-eslint | **Ao terminar o Marco I** — se o atrito estiver alto, avaliar `recommendedTypeChecked` | tarefa 0.3 |
+| Excluir `/assets/` do *rewrite* de SPA | **Ao primeiro `Unexpected token '<'` no console** — asset ausente devolve HTML em vez de 404 | ADR-0008 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
