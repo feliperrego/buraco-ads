@@ -39,6 +39,14 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 - `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
   lint falhar**. Escrevemos a violação, confirmamos a falha, e removemos.
 
+> **Concluída em 2026-07-31.** A verificação foi automatizada em
+> [`scripts/verificar-fronteiras.py`](../scripts/verificar-fronteiras.py), que escreve 14
+> violações e 4 imports permitidos, confere o resultado de cada um e apaga tudo. Roda em
+> `npm run verificar`.
+>
+> Os **4 casos permitidos** são tão necessários quanto as violações: sem eles, uma regra que
+> bloqueasse qualquer import passaria nos 14 testes negativos.
+
 > RD1 parece exagero e não é. Uma regra de lint mal configurada não avisa que está mal
 > configurada — ela simplesmente passa. A A2 afirma que a fronteira é garantida por ferramenta;
 > se ninguém verificar a ferramenta, voltamos a ter uma intenção, com a agravante de acreditar

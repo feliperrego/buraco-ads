@@ -59,8 +59,31 @@ testada, os testes passam a ser a especificação viva.
 
 ## Verificação
 
+```bash
+npm run verificar
+```
+
+Roda, na ordem do CI ([testing-strategy.md](testing-strategy.md) E9): `lint` → `formato` →
+`tipos` → `fronteiras` → `rastreio`.
+
+### Fronteiras arquiteturais
+
+A regra de dependência de [architecture.md](architecture.md) A1 é **verificada por ESLint**,
+não por disciplina (A2). [`scripts/verificar-fronteiras.py`](../scripts/verificar-fronteiras.py)
+prova que a configuração funciona: escreve 14 violações propositais e 4 imports permitidos,
+confere cada resultado e apaga tudo.
+
+```bash
+python3 scripts/verificar-fronteiras.py
+```
+
+Os casos permitidos existem porque uma regra que bloqueasse **qualquer** import também
+passaria nos 14 testes negativos.
+
+### Rastreabilidade
+
 [`scripts/verificar-rastreabilidade.py`](../scripts/verificar-rastreabilidade.py) confere as
-relações de rastreabilidade e falha o CI se alguma quebrar: toda regra citada por alguma
+relações entre documentos e falha o CI se alguma quebrar: toda regra citada por alguma
 história, nenhuma história citando regra inexistente, nenhum critério citando regra
 inexistente.
 

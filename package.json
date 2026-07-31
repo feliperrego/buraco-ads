@@ -13,7 +13,8 @@
     "formato:corrigir": "prettier --write .",
     "tipos": "tsc -b --noEmit",
     "rastreio": "python3 scripts/verificar-rastreabilidade.py",
-    "verificar": "npm run lint && npm run formato && npm run tipos && npm run rastreio"
+    "verificar": "npm run lint && npm run formato && npm run tipos && npm run fronteiras && npm run rastreio",
+    "fronteiras": "python3 scripts/verificar-fronteiras.py"
   },
   "dependencies": {
     "react": "^19.2.8",
