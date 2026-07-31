@@ -13,8 +13,11 @@
     "formato:corrigir": "prettier --write .",
     "tipos": "tsc -b --noEmit",
     "rastreio": "python3 scripts/verificar-rastreabilidade.py",
-    "verificar": "npm run lint && npm run formato && npm run tipos && npm run fronteiras && npm run rastreio",
-    "fronteiras": "python3 scripts/verificar-fronteiras.py"
+    "verificar": "npm run lint && npm run formato && npm run tipos && npm run fronteiras && npm run rastreio && npm run teste",
+    "fronteiras": "python3 scripts/verificar-fronteiras.py",
+    "teste": "vitest run",
+    "teste:observar": "vitest",
+    "teste:cobertura": "vitest run --coverage"
   },
   "dependencies": {
     "react": "^19.2.8",
@@ -26,14 +29,17 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
+    "@vitest/coverage-v8": "^4.1.10",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.8.0",
+    "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.65.0",
-    "vite": "^8.2.0"
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
   }
 }

@@ -64,7 +64,16 @@ npm run verificar
 ```
 
 Roda, na ordem do CI ([testing-strategy.md](testing-strategy.md) E9): `lint` → `formato` →
-`tipos` → `fronteiras` → `rastreio`.
+`tipos` → `fronteiras` → `rastreio` → `teste`.
+
+Os testes são divididos em dois projetos do Vitest, porque as camadas têm necessidades
+opostas: **`nucleo`** roda em Node sem DOM (`engine/`, `ia/`, `tests/`) e **`interface`** roda
+em jsdom (`ui/`, `estado/`). Durante o desenvolvimento da engine dá para rodar só o núcleo:
+
+```bash
+npx vitest --project nucleo
+npm run teste:cobertura
+```
 
 ### Fronteiras arquiteturais
 

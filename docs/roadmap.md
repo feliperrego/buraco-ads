@@ -32,7 +32,7 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 | **0.2** | Estrutura de pastas de `src/` | A7 |
 | **0.3** | ESLint + Prettier, **proibindo asserção de não-nulo** | Stack, ADR-0007 |
 | **0.4** | **Regra de dependência como configuração de ESLint** | A2, A3, C6 |
-| **0.5** | Vitest com relatório de cobertura | E4 |
+| **0.5** | Vitest em dois projetos, com relatório e limiar de cobertura | E4 |
 | **0.6** | `scripts/verificar-rastreabilidade.py` + `rastreio.json` no CI | E5, E9 |
 | **0.7** | TanStack Router com as quatro rotas vazias | ADR-0005, T1 |
 
