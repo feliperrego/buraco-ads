@@ -1,8 +1,8 @@
 # Roteiro
 
-> Status: **confirmado** — 6 decisões, nenhuma pendência
+> Status: **confirmado** — 8 decisões, nenhuma pendência
 > Deriva de: [user-stories.md](user-stories.md) · [testing-strategy.md](testing-strategy.md) · [architecture.md](architecture.md)
-> Última atualização: 2026-07-29
+> Última atualização: 2026-07-31
 
 ## Como ler este documento
 
@@ -35,6 +35,24 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 | **0.5** | Vitest em dois projetos, com relatório e limiar de cobertura | E4 |
 | **0.6** | CI no GitHub Actions rodando `npm run verificar` e `npm run build` | E5, E9 |
 | **0.7** | TanStack Router com as quatro rotas vazias | ADR-0005, T1 |
+| **0.8a** | Repositório no GitHub e primeiro push | 0.6, ADR-0008 |
+| **0.8** | Publicação na Vercel, com *rewrite* de SPA em `vercel.json` | ADR-0008, RNF3.1 |
+
+- `[D]` **A 0.8a e a 0.8 executam antes da 0.7**, apesar da numeração. Duas razões, e a
+  segunda é a mais forte:
+  1. A primeira rota nasce com deep link já funcionando, em vez de ganhá-lo depois.
+  2. **Isola variáveis.** Publicando enquanto o app é uma página trivial, um 404 só pode vir
+     da hospedagem. Se o primeiro deploy acontecesse depois do roteador, um 404 seria ambíguo
+     entre roteador e host — e depurar duas causas ao mesmo tempo custa muito mais.
+
+- `[D]` A 0.8 só está pronta quando a URL publicada devolver **404 antes** e **200 depois**
+  do `vercel.json`. Sem o 404, não se sabe se o 200 veio do *rewrite* ou de um padrão da
+  plataforma — o arquivo poderia ser cerimônia. É a invariante 5 aplicada à hospedagem.
+
+> O deep link é a **única parte do projeto que `npm run verificar` não alcança**. Medimos que
+> o `vite preview` faz *fallback* de SPA sozinho: `GET /uma-rota-que-nao-existe` devolve
+> `200 text/html` com ou sem configuração de hospedagem. Verificar deep link localmente é
+> exatamente o verificador que sempre passa.
 
 - `[D]` A tarefa 0.4 só está pronta quando um **import proibido de verdade faz o
   lint falhar**. Escrevemos a violação, confirmamos a falha, e removemos.
@@ -58,13 +76,24 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 - `[D]` A tarefa 0.7 cria as rotas **vazias**, sem conteúdo. É o esqueleto de
   navegação que a T1 e a RF1.3 vão usar, não as telas.
 
-> **Nota sobre a 0.6, concluída em 2026-07-31.** É a única tarefa do Marco 0 que **não foi
-> verificada antes de entregue**. Todo o resto foi executado localmente; um workflow do
-> GitHub Actions só se prova no primeiro push.
+> **Nota sobre a 0.6, corrigida em 2026-07-31.** A redação anterior dizia que a 0.6 era a
+> única tarefa do Marco 0 **não verificada antes de entregue**, e que "um workflow do GitHub
+> Actions só se prova no primeiro push". Era generoso demais.
 >
-> O que deu para verificar: o YAML analisa, e os comandos que ele invoca — `npm ci`,
-> `npm run verificar`, `npm run build` — passam nesta máquina. O que resta são as versões das
-> actions e o comportamento do runner.
+> O fato apurado ao começar a 0.8a: **este repositório não tinha remoto.** `git remote -v`
+> voltava vazio. Não é que o push ainda não tivesse acontecido — não existia destino para
+> ele. O workflow esteve no disco por um commit inteiro sem nunca ter sido executado.
+>
+> O que deu para verificar continua valendo: o YAML analisa, e os comandos que ele invoca —
+> `npm ci`, `npm run verificar`, `npm run build` — passam nesta máquina. O que faltava não
+> eram as versões das actions: era o repositório remoto.
+>
+> A 0.6 passa a depender da **0.8a** para ser considerada concluída de fato.
+>
+> A lição não é sobre GitHub Actions. É que "entregue mas não verificado" e "entregue e
+> impossível de verificar" parecem a mesma coisa na hora de escrever a nota, e são muito
+> diferentes. A pergunta que teria pegado isto na hora: *o que exatamente falta acontecer
+> para esta verificação rodar?*
 
 ---
 
@@ -74,7 +103,7 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 
 | Marco | Histórias | Termina quando |
 |---|---|---|
-| **0** | 0.1–0.7 | O lint recusa um import proibido e a suíte vazia roda |
+| **0** | 0.1–0.8 | O lint recusa um import proibido, a suíte vazia roda e uma rota digitada direto na URL publicada devolve a aplicação |
 | **I** | H1–H3 | Dois jogadores compram e descartam; a IA joga sozinha |
 | **II** | H4–H7 | Dá para baixar sequências, com e sem curinga, e pegar o lixo |
 | **III** | H8–H12 | Uma rodada completa termina em batida e pontuação apurada |
@@ -145,7 +174,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 ## 5. Histórico das decisões
 
-**Não há pendências.** As 6 decisões foram confirmadas em 2026-07-29.
+**Não há pendências.** RD1–RD6 foram confirmadas em 2026-07-29; RD7 e RD8, em 2026-07-31.
 
 | # | Assunto | Decisão confirmada |
 |---|---|---|
@@ -155,9 +184,17 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | **RD4** | Reavaliação | Todo gatilho acionado gera decisão registrada, nunca mudança silenciosa |
 | **RD5** | Ciclo | Sete passos de spec a commit, sem atalho |
 | **RD6** | Pronto | Suíte **inteira** verde, não só os testes da história |
+| **RD7** | Marco 0 | Publicar na **Vercel** por integração Git; 0.8a e 0.8 executam **antes** da 0.7 |
+| **RD8** | Marco 0 | O *rewrite* de SPA só está provado com **404 antes** e **200 depois** na URL publicada |
 
 ### Notas de decisão
 
 - **RD1** é a única tarefa do Marco 0 que exige verificar a própria ferramenta. Sem ela, a A2 seria fé.
 - **RD3** faz o ritmo depender de nós dois, coerente com "não temos pressa".
 - A **tabela de gatilhos da seção 3** é o conteúdo real deste documento.
+- **RD8** é a RD1 aplicada à hospedagem, e nasceu do mesmo raciocínio: verificamos que o
+  `vite preview` faz *fallback* sozinho, portanto um teste local de deep link passaria sempre.
+  A diferença é que a RD1 pôde virar script versionado
+  ([`verificar-fronteiras.py`](../scripts/verificar-fronteiras.py)) e a RD8 não — ela depende
+  de uma URL externa. É a única verificação do projeto que fica fora de `npm run verificar`,
+  e vale saber disso em vez de fingir cobertura.
