@@ -127,7 +127,29 @@ O **Marco 0** (fundação técnica, `docs/roadmap.md` §1) está em andamento. A
 código de domínio**: `src/` tem só `main.tsx` e `ui/`. A engine nasce na **H1**, cuja spec já
 está escrita em [`docs/specs/0001-mesa-inicial.md`](docs/specs/0001-mesa-inicial.md).
 
-Uma tarefa **0.8** foi acordada e ainda não está na tabela do roadmap: publicação na Vercel,
-com `vercel.json` para reescrita de SPA — sem ela, abrir uma rota direto no navegador dá 404 —
-e um ADR registrando a escolha da plataforma. Ela vem **antes** da 0.7, para que a primeira
-rota já nasça com deep link funcionando.
+Do Marco 0 falta a **0.7** — TanStack Router com as quatro rotas vazias. A tabela do
+`docs/roadmap.md` §1 é a fonte; se divergir daqui, ela vence.
+
+As tarefas **0.8a e 0.8** foram executadas antes da 0.7, de propósito: o deep link já
+funciona, então um 404 durante a 0.7 só pode vir do roteador, nunca da hospedagem.
+
+## O projeto está publicado
+
+Repositório em [feliperrego/buraco-ads](https://github.com/feliperrego/buraco-ads),
+aplicação em [buraco-ads.vercel.app](https://buraco-ads.vercel.app). Um push em `main` roda
+o CI **e** publica.
+
+**Uma verificação fica de fora de `npm run verificar`**, e é a mais fácil de quebrar sem
+perceber: o *rewrite* de SPA do [`vercel.json`](vercel.json), que faz uma rota digitada direto
+na URL devolver a aplicação em vez de 404.
+
+Não tente verificá-lo localmente. Está medido que o `vite preview` faz *fallback* sozinho e
+devolve `200 text/html` **mesmo com o arquivo apagado** — é o verificador que sempre passa.
+A prova é contra a URL publicada:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" https://buraco-ads.vercel.app/rota-que-nao-existe
+```
+
+Deve dar **200**. O raciocínio completo está no
+[ADR-0008](docs/decisions/0008-publicar-na-vercel-com-integracao-git.md).
