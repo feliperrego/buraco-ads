@@ -158,7 +158,8 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Custo de enumerar todos os `baixar` | **Ao terminar H4** — medir com 22 cartas na mão | T7 |
+| Custo de enumerar todos os `baixar` | **Ao terminar H4** — virou a `CA-S46-1`; falta o número medido com 22 cartas | T7, S46 |
+| Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |

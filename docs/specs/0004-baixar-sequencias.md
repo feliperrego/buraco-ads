@@ -1,6 +1,6 @@
 # Spec 0004 — Baixar sequências
 
-> Status: **rascunho anotado** — 12 pendências na seção 7
+> Status: **confirmado** — 12 decisões, nenhuma pendência
 > História: **H4** — "Baixo três ou mais cartas do mesmo naipe em sequência"
 > Fecha: R3.4, R5.1, R5.2, R5.3, R5.6, R6.1, I1, I2, I3, I5, I6
 > Última atualização: 2026-08-01
@@ -28,7 +28,7 @@ invariantes do [domain.md](../domain.md) §4.
 | Canastra, categoria e pontuação (R8, R11) | H8–H12 |
 | Bater e pegar morto (R9, R10) | H10 |
 
-- `[P]` ⚠️ **S38** — A H4 é **sem curinga**. O `2` do próprio naipe continua sendo
+- `[D]` **S38** — A H4 é **sem curinga**. O `2` do próprio naipe continua sendo
   carta natural na posição dele (R1.3), e é assim que `A-2-3` entra aqui.
 
 > A H5 é um subproblema inteiro, e as [user-stories.md](../user-stories.md) já avisaram: juntar
@@ -61,14 +61,14 @@ criarJogo(dono: JogadorId, cartas: readonly Carta[]): ResultadoDeJogo
 { tipo: 'baixar'; cartas: readonly string[] }
 ```
 
-- `[P]` ⚠️ **S39** — `Posicao` nasce com **só `Natural`**. A variante `Curinga`
+- `[D]` **S39** — `Posicao` nasce com **só `Natural`**. A variante `Curinga`
   entra na H5 e alarga o tipo.
 
 > Mesmo padrão do `Jogo = never` na H1: o tipo diz a verdade sobre a fatia, e o compilador
 > passa a garantir que a H4 não cria curinga por acidente. A M2 continua honrada — a estrutura
 > **já é** lista de posições, não de cartas, que é o que torna a R6.5 exprimível na H9.
 
-- `[P]` ⚠️ **S40** — `criarJogo` devolve **sucesso com o jogo, ou a lista de
+- `[D]` **S40** — `criarJogo` devolve **sucesso com o jogo, ou a lista de
   invariantes violadas** (M6), nunca um `Jogo` inválido. `Invariante` cobre só os cinco da H4;
   `I4` e `I7` entram com o curinga.
 
@@ -81,7 +81,7 @@ criarJogo(dono: JogadorId, cartas: readonly Carta[]): ResultadoDeJogo
 Esta é a decisão mais consequente da fatia, e o [domain.md](../domain.md) §4 já avisou que o
 `I6` "é um erro fácil de cometer e difícil de notar".
 
-- `[P]` ⚠️ **S41** — A ordem da R5.2 é uma **linha de 14 casas**, não um anel:
+- `[D]` **S41** — A ordem da R5.2 é uma **linha de 14 casas**, não um anel:
 
 ```
 casa:   0  1  2  3  4  5  6  7  8  9 10 11 12 13
@@ -101,7 +101,7 @@ Uma sequência é um trecho **contíguo** desta linha, cada casa ocupada uma vez
 > intuição errada mais natural do mundo aqui: `A` aparece nas duas pontas, então parece que
 > fecha. Não fecha.
 
-- `[P]` ⚠️ **S42** — Uma carta de valor `A` pode ocupar a casa **0 ou a 13**. Ao
+- `[D]` **S42** — Uma carta de valor `A` pode ocupar a casa **0 ou a 13**. Ao
   construir o jogo, a engine **tenta as combinações** e aceita se alguma produzir trecho
   contíguo válido.
 
@@ -110,7 +110,7 @@ Uma sequência é um trecho **contíguo** desta linha, cada casa ocupada uma vez
 
 ### 3.2 A ordem em que as cartas chegam
 
-- `[P]` ⚠️ **S43** — O comando aceita as cartas em **qualquer ordem**. A engine
+- `[D]` **S43** — O comando aceita as cartas em **qualquer ordem**. A engine
   ordena.
 
 > A T8 fixou "tocar e confirmar": o jogador seleciona `7♥`, depois `5♥`, depois `6♥`, e a
@@ -119,7 +119,7 @@ Uma sequência é um trecho **contíguo** desta linha, cada casa ocupada uma vez
 
 ### 3.3 Baixar não encerra o turno
 
-- `[P]` ⚠️ **S44** — Depois de `baixar`, a fase **continua `Acao`** e a vez
+- `[D]` **S44** — Depois de `baixar`, a fase **continua `Acao`** e a vez
   **não passa**. Só `descartar` encerra o turno.
 
 > É a R3.3 — "quantas ações quiser, em qualquer ordem". A H2 tinha só um comando na fase de
@@ -131,7 +131,7 @@ Uma sequência é um trecho **contíguo** desta linha, cada casa ocupada uma vez
 Se um jogador baixar **todas** as cartas da mão, ele fica sem carta para descartar — e a R7.1
 exige o descarte. A R7.3 diz que a exceção é a batida, que é a H10.
 
-- `[P]` ⚠️ **S45** — Na H4, `movimentosValidos` **não oferece** um `baixar` que
+- `[D]` **S45** — Na H4, `movimentosValidos` **não oferece** um `baixar` que
   esvaziaria a mão. A guarda é temporária e sai na H10.
 
 > É a única proposta desta spec que **restringe** o jogo além das regras, e é por isso que ela
@@ -150,7 +150,7 @@ exige o descarte. A R7.3 diz que a exceção é a batida, que é a H10.
 A [screens.md](../screens.md) §3.1 registrou o medo: enumerar todos os `baixar` com 22 cartas
 na mão poderia explodir. A T7 decidiu **medir antes de otimizar**, e o gatilho vence aqui.
 
-- `[P]` ⚠️ **S46** — A enumeração é feita por **corridas de casas**, não por
+- `[D]` **S46** — A enumeração é feita por **corridas de casas**, não por
   subconjuntos da mão.
 
 ```
@@ -167,7 +167,7 @@ para cada naipe:
 > **O medo era de um algoritmo que ninguém precisa escrever.** Vale medir mesmo assim, porque
 > a T7 pediu número e não argumento.
 
-- `[P]` ⚠️ **S47** — Cartas repetidas geram **um comando só**. Para cada casa, a
+- `[D]` **S47** — Cartas repetidas geram **um comando só**. Para cada casa, a
   engine escolhe uma carta canônica — a de menor `id`.
 
 > Com dois `5♥` na mão, `5♥-6♥-7♥` é uma jogada, não duas. A M1 diz que as regras comparam só
@@ -180,7 +180,7 @@ para cada naipe:
 
 A H2 tinha seleção de **uma** carta. Baixar precisa de várias, e a T6 já disse como.
 
-- `[P]` ⚠️ **S48** — A máquina de seleção passa a operar sobre um **conjunto**, e
+- `[D]` **S48** — A máquina de seleção passa a operar sobre um **conjunto**, e
   o botão de confirmar aparece para **todo comando cujas cartas sejam exatamente a seleção**.
 
 > Isso unifica o que a H2 fez à mão: `descartar` vira o caso de conjunto unitário, e não
@@ -190,7 +190,7 @@ A H2 tinha seleção de **uma** carta. Baixar precisa de várias, e a T6 já dis
 > Consequência: com três cartas selecionadas que formem sequência, aparece "Baixar". Com uma
 > carta só, aparece "Descartar". Nenhum dos dois botões é decidido pela interface.
 
-- `[P]` ⚠️ **S49** — Uma carta da mão é **selecionável** quando participa de ao
+- `[D]` **S49** — Uma carta da mão é **selecionável** quando participa de ao
   menos um comando válido **compatível com a seleção atual**. Ao selecionar, as cartas que
   deixam de poder acompanhar ficam inertes.
 
@@ -251,9 +251,11 @@ Interface, nível 4:
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 12 decisões foram confirmadas em 2026-08-01.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S38** | Escopo | H4 é **sem curinga**; o `2` do naipe segue natural (R1.3) |
 | **S39** | Tipos | `Posicao` nasce só com `Natural`; `Curinga` alarga na H5 |
