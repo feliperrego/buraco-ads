@@ -123,15 +123,15 @@ As ondas de documentação (0 a 3) estão **completas e confirmadas** — `visio
 `rules`, `requirements`, `domain`, `architecture`, `user-stories`, `screens`,
 `acceptance-tests`, `testing-strategy`, `roadmap`, mais a spec da H1.
 
-O **Marco 0** (fundação técnica, `docs/roadmap.md` §1) está em andamento. Ainda **não existe
-código de domínio**: `src/` tem só `main.tsx` e `ui/`. A engine nasce na **H1**, cuja spec já
-está escrita em [`docs/specs/0001-mesa-inicial.md`](docs/specs/0001-mesa-inicial.md).
+O **Marco 0** (fundação técnica, `docs/roadmap.md` §1) está **fechado**. O próximo trabalho é
+a **H1**, cuja spec já está escrita em
+[`docs/specs/0001-mesa-inicial.md`](docs/specs/0001-mesa-inicial.md).
 
-Do Marco 0 falta a **0.7** — TanStack Router com as quatro rotas vazias. A tabela do
-`docs/roadmap.md` §1 é a fonte; se divergir daqui, ela vence.
+Ainda **não existe código de domínio**. `src/` tem `main.tsx` e `ui/`, e as quatro rotas de
+`ui/rotas/` renderizam só um `<h1>` cada — esqueleto de navegação, não telas (RD2). A engine
+nasce na H1, em `src/engine/`.
 
-As tarefas **0.8a e 0.8** foram executadas antes da 0.7, de propósito: o deep link já
-funciona, então um 404 durante a 0.7 só pode vir do roteador, nunca da hospedagem.
+A tabela do `docs/roadmap.md` §1 é a fonte do que está pronto; se divergir daqui, ela vence.
 
 ## O projeto está publicado
 
@@ -153,3 +153,18 @@ curl -s -o /dev/null -w "%{http_code}\n" https://buraco-ads.vercel.app/rota-que-
 
 Deve dar **200**. O raciocínio completo está no
 [ADR-0008](docs/decisions/0008-publicar-na-vercel-com-integracao-git.md).
+
+Consequência disso, medida na 0.7: como qualquer caminho devolve 200, **o roteador é o dono do
+404**, não o servidor. Hoje ele mostra o "Not Found" padrão do TanStack, em inglês. Está na
+tabela de gatilhos com prazo no Marco VI.
+
+## Sobre automatizar o ciclo
+
+A RD9 fixou onde automação autônoma cabe: nos passos **3–6** do ciclo de `docs/roadmap.md` §4
+— testes, código, refatoração, verificação — e **nunca nos 1–2**, que são spec e critérios.
+
+O motivo está na calibragem acima. Suas propostas erram onde o assunto é o domínio dele, e a
+RNF2.1 exige que todo teste cite o `Rn` que valida. Uma regra mal interpretada sem supervisão
+não produz apenas código errado: produz um teste que passa e **documenta** o erro, fazendo a
+verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
+aprovado antes.

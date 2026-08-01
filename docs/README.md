@@ -139,3 +139,4 @@ a medição do 404 antes do arquivo existir, está no
 | [0006](decisions/0006-playwright-na-onda-3.md) | Playwright entra na Onda 3 |
 | [0007](decisions/0007-typescript-estrito-com-indexacao-verificada.md) | TypeScript estrito com indexação verificada |
 | [0008](decisions/0008-publicar-na-vercel-com-integracao-git.md) | Publicar na Vercel com integração Git (depende da mesma premissa do 0004) |
+| [0009](decisions/0009-roteamento-por-codigo.md) | Roteamento por código, divergindo do padrão recomendado do TanStack |

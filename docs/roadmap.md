@@ -1,6 +1,6 @@
 # Roteiro
 
-> Status: **confirmado** — 8 decisões, nenhuma pendência
+> Status: **confirmado** — 9 decisões, nenhuma pendência
 > Deriva de: [user-stories.md](user-stories.md) · [testing-strategy.md](testing-strategy.md) · [architecture.md](architecture.md)
 > Última atualização: 2026-07-31
 
@@ -90,6 +90,22 @@ Não é história de usuário: ninguém "vê" configuração. Mas a H1 não come
 - `[D]` A tarefa 0.7 cria as rotas **vazias**, sem conteúdo. É o esqueleto de
   navegação que a T1 e a RF1.3 vão usar, não as telas.
 
+> **0.7 concluída em 2026-07-31 — o Marco 0 está fechado.** Roteamento por código, registrado
+> no [ADR-0009](decisions/0009-roteamento-por-codigo.md). Quatro rotas: `/`, `/partida`,
+> `/fim`, `/regras`.
+>
+> O teste foi **visto reprovando** antes de ser aceito, conforme a invariante 5: com o caminho
+> escrito errado e com a rota fora do `addChildren`, um caso falha e os outros quatro passam.
+> É o que o tipo não pega — rota não registrada só falha em runtime.
+>
+> A prova de fim a fim: `https://buraco-ads.vercel.app/regras` digitado direto **renderiza a
+> tela**. Servidor devolve o `index.html` pelo rewrite da 0.8, roteador resolve, React monta.
+> Foi exatamente para isto que a 0.8 veio antes.
+>
+> Achado que só apareceu com as duas juntas: como o rewrite faz a Vercel devolver 200 para
+> qualquer caminho, **o roteador virou o dono do 404**. Hoje ele mostra o "Not Found" padrão
+> do TanStack — em inglês, sem `<h1>`. Gatilho na §3.
+
 > **Nota sobre a 0.6, corrigida em 2026-07-31.** A redação anterior dizia que a 0.6 era a
 > única tarefa do Marco 0 **não verificada antes de entregue**, e que "um workflow do GitHub
 > Actions só se prova no primeiro push". Era generoso demais.
@@ -152,6 +168,9 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Reintroduzir TanStack Query | **Se multiplayer entrar no escopo** | ADR-0004 |
 | `strictTypeChecked` do typescript-eslint | **Ao terminar o Marco I** — se o atrito estiver alto, avaliar `recommendedTypeChecked` | tarefa 0.3 |
 | Excluir `/assets/` do *rewrite* de SPA | **Ao primeiro `Unexpected token '<'` no console** — asset ausente devolve HTML em vez de 404 | ADR-0008 |
+| Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
+| Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
+| Loop autônomo nos passos 3–6 do ciclo | **Ao começar a H2** — critérios já confirmados; medir quantos commits precisaram de retrabalho | RD9 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
@@ -189,7 +208,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 ## 5. Histórico das decisões
 
-**Não há pendências.** RD1–RD6 foram confirmadas em 2026-07-29; RD7 e RD8, em 2026-07-31.
+**Não há pendências.** RD1–RD6 foram confirmadas em 2026-07-29; RD7 a RD9, em 2026-07-31.
 
 | # | Assunto | Decisão confirmada |
 |---|---|---|
@@ -201,12 +220,20 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | **RD6** | Pronto | Suíte **inteira** verde, não só os testes da história |
 | **RD7** | Marco 0 | Publicar na **Vercel** por integração Git; 0.8a e 0.8 executam **antes** da 0.7 |
 | **RD8** | Marco 0 | O *rewrite* de SPA só está provado com **404 antes** e **200 depois** na URL publicada |
+| **RD9** | Ritmo | Automação autônoma cabe nos passos **3–6** do ciclo §4, **nunca nos 1–2** |
 
 ### Notas de decisão
 
 - **RD1** é a única tarefa do Marco 0 que exige verificar a própria ferramenta. Sem ela, a A2 seria fé.
 - **RD3** faz o ritmo depender de nós dois, coerente com "não temos pressa".
 - A **tabela de gatilhos da seção 3** é o conteúdo real deste documento.
+- **RD9** divide o ciclo §4 pela natureza do trabalho, não pela dificuldade. Os passos 1–2 são
+  julgamento sobre o domínio; os 3–6 são mecânicos, e o próprio §4 já diz que o teste é
+  "transcrição, não invenção" porque o critério de aceite veio antes.
+  A calibragem do `CLAUDE.md` explica por que a divisão importa: das 105 propostas, as 5 que
+  caíram foram **todas** no `rules.md`. Some-se a RNF2.1, que exige que todo teste cite o `Rn`
+  que valida, e uma regra mal interpretada sem supervisão não gera só código errado — gera um
+  teste que passa e **documenta** o erro. A verificação passaria a confirmá-lo.
 - **RD8** é a RD1 aplicada à hospedagem, e nasceu do mesmo raciocínio: verificamos que o
   `vite preview` faz *fallback* sozinho, portanto um teste local de deep link passaria sempre.
   A diferença é que a RD1 pôde virar script versionado
