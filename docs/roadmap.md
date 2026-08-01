@@ -161,7 +161,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Custo de enumerar todos os `baixar` | **Ao terminar H4** — medir com 22 cartas na mão | T7 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
-| Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido | E6 |
+| Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
 | `useReducer` + Context vs Zustand | **Se houver re-render perceptível** durante Marco VI | A6 |
 | Teste de mutação | **Se aparecer bug em regra que tinha teste passando** | E8 |
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
@@ -171,7 +171,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
 | `eventos[]` no retorno de `aplicar` | **Ao escrever a H12** — decidir entre acrescentá-los ou derivar a apuração do estado | M8, S21 |
-| Critério de ponta a ponta | **Ao escrever a spec da H3** — o turno da IA exige o fluxo completo de qualquer forma | spec 0001 §1 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.

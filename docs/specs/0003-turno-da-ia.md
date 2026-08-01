@@ -1,8 +1,8 @@
 # Spec 0003 — Turno da IA
 
-> Status: **rascunho anotado** — 10 pendências na seção 7
+> Status: **confirmado** — 10 decisões, nenhuma pendência
 > História: **H3** — "O oponente joga seu turno sozinho e a vez volta para mim"
-> Fecha: RF5.1, RF5.2, M11, M12
+> Fecha: RF5.1, RF5.2, RF5.3 (metade), M11, M12
 > Última atualização: 2026-08-01
 
 As pendências continuam a série global das specs, que foi de `S1` a `S27`. Esta começa em
@@ -30,7 +30,7 @@ Nasce a camada **`ia/`**, a última das quatro. Depois desta fatia as três fron
 | Monte esgotado | H14 |
 | Força relativa e orçamento de 100 ms (E6) | H15, quando houver duas IAs para comparar |
 
-- `[P]` ⚠️ **S28** — A IA da H3 escolhe **por sorteio**, uniformemente, dentro de
+- `[D]` **S28** — A IA da H3 escolhe **por sorteio**, uniformemente, dentro de
   `movimentosValidos`. Nenhuma avaliação, nenhuma preferência.
 
 > Isso não é um rascunho a ser jogado fora. A [testing-strategy.md](../testing-strategy.md) E7
@@ -51,7 +51,7 @@ criarAleatorio(semente: number): Aleatorio
 decidir(visao: VisaoDoJogador, aleatorio: Aleatorio): Comando | null
 ```
 
-- `[P]` ⚠️ **S29** — `decidir` recebe **apenas a visão**, e chama
+- `[D]` **S29** — `decidir` recebe **apenas a visão**, e chama
   `movimentosValidos` ela mesma. Não recebe a `Partida` nem a lista pronta.
 
 > É a RF5.2 como garantia estrutural, não como política. A IA não *escolhe* não trapacear: ela
@@ -59,7 +59,7 @@ decidir(visao: VisaoDoJogador, aleatorio: Aleatorio): Comando | null
 > lista viesse pronta de fora, alguém poderia um dia passar uma lista calculada a partir da
 > `Partida`.
 
-- `[P]` ⚠️ **S30** — A engine passa a exportar `criarAleatorio(semente)` na API
+- `[D]` **S30** — A engine passa a exportar `criarAleatorio(semente)` na API
   pública, reusando o `mulberry32` que já existe.
 
 > `estado/` precisa semear a IA e **não pode** alcançar `engine/aleatorio/` — a A8 proíbe, e o
@@ -67,7 +67,7 @@ decidir(visao: VisaoDoJogador, aleatorio: Aleatorio): Comando | null
 > ou deixar a IA usar `Math.random()` e perder o determinismo que a E6 exige. Exportar o que já
 > existe é mais barato que as duas.
 
-- `[P]` ⚠️ **S31** — `decidir` devolve **`null`** quando não há movimento algum.
+- `[D]` **S31** — `decidir` devolve **`null`** quando não há movimento algum.
 
 > Acontece só no caso da R4.6/R4.8 — monte esgotado —, que é a H14. Devolver `null` em vez de
 > lançar deixa o chamador decidir, e é o que impede a H14 de ter que reescrever esta
@@ -91,13 +91,13 @@ não dependa do tamanho da lista.
 
 ### 3.2 Quem conduz o turno (A3)
 
-- `[P]` ⚠️ **S32** — O turno da IA é conduzido por um efeito em **`estado/`**.
+- `[D]` **S32** — O turno da IA é conduzido por um efeito em **`estado/`**.
 
 > A A3 proíbe `ia/` de importar `estado/` ou `ui/`, então a IA não pode se auto-agendar. E a
 > `ui/` não pode importar `ia/` — a regra de dependência recusa. Sobra `estado/`, que é a única
 > camada autorizada a conhecer as duas, e é onde o despacho já mora.
 
-- `[P]` ⚠️ **S33** — O efeito aplica **um comando por vez**, não o turno inteiro.
+- `[D]` **S33** — O efeito aplica **um comando por vez**, não o turno inteiro.
 
 > Cada comando muda o estado, o efeito roda de novo, e a IA decide o próximo. Comprar e
 > descartar saem naturalmente de duas passagens.
@@ -108,7 +108,7 @@ não dependa do tamanho da lista.
 
 ### 3.3 A semente da IA (E6, RNF1.3)
 
-- `[P]` ⚠️ **S34** — A IA recebe **um `Aleatorio` de vida longa**, criado quando a
+- `[D]` **S34** — A IA recebe **um `Aleatorio` de vida longa**, criado quando a
   partida começa, a partir de `partida.semente`.
 
 > A E6 exige que "mesma visão e mesma semente produzam a mesma escolha". Um gerador recriado a
@@ -127,7 +127,7 @@ Mas ela está na lista da **H15**, não na da H3.
 Sem nenhuma pausa, o turno da IA acontece entre dois quadros: o jogador confirma o descarte e
 a mesa volta a ser dele, com duas cartas a mais no lixo e nenhuma pista de que houve um turno.
 
-- `[P]` ⚠️ **S35** — A H3 implementa a **primeira metade da RF5.3**: uma pausa fixa
+- `[D]` **S35** — A H3 implementa a **primeira metade da RF5.3**: uma pausa fixa
   entre comandos da IA, sem animação nem destaque. A apresentação refinada fica na H15.
 
 > Mesmo padrão da S7 na H1 e da S17 na H2 — uma regra fechada por duas histórias, com a divisão
@@ -169,7 +169,7 @@ deixam de ser hipotéticos.
 Nada novo na mesa. O que muda é que ela **deixa de ficar parada**: durante o turno da IA
 continua inerte (S18, S20), e volta a responder quando a vez retorna.
 
-- `[P]` ⚠️ **S36** — Durante o turno da IA a mesa mostra que ele está acontecendo,
+- `[D]` **S36** — Durante o turno da IA a mesa mostra que ele está acontecendo,
   reusando o painel "Vez e fase" que já existe. Sem elemento novo.
 
 ---
@@ -201,7 +201,7 @@ Interface, nível 4:
 |---|---|---|
 | **CA-S37-1** | iniciar, comprar e descartar pela interface | a mesa volta a responder ao humano, com o lixo maior |
 
-- `[P]` ⚠️ **S37** — A `CA-S37-1` é o **critério de ponta a ponta** que a H1 não
+- `[D]` **S37** — A `CA-S37-1` é o **critério de ponta a ponta** que a H1 não
   teve e a H2 adiou. Ele exercita clique → estado → engine → IA → mesa numa asserção só.
 
 > Registrado como gatilho no [roadmap.md](../roadmap.md) §3 desde a H1, com prazo nesta spec.
@@ -214,9 +214,11 @@ Interface, nível 4:
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 10 decisões foram confirmadas em 2026-08-01.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S28** | Escopo | A IA sorteia uniformemente; heurística é a H15 |
 | **S29** | API | `decidir(visao, aleatorio)` — só a visão, e chama `movimentosValidos` sozinha |
