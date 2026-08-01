@@ -115,7 +115,7 @@ describe('R3 — estrutura do turno', () => {
 })
 
 describe('M9 — conservação das cartas', () => {
-  it('CA-M9-1 — mãos, jogos, monte, lixo e mortos somam 104 sem id repetido', () => {
+  it('CA-M9-3 — mãos, jogos, monte, lixo e mortos somam 104 sem id repetido', () => {
     const todos = ids(todasAsCartas(iniciarPartida(SEMENTE_QUALQUER)))
 
     expect(todos).toHaveLength(104)

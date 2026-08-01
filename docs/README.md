@@ -117,6 +117,25 @@ A configuração fica em [`rastreio.json`](../rastreio.json) na raiz: qual arqui
 itens numerados, com que padrão, e quais documentos os citam. O script é genérico — a mesma
 ferramenta serve para requisitos, endpoints ou qualquer conjunto de itens identificados.
 
+### Unicidade dos identificadores
+
+```bash
+python3 scripts/verificar-identificadores.py
+```
+
+[`verificar-identificadores.py`](../scripts/verificar-identificadores.py) prova que nenhum
+`CA-` ou `S` foi **definido em dois lugares**. São as duas famílias que atravessam arquivos:
+critérios vivem em [acceptance-tests.md](acceptance-tests.md) *e* em [`specs/`](specs/), e a
+série `S` das specs é global e não reinicia.
+
+Ele nasceu de uma colisão real, em 2026-08-01: ao fechar a spec da H1, a checagem de conflito
+foi um `grep` de padrão `CA-R[0-9.]+-[0-9]+`, que casa `CA-R2.2-1` e **ignora** `CA-M9-1`. O
+identificador já pertencia ao `acceptance-tests.md` com outro significado, e a duplicata entrou
+no repositório junto com o teste.
+
+A lição está na regra do `CLAUDE.md`: afirmação de completude precisa de script, não de
+atenção — e um `grep` escrito na hora é atenção disfarçada de script.
+
 ### O que fica de fora
 
 Uma coisa **não** é coberta por `npm run verificar`, e vale saber qual: o *rewrite* de SPA do

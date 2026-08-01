@@ -96,7 +96,7 @@ npm run teste:observar   # Vitest em watch
 npx vitest --project nucleo   # só engine/ia/tests, sem custo de DOM
 ```
 
-`npm run verificar` precisa passar antes de qualquer commit. Ele inclui três verificadores
+`npm run verificar` precisa passar antes de qualquer commit. Ele inclui quatro verificadores
 próprios:
 
 - `scripts/verificar-fronteiras.py` — prova que a regra de dependência do ESLint recusa
@@ -105,6 +105,9 @@ próprios:
   de verdade**. Ele escreve arquivos dentro de `src/engine/`, `src/estado/` e `src/ia/`, e
   já destruiu trabalho não commitado uma vez
 - `scripts/verificar-rastreabilidade.py` — prova que nenhuma regra ficou órfã de história
+- `scripts/verificar-identificadores.py` — prova que nenhum `CA-` ou `S` foi definido em
+  dois lugares. Nasceu de uma colisão real: um `grep` de padrão incompleto declarou
+  "sem conflito" e deixou passar um ID duplicado
 
 ## Git
 

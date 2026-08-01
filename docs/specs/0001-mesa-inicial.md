@@ -315,7 +315,7 @@ preenche duas das quatro.
 | **CA-R2.6-1** | duas partidas com a mesma semente | o `jogadorDaVez` é o **mesmo** |
 | **CA-R2.6-2** | as sementes **1 a 20** | `0` e `1` aparecem, cada um ao menos uma vez, como `jogadorDaVez` |
 | **CA-R3.1-1** | uma partida iniciada | a fase é **`Compra`** |
-| **CA-M9-1** | uma partida iniciada | mãos + jogos + monte + lixo + mortos = **104**, sem `id` repetido |
+| **CA-M9-3** | uma partida iniciada | mãos + jogos + monte + lixo + mortos = **104**, sem `id` repetido |
 | **CA-RNF1.3-1** | duas partidas com a mesma semente | os estados são **profundamente iguais** |
 | **CA-RNF1.3-2** | duas partidas com sementes diferentes | as distribuições **diferem** |
 | **CA-S4-1** | a semente **20260731** | a distribuição é **exatamente** a registrada em 6.1 |
