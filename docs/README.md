@@ -89,6 +89,19 @@ python3 scripts/verificar-fronteiras.py
 Os casos permitidos existem porque uma regra que bloqueasse **qualquer** import também
 passaria nos 14 testes negativos.
 
+Para escrever essas violações, o script cria arquivos dentro de `src/engine/`, `src/estado/`
+e `src/ia/` — e depois os apaga. Em 2026-07-31 descobrimos que a limpeza apagava as três
+pastas **inteiras**, junto com código não commitado. Era inofensiva enquanto elas não
+existiam, e destrutiva no primeiro dia da engine.
+
+```bash
+python3 scripts/verificar-fronteiras-preserva.py
+```
+
+[`verificar-fronteiras-preserva.py`](../scripts/verificar-fronteiras-preserva.py) fecha esse
+buraco: cria sentinelas nas três pastas, roda o verificador e exige que sobrevivam byte a
+byte. Foi visto reprovando contra a versão antiga antes de ser aceito.
+
 ### Rastreabilidade
 
 [`scripts/verificar-rastreabilidade.py`](../scripts/verificar-rastreabilidade.py) confere as

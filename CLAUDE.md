@@ -96,11 +96,14 @@ npm run teste:observar   # Vitest em watch
 npx vitest --project nucleo   # só engine/ia/tests, sem custo de DOM
 ```
 
-`npm run verificar` precisa passar antes de qualquer commit. Ele inclui dois verificadores
+`npm run verificar` precisa passar antes de qualquer commit. Ele inclui três verificadores
 próprios:
 
 - `scripts/verificar-fronteiras.py` — prova que a regra de dependência do ESLint recusa
   violações propositais e **aceita** os imports legítimos
+- `scripts/verificar-fronteiras-preserva.py` — prova que o script acima **não apaga código
+  de verdade**. Ele escreve arquivos dentro de `src/engine/`, `src/estado/` e `src/ia/`, e
+  já destruiu trabalho não commitado uma vez
 - `scripts/verificar-rastreabilidade.py` — prova que nenhuma regra ficou órfã de história
 
 ## Git

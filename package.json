@@ -16,8 +16,9 @@
     "formato:corrigir": "prettier --write .",
     "tipos": "tsc -b --noEmit",
     "rastreio": "python3 scripts/verificar-rastreabilidade.py",
-    "verificar": "npm run lint && npm run formato && npm run tipos && npm run fronteiras && npm run rastreio && npm run teste",
+    "verificar": "npm run lint && npm run formato && npm run tipos && npm run fronteiras && npm run fronteiras:preserva && npm run rastreio && npm run teste",
     "fronteiras": "python3 scripts/verificar-fronteiras.py",
+    "fronteiras:preserva": "python3 scripts/verificar-fronteiras-preserva.py",
     "teste": "vitest run",
     "teste:observar": "vitest",
     "teste:cobertura": "vitest run --coverage"

@@ -13,7 +13,6 @@ Uso: python3 scripts/verificar-fronteiras.py
 """
 
 import json
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -80,10 +79,32 @@ PERMITIDOS = [
 ]
 
 
+CRIADOS = []
+PASTAS_CRIADAS = []
+
+
 def escrever(caminho_relativo, conteudo):
+    """Escreve um arquivo temporario, sem nunca tocar em codigo que ja existe.
+
+    A partir da H1 existe codigo de verdade em engine/ e estado/, e a tabela
+    ALVOS usa nomes reais - engine/index.ts e engine/dominio/carta.ts existem
+    mesmo. Um alvo so serve para o import resolver, e o modulo real resolve tao
+    bem quanto: quando o caminho ja existe, deixamos como esta.
+    """
     destino = SRC / caminho_relativo
+    if destino.exists():
+        return destino
+
+    ausentes = []
+    pasta = destino.parent
+    while not pasta.exists():
+        ausentes.append(pasta)
+        pasta = pasta.parent
+
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(conteudo, encoding="utf-8")
+    CRIADOS.append(destino)
+    PASTAS_CRIADAS.extend(ausentes)
     return destino
 
 
@@ -106,33 +127,38 @@ def rodar_eslint(arquivos):
     return por_arquivo
 
 
-def limpar(criados):
-    for caminho in criados:
+def limpar():
+    """Apaga exatamente o que este script criou, e nada mais.
+
+    A versao anterior fazia `shutil.rmtree` em src/engine, src/ia e src/estado
+    sem perguntar quem os criou. Era inofensivo enquanto essas pastas nao
+    existiam - e destrutivo no primeiro dia em que passaram a existir, apagando
+    a engine inteira de quem rodasse `npm run verificar`.
+
+    Ver o teste de regressao em `verificar-fronteiras-preserva.py`.
+    """
+    for caminho in CRIADOS:
         caminho.unlink(missing_ok=True)
-    for camada in ("engine", "ia", "estado", "ui"):
-        pasta = SRC / camada / "_fronteira"
+
+    # Da pasta mais funda para a mais rasa, e so quando ficou vazia: uma pasta
+    # que ainda tem arquivo dentro e' de outra pessoa.
+    for pasta in sorted(set(PASTAS_CRIADAS), key=lambda p: len(p.parts), reverse=True):
         if pasta.is_dir() and not any(pasta.iterdir()):
             pasta.rmdir()
-    for alvo in ALVOS:
-        (SRC / alvo).unlink(missing_ok=True)
-    for camada in ("engine", "ia", "estado"):
-        base = SRC / camada
-        if base.is_dir():
-            shutil.rmtree(base, ignore_errors=True)
-    for restante in ("ui/tela.ts",):
-        (SRC / restante).unlink(missing_ok=True)
+
+    CRIADOS.clear()
+    PASTAS_CRIADAS.clear()
 
 
 def main():
-    criados = []
     falhas = []
     try:
         for relativo, conteudo in ALVOS.items():
-            criados.append(escrever(relativo, conteudo))
+            escrever(relativo, conteudo)
         for relativo, conteudo, _, _ in VIOLACOES:
-            criados.append(escrever(relativo, conteudo))
+            escrever(relativo, conteudo)
         for relativo, conteudo, _ in PERMITIDOS:
-            criados.append(escrever(relativo, conteudo))
+            escrever(relativo, conteudo)
 
         alvos_eslint = [SRC / r for r, _, _, _ in VIOLACOES]
         alvos_eslint += [SRC / r for r, _, _ in PERMITIDOS]
@@ -155,7 +181,7 @@ def main():
             if not ok:
                 falhas.append(f"{descricao}: disparou {sorted(disparadas)} sem motivo")
     finally:
-        limpar(criados)
+        limpar()
 
     if falhas:
         print(f"\n{len(falhas)} problema(s):")
