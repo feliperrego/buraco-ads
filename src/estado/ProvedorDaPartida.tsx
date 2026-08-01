@@ -2,6 +2,7 @@ import { useMemo, useReducer } from 'react'
 import type { ReactNode } from 'react'
 import { Contexto, INICIAL, reduzir, sortearSemente } from './partida-em-curso.ts'
 import type { ContextoDaPartida } from './partida-em-curso.ts'
+import type { Comando } from '../engine/index.ts'
 
 /**
  * Único export deste arquivo, por exigência do `react-refresh`. A lógica e o
@@ -16,6 +17,9 @@ export default function ProvedorDaPartida({ children }: { children: ReactNode })
       iniciar: () => {
         // A impureza mora aqui, numa linha, fora do reducer (S8).
         despachar({ tipo: 'iniciar', semente: sortearSemente() })
+      },
+      jogar: (comando: Comando) => {
+        despachar({ tipo: 'jogar', comando })
       },
     }),
     [estado.partida],

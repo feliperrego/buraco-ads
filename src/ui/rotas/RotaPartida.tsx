@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { visaoDe } from '../../engine/index.ts'
+import { movimentosValidos, visaoDe } from '../../engine/index.ts'
 import { usePartidaEmCurso } from '../../estado/partida-em-curso.ts'
 import TelaPartida from '../telas/TelaPartida.tsx'
 
@@ -14,7 +14,7 @@ import TelaPartida from '../telas/TelaPartida.tsx'
  * navegação termina, não por qual mecanismo.
  */
 export default function RotaPartida() {
-  const { partida } = usePartidaEmCurso()
+  const { partida, jogar } = usePartidaEmCurso()
   const navegar = useNavigate()
 
   useEffect(() => {
@@ -27,6 +27,9 @@ export default function RotaPartida() {
     return null
   }
 
-  // S11 — o humano é sempre 0. A tela nunca vê a `Partida` (spec §4.2).
-  return <TelaPartida visao={visaoDe(partida, 0)} />
+  // S11 — o humano é sempre 0. A tela nunca vê a `Partida` (spec 0001 §4.2), e
+  // recebe a lista de movimentos em vez de decidir o que é válido (T6).
+  const visao = visaoDe(partida, 0)
+
+  return <TelaPartida visao={visao} movimentos={movimentosValidos(visao)} aoJogar={jogar} />
 }

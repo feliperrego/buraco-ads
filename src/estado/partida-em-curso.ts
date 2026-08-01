@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react'
-import { iniciarPartida } from '../engine/index.ts'
-import type { Partida } from '../engine/index.ts'
+import { aplicar, iniciarPartida } from '../engine/index.ts'
+import type { Comando, Partida } from '../engine/index.ts'
 
 /**
  * A6 — `useReducer` + Context. Guarda a partida em curso entre as rotas.
@@ -15,7 +15,9 @@ import type { Partida } from '../engine/index.ts'
  * módulo com componente exporte **só** componentes, então a lógica pura mora
  * aqui e o provedor mora sozinho em `ProvedorDaPartida.tsx`.
  */
-export type AcaoDaPartida = { readonly tipo: 'iniciar'; readonly semente: number }
+export type AcaoDaPartida =
+  | { readonly tipo: 'iniciar'; readonly semente: number }
+  | { readonly tipo: 'jogar'; readonly comando: Comando }
 
 export type EstadoDaPartida = {
   readonly partida: Partida | null
@@ -24,13 +26,26 @@ export type EstadoDaPartida = {
 export const INICIAL: EstadoDaPartida = { partida: null }
 
 export function reduzir(estado: EstadoDaPartida, acao: AcaoDaPartida): EstadoDaPartida {
-  // O estado anterior não participa: a H1 só sabe começar do zero. Substituir
-  // uma partida em curso é a RF1.3, que exige confirmação e chega na H16.
-  void estado
+  switch (acao.tipo) {
+    case 'iniciar':
+      // Substituir uma partida em curso é a RF1.3, que exige confirmação e
+      // chega na H16. Aqui iniciar sempre começa do zero.
+      return { partida: iniciarPartida(acao.semente) }
 
-  // Sem `switch` porque há uma ação só, e o lint reclama com razão de um desvio
-  // cuja condição é sempre verdadeira. Ele nasce junto com a segunda ação, na H2.
-  return { partida: iniciarPartida(acao.semente) }
+    case 'jogar': {
+      if (estado.partida === null) {
+        return estado
+      }
+
+      const resultado = aplicar(estado.partida, acao.comando)
+
+      // Uma recusa não deveria chegar aqui: a RF2.1 garante que a interface só
+      // oferece o que está em `movimentosValidos`. Se chegar, o estado fica como
+      // está — a recusa da S22 existe para proteger a engine, não para virar
+      // mensagem de erro que a RF2.1 diz não existir.
+      return resultado.tipo === 'sucesso' ? { partida: resultado.partida } : estado
+    }
+  }
 }
 
 /** S8 — a única fonte de aleatoriedade do sistema, e ela vive fora da engine. */
@@ -41,6 +56,7 @@ export function sortearSemente(): number {
 export type ContextoDaPartida = {
   readonly partida: Partida | null
   readonly iniciar: () => void
+  readonly jogar: (comando: Comando) => void
 }
 
 export const Contexto = createContext<ContextoDaPartida | null>(null)
