@@ -133,8 +133,8 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 
 | Marco | Histórias | Termina quando |
 |---|---|---|
-| **0** | 0.1–0.8 | O lint recusa um import proibido, a suíte vazia roda e uma rota digitada direto na URL publicada devolve a aplicação |
-| **I** | H1–H3 | Dois jogadores compram e descartam; a IA joga sozinha |
+| **0** ✅ | 0.1–0.8 | O lint recusa um import proibido, a suíte vazia roda e uma rota digitada direto na URL publicada devolve a aplicação |
+| **I** ✅ | H1–H3 | Dois jogadores compram e descartam; a IA joga sozinha |
 | **II** | H4–H7 | Dá para baixar sequências, com e sem curinga, e pegar o lixo |
 | **III** | H8–H12 | Uma rodada completa termina em batida e pontuação apurada |
 | **IV** | H13–H14 | Uma partida completa chega a 3000, inclusive com monte esgotado |
@@ -166,7 +166,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Teste de mutação | **Se aparecer bug em regra que tinha teste passando** | E8 |
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
 | Reintroduzir TanStack Query | **Se multiplayer entrar no escopo** | ADR-0004 |
-| `strictTypeChecked` do typescript-eslint | **Ao terminar o Marco I** — se o atrito estiver alto, avaliar `recommendedTypeChecked` | tarefa 0.3 |
 | Excluir `/assets/` do *rewrite* de SPA | **Ao primeiro `Unexpected token '<'` no console** — asset ausente devolve HTML em vez de 404 | ADR-0008 |
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
@@ -174,6 +173,16 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
+
+### Gatilhos já disparados
+
+Saíram da tabela acima porque foram resolvidos. Ficam aqui porque a RD4 exige o registro — um
+gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
+
+| Decisão | Disparou em | Resultado |
+|---|---|---|
+| Critério de ponta a ponta | Spec da H3, 2026-08-01 | Virou a **`CA-S37-1`**, primeiro teste do projeto a exercitar as quatro camadas numa asserção só |
+| `strictTypeChecked` do typescript-eslint | Fim do Marco I, 2026-08-01 | **Mantido.** Reprovou seis vezes na H2 e na H3, e **nenhuma foi ruído**: `no-unnecessary-condition` num `switch` de uma alternativa, `no-base-to-string` num objeto em template, `restrict-template-expressions`, `react-refresh` em dois arquivos e dois `no-unused-vars`. O atrito medido é baixo e a regra está pagando |
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
 > próprio modelo**. A R6.5 é a regra mais difícil do Buraco Aberto. Se o `domain.md` M2 acertou,

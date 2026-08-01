@@ -125,18 +125,21 @@ git log --oneline | grep -i tarefa    # tarefas do Marco 0 concluídas
 git log --oneline | head -20
 ```
 
-As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** e da
-**H2** estão fechadas e implementadas.
+As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1**, **H2**
+e **H3** estão fechadas e implementadas.
 
-O **Marco 0**, a **H1** e a **H2** estão prontos: dá para iniciar uma partida, comprar do monte
-e descartar. O próximo trabalho é a **H3** (turno da IA), que ainda **não tem spec**.
+O **Marco 0 e o Marco I estão fechados**: existe um jogo que roda. O humano compra e descarta,
+a IA joga sozinha, e a vez volta — para sempre. O próximo trabalho é a **H4** (baixar
+sequências), que ainda **não tem spec**.
 
-As camadas `engine/` (puro, determinístico), `estado/` (`useReducer` + Context, única fonte de
-`Math.random()`) e `ui/` estão de pé e exercitadas. `ia/` nasce na H3.
+**As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
+hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),
+`estado/` (`useReducer` + Context, única fonte de `Math.random()`, e a única camada que conhece
+`ia/` e `ui/`), `ui/`.
 
-**A partida trava depois de uma jogada, e isso é a spec, não bug.** A S18 fixou que sem IA a
-vez passa ao adversário e a mesa congela. Medido: como a R2.6 sorteia quem começa, **~54% das
-partidas nascem já congeladas**, sem nenhuma jogada para o humano. É a H3 que destrava.
+A IA é **aleatória de propósito** — ela sorteia dentro de `movimentosValidos`. A heurística é a
+H15, e a E7 fixou que esta aleatória **não é descartada lá**: vira a linha de base contra a qual
+a heurística é medida.
 
 As tabelas do `docs/roadmap.md` §1 e do `docs/user-stories.md` são a fonte do que está pronto;
 se divergirem daqui, elas vencem.
@@ -176,3 +179,13 @@ RNF2.1 exige que todo teste cite o `Rn` que valida. Uma regra mal interpretada s
 não produz apenas código errado: produz um teste que passa e **documenta** o erro, fazendo a
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
+
+**Medido na H2 e na H3:** cinco commits de loop, **zero retrabalho**. Dois modos de falha
+apareceram, e ambos valem vigiar:
+
+- **Critério negativo passa de graça.** "Não deve existir X" é trivialmente verdade num
+  componente vazio. Aconteceu duas vezes — `CA-S1-1` e `CA-S27-1`. Todo critério negativo
+  precisa de uma afirmação positiva antes, provando que há o que negar.
+- **A tentação de pular o passo 3.** Com os critérios prontos, escrever o código direto parece
+  óbvio, e foi o que aconteceu na H3. O conserto é cotar a função e ver o vermelho — mesma
+  garantia, mas é conserto, não disciplina.
