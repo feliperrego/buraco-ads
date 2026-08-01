@@ -126,15 +126,18 @@ As ondas de documentação (0 a 3) estão **completas e confirmadas** — `visio
 `rules`, `requirements`, `domain`, `architecture`, `user-stories`, `screens`,
 `acceptance-tests`, `testing-strategy`, `roadmap`, mais a spec da H1.
 
-O **Marco 0** (fundação técnica, `docs/roadmap.md` §1) está **fechado**. O próximo trabalho é
-a **H1**, cuja spec já está escrita em
-[`docs/specs/0001-mesa-inicial.md`](docs/specs/0001-mesa-inicial.md).
+O **Marco 0** está fechado e a **H1 está pronta** — a engine existe, e clicar em "iniciar
+partida" mostra uma mesa de verdade. O próximo trabalho é a **H2** (comprar e descartar), que
+ainda **não tem spec**: escrevê-la é o passo 1.
 
-Ainda **não existe código de domínio**. `src/` tem `main.tsx` e `ui/`, e as quatro rotas de
-`ui/rotas/` renderizam só um `<h1>` cada — esqueleto de navegação, não telas (RD2). A engine
-nasce na H1, em `src/engine/`.
+As quatro camadas estão de pé e exercitadas: `engine/` (puro, determinístico), `estado/`
+(`useReducer` + Context, única fonte de `Math.random()`), `ui/`. `ia/` nasce na H3.
 
-A tabela do `docs/roadmap.md` §1 é a fonte do que está pronto; se divergir daqui, ela vence.
+A mesa **não responde a clique**, e isso é intencional (spec 0001 S1): a H1 provou a
+integração, a interatividade começa na H2.
+
+As tabelas do `docs/roadmap.md` §1 e do `docs/user-stories.md` são a fonte do que está pronto;
+se divergirem daqui, elas vencem.
 
 ## O projeto está publicado
 
