@@ -86,3 +86,111 @@ describe('M8 — a partida recebida nunca é alterada', () => {
     expect(antes).toEqual(copia)
   })
 })
+
+/** A mão de quem está jogando agora. */
+function maoDaVez(partida: Partida): readonly Carta[] {
+  return partida.jogadores[partida.jogadorDaVez].mao
+}
+
+/** Compra e descarta, devolvendo a partida com a vez já passada. */
+function turnoCompleto(partida: Partida, escolher: (mao: readonly Carta[]) => Carta): Partida {
+  const comprou = aplicado(partida, { tipo: 'comprarDoMonte' })
+
+  return aplicado(comprou, { tipo: 'descartar', carta: escolher(maoDaVez(comprou)).id })
+}
+
+function primeira(mao: readonly Carta[]): Carta {
+  const carta = mao[0]
+
+  if (carta === undefined) {
+    throw new Error('cenário impossível: mão vazia')
+  }
+
+  return carta
+}
+
+describe('R7 — o descarte encerra o turno', () => {
+  it('CA-R7.1-1 — descartar deixa 11 na mão e 1 no lixo', () => {
+    const comprou = aplicado(iniciarPartida(SEMENTE), { tipo: 'comprarDoMonte' })
+    const quem = comprou.jogadorDaVez
+    const escolhida = primeira(maoDaVez(comprou))
+
+    const depois = aplicado(comprou, { tipo: 'descartar', carta: escolhida.id })
+
+    expect(comprou.jogadores[quem].mao).toHaveLength(12)
+    expect(depois.jogadores[quem].mao).toHaveLength(11)
+    expect(depois.lixo).toHaveLength(1)
+    expect(depois.lixo[0]).toEqual(escolhida)
+    expect(depois.jogadores[quem].mao).not.toContainEqual(escolhida)
+  })
+
+  it('CA-R7.1-2 — após descartar, a vez é do outro jogador e a fase volta a Compra', () => {
+    const comprou = aplicado(iniciarPartida(SEMENTE), { tipo: 'comprarDoMonte' })
+    const quem = comprou.jogadorDaVez
+
+    const depois = aplicado(comprou, { tipo: 'descartar', carta: primeira(maoDaVez(comprou)).id })
+
+    expect(depois.jogadorDaVez).not.toBe(quem)
+    expect(depois.fase).toBe('Compra')
+  })
+
+  it('CA-R7.2-1 — a carta recém-comprada pode ser descartada no mesmo turno', () => {
+    const antes = iniciarPartida(SEMENTE)
+    const comprada = antes.monte[0]
+    const comprou = aplicado(antes, { tipo: 'comprarDoMonte' })
+
+    expect(comprada).toBeDefined()
+
+    // A S23 põe a carta comprada no fim da mão; a R7.2 diz que ela é descartável
+    // como qualquer outra. É o tipo de regra que uma implementação "esperta"
+    // quebraria ao proteger a carta recém-adquirida.
+    const depois = aplicado(comprou, { tipo: 'descartar', carta: comprada?.id ?? '' })
+
+    expect(depois.lixo[0]).toEqual(comprada)
+  })
+})
+
+describe('S24 — a ordem do lixo', () => {
+  it('CA-S24-1 — após dois descartes, lixo[0] é o último descartado', () => {
+    const primeiroTurno = turnoCompleto(iniciarPartida(SEMENTE), primeira)
+    const descartadaPrimeiro = primeiroTurno.lixo[0]
+
+    const segundoTurno = turnoCompleto(primeiroTurno, primeira)
+
+    expect(segundoTurno.lixo).toHaveLength(2)
+    expect(segundoTurno.lixo[1]).toEqual(descartadaPrimeiro)
+    expect(segundoTurno.lixo[0]).not.toEqual(descartadaPrimeiro)
+  })
+})
+
+describe('R3.2 e S22 — comandos que a engine recusa', () => {
+  it('CA-R3.2-2 — descartar na fase Compra é recusado', () => {
+    const partida = iniciarPartida(SEMENTE)
+    const resultado = aplicar(partida, { tipo: 'descartar', carta: primeira(maoDaVez(partida)).id })
+
+    expect(resultado.tipo).toBe('recusa')
+  })
+
+  it('CA-S22-1 — descartar carta que não está na mão é recusado', () => {
+    const comprou = aplicado(iniciarPartida(SEMENTE), { tipo: 'comprarDoMonte' })
+    const doMonte = comprou.monte[0]
+
+    expect(doMonte).toBeDefined()
+
+    // A RF2.1 garante que a interface nunca envia isto. A recusa protege a
+    // engine de um chamador com bug — o caso da IA da H15 (S22).
+    const resultado = aplicar(comprou, { tipo: 'descartar', carta: doMonte?.id ?? '' })
+
+    expect(resultado.tipo).toBe('recusa')
+  })
+})
+
+describe('M9 — conservação após o descarte', () => {
+  it('CA-M9-5 — após descartar, as 104 cartas se conservam', () => {
+    const depois = turnoCompleto(iniciarPartida(SEMENTE), primeira)
+    const ids = todasAsCartas(depois).map((carta) => carta.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+})

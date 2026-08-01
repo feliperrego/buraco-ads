@@ -15,7 +15,7 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
     case 'comprarDoMonte':
       return comprarDoMonte(partida)
     case 'descartar':
-      throw new Error('não implementado — descartar chega na próxima iteração')
+      return descartar(partida, comando.carta)
   }
 }
 
@@ -54,6 +54,39 @@ function comprarDoMonte(partida: Partida): Resultado {
       jogadores: comMao(partida, quem, [...partida.jogadores[quem].mao, topo]),
       monte: partida.monte.slice(1),
       fase: 'Acao',
+    },
+  }
+}
+
+function descartar(partida: Partida, cartaId: string): Resultado {
+  if (partida.fase !== 'Acao') {
+    // R3.2 — não se descarta antes de comprar. Na interface isso é a ausência do
+    // comando na lista (RF2.1); aqui é a recusa que protege a engine (S22).
+    return { tipo: 'recusa', motivo: 'R3.2: descartar só depois de comprar' }
+  }
+
+  const quem = partida.jogadorDaVez
+  const mao = partida.jogadores[quem].mao
+  const carta = mao.find((daMao) => daMao.id === cartaId)
+
+  if (carta === undefined) {
+    return { tipo: 'recusa', motivo: `R7.1: a carta ${cartaId} não está na mão de quem joga` }
+  }
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores: comMao(
+        partida,
+        quem,
+        mao.filter((daMao) => daMao.id !== cartaId),
+      ),
+      // S24 — lixo[0] é o topo, isto e' a carta descartada mais recentemente.
+      lixo: [carta, ...partida.lixo],
+      // R7.1 — o descarte encerra o turno.
+      fase: 'Compra',
+      jogadorDaVez: quem === 0 ? 1 : 0,
     },
   }
 }
