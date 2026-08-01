@@ -1,28 +1,30 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import type { RouterHistory } from '@tanstack/react-router'
 import App from '../App.tsx'
+import RotaInicial from './RotaInicial.tsx'
+import RotaPartida from './RotaPartida.tsx'
 
 /**
- * As quatro telas de docs/screens.md §1, criadas **vazias** conforme a RD2: o
- * esqueleto de navegação que a RF1.3 e a RF1.4 vão usar, não as telas.
+ * As quatro telas de docs/screens.md §1. A H1 preenche duas; `/fim` e `/regras`
+ * seguem vazias, como a RD2 as criou.
  *
- * Roteamento por código, e não por arquivos, por causa da A7: as rotas moram em
- * src/ui/rotas/ porque a arquitetura já decidiu isso. O plugin de arquivos
- * geraria um routeTree.gen.ts para ser commitado e depois excluído do Prettier,
- * do ESLint e da cobertura — três exceções para economizar vinte linhas.
+ * Roteamento por código, e não por arquivos, pelo ADR-0009.
+ *
+ * As duas rotas com conteúdo moram em arquivos próprios porque este exporta a
+ * fábrica, que não é componente — o `react-refresh` não deixa os dois juntos.
  */
 const rotaRaiz = createRootRoute({ component: App })
 
 const rotaInicial = createRoute({
   getParentRoute: () => rotaRaiz,
   path: '/',
-  component: () => <h1>Inicial</h1>,
+  component: RotaInicial,
 })
 
 const rotaPartida = createRoute({
   getParentRoute: () => rotaRaiz,
   path: '/partida',
-  component: () => <h1>Partida</h1>,
+  component: RotaPartida,
 })
 
 const rotaFim = createRoute({

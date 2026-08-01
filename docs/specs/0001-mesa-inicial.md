@@ -230,12 +230,25 @@ para que o caminho certo seja o único que existe desde o começo.
 Esta seção **não existia no rascunho**, e a razão é datada: ele foi escrito em 2026-07-29, antes
 de a tarefa 0.7 criar as rotas. Com quatro rotas de pé, três perguntas ficaram em aberto.
 
-- `[D]` **S15** — O `Provider` do `useReducer` (A6) fica na **rota raiz**, em
-  `ui/App.tsx`, acima do `<Outlet/>`. Assim a partida sobrevive à navegação de `/` para
-  `/partida`, que é a única transição da H1.
+- `[D]` **S15** — O `Provider` do `useReducer` (A6) fica **acima do roteador**, em
+  `ui/Aplicacao.tsx`. Assim a partida sobrevive à navegação de `/` para `/partida`, que é a
+  única transição da H1.
 
-- `[D]` **S14** — `/partida` **sem partida em memória redireciona para `/`**, por
-  `beforeLoad` da rota.
+- `[D]` **S14** — `/partida` **sem partida em memória redireciona para `/`**.
+
+> **Correção de 2026-08-01, ao implementar.** A S15 dizia que o `Provider` ficaria na rota
+> raiz (`ui/App.tsx`) e a S14 dizia que o redirecionamento viria de um `beforeLoad`. As duas
+> juntas não fecham: **`beforeLoad` roda fora do React** e não enxerga contexto de componente,
+> então não teria como saber se há partida.
+>
+> Duas saídas eram possíveis — injetar o estado no contexto do roteador, ou redirecionar
+> dentro do componente. Ficou a segunda, por ser mais simples e por evitar uma segunda corrida:
+> o `dispatch` é assíncrono, então mesmo com o contexto do roteador o `beforeLoad` poderia ler
+> um estado velho.
+>
+> A CA-S14-1 **não precisou mudar**, e é isso que valida a correção: ela mede *onde a navegação
+> termina*, não por qual mecanismo. Um critério escrito sobre comportamento sobrevive à troca da
+> implementação — se estivesse escrito sobre `beforeLoad`, teria virado retrabalho.
 
 > A S14 responde a uma pergunta que só passou a existir depois do [ADR-0008](../decisions/0008-publicar-na-vercel-com-integracao-git.md).
 > O *rewrite* de SPA faz **qualquer** URL devolver a aplicação, então digitar `/partida` direto
@@ -249,10 +262,15 @@ de a tarefa 0.7 criar as rotas. Com quatro rotas de pé, três perguntas ficaram
 ```
 /          tela inicial, botão "iniciar partida"
   ↓        estado/ gera a semente (S8) e cria a Partida
+  ↓        a navegação dispara quando a partida APARECE, não no clique
 /partida   renderiza visaoDe(partida, 0)
   ↑
   └─ sem partida em memória → redireciona para /
 ```
+
+A ordem da seta do meio importa. Navegar dentro do `onClick` seria uma corrida com o
+`dispatch`: `/partida` chegaria a ver `partida === null` e seria devolvida para `/` pela
+própria regra da S14.
 
 ---
 
