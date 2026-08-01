@@ -55,7 +55,7 @@ testada, os testes passam a ser a especificação viva.
 
 | Spec | História | Status |
 |---|---|---|
-| [0001-mesa-inicial.md](specs/0001-mesa-inicial.md) | H1 — mesa inicial | Rascunho anotado |
+| [0001-mesa-inicial.md](specs/0001-mesa-inicial.md) | H1 — mesa inicial | Confirmada |
 
 ## Verificação
 
