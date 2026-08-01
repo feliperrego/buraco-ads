@@ -171,6 +171,8 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
 | Loop autônomo nos passos 3–6 do ciclo | **Ao começar a H2** — critérios já confirmados; medir quantos commits precisaram de retrabalho | RD9 |
+| `eventos[]` no retorno de `aplicar` | **Ao escrever a H12** — decidir entre acrescentá-los ou derivar a apuração do estado | M8, S21 |
+| Critério de ponta a ponta da H1 | **Ao escrever os testes da H2** — nenhum dos 20 critérios cobre clique → engine → mesa | spec 0001 §1 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.

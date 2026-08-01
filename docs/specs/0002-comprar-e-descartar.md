@@ -1,6 +1,6 @@
 # Spec 0002 — Comprar e descartar
 
-> Status: **rascunho anotado** — 11 pendências na seção 7
+> Status: **confirmado** — 11 decisões, nenhuma pendência
 > História: **H2** — "Compro uma carta do monte e descarto outra, encerrando meu turno"
 > Fecha: R3.1, R3.2, R4.1 (metade), R4.3, R7.1, R7.2, RF2.2, M10
 > Última atualização: 2026-08-01
@@ -35,14 +35,14 @@ criada e vista; a H2 prova que ela pode **mudar** sem violar a conservação das
 | Pegar morto | H10 |
 | Monte esgotado (R4.6, R4.8) | H14 |
 
-- `[P]` ⚠️ **S17** — A H2 implementa **apenas `comprarDoMonte`** das duas opções da
+- `[D]` **S17** — A H2 implementa **apenas `comprarDoMonte`** das duas opções da
   R4.1. `pegarLixo` é a H7 inteira, e misturar as duas aqui juntaria a primeira transição de
   estado com a regra de compra mais complexa do jogo.
 
 > Isto repete o padrão da S7 na H1, que implementou só a primeira metade da R2.6. Uma regra
 > pode ser fechada por duas histórias, desde que esteja escrito qual metade cabe a cada uma.
 
-- `[P]` ⚠️ **S18** — Depois do descarte, a vez passa ao adversário e **a mesa fica
+- `[D]` **S18** — Depois do descarte, a vez passa ao adversário e **a mesa fica
   inerte**. Sem IA (H3), a partida para ali.
 
 > S18 parece um beco sem saída e é a fatia honesta. A alternativa seria deixar o humano jogar
@@ -79,7 +79,7 @@ marcadas `[D]`:
 | **M10** | `movimentosValidos(partida) → Comando[]` |
 | **M12** | "`movimentosValidos` opera sobre `VisaoDoJogador`, **não** sobre `Partida`" |
 
-- `[P]` ⚠️ **S19** — Vale o **M12**: a assinatura recebe `VisaoDoJogador`. A linha do
+- `[D]` **S19** — Vale o **M12**: a assinatura recebe `VisaoDoJogador`. A linha do
   M10 é imprecisão de redação e deve ser corrigida no `domain.md`, com nota de por quê.
 
 > O M12 vence por três motivos, e o terceiro é o que decide.
@@ -97,13 +97,13 @@ marcadas `[D]`:
 > "o que o adversário poderia fazer?", que é exatamente o que a IA da H15 vai querer. A visão
 > já carrega o `eu`, então a pergunta é sempre inequívoca.
 
-- `[P]` ⚠️ **S20** — Quando `visao.jogadorDaVez !== visao.eu`, a lista é **vazia**.
+- `[D]` **S20** — Quando `visao.jogadorDaVez !== visao.eu`, a lista é **vazia**.
 
 > É daqui que a mesa inerte da S18 cai de graça: a interface só mostra o que está na lista
 > (RF2.1), então "não é sua vez" não precisa de nenhum código de interface. É ausência, não
 > desabilitação.
 
-- `[P]` ⚠️ **S21** — `aplicar` devolve `Sucesso(partida)` **sem a lista de eventos**
+- `[D]` **S21** — `aplicar` devolve `Sucesso(partida)` **sem a lista de eventos**
   que o M8 previu.
 
 > O M8 escreveu `Sucesso(nova partida, eventos[])`. Não há consumidor de eventos na H2, nem na
@@ -114,7 +114,7 @@ marcadas `[D]`:
 > Gatilho registrado: **ao escrever a H12**, decidir entre acrescentar `eventos[]` ou derivar a
 > narrativa do estado.
 
-- `[P]` ⚠️ **S22** — `aplicar` **recusa** comando ilegal, mesmo a RF2.1 garantindo
+- `[D]` **S22** — `aplicar` **recusa** comando ilegal, mesmo a RF2.1 garantindo
   que a interface nunca o envie.
 
 > Parece redundância e não é: a RF2.1 protege o jogador humano, não a engine. A IA da H15
@@ -138,7 +138,7 @@ marcadas `[D]`:
 
 A carta comprada sai de `monte[0]`, que a S6 fixou como o topo.
 
-- `[P]` ⚠️ **S23** — A carta comprada entra no **fim** da mão. A mão não é
+- `[D]` **S23** — A carta comprada entra no **fim** da mão. A mão não é
   reordenada pela engine em nenhum momento.
 
 > Ordenar a mão é assunto de interface, e de preferência do jogador. Uma engine que ordena
@@ -156,14 +156,14 @@ A carta comprada sai de `monte[0]`, que a S6 fixou como o topo.
 | `fase: 'Acao'` | `fase: 'Compra'` |
 | `jogadorDaVez: p` | `jogadorDaVez: o outro` |
 
-- `[P]` ⚠️ **S24** — `lixo[0]` é o **topo**, isto é, a carta descartada mais
+- `[D]` **S24** — `lixo[0]` é o **topo**, isto é, a carta descartada mais
   recentemente. Descartar insere no início.
 
 > Mesma convenção da S6 para o monte, e pela mesma razão: "qual ponta é o topo" é exatamente o
 > tipo de coisa que duas partes do código decidem em silêncio e diferente. A T3 pede o topo
 > destacado na interface, e a H7 vai precisar da ordem para pegar o lixo inteiro.
 
-- `[P]` ⚠️ **S25** — A carta é identificada por **`id`** no comando, não por
+- `[D]` **S25** — A carta é identificada por **`id`** no comando, não por
   posição na mão.
 
 > Posição é frágil: qualquer reordenação na interface, que a S23 deixa livre, mudaria o
@@ -197,7 +197,7 @@ interface deixar de dizer "Vazio" e passar a listar.
 A H1 provou a M9 num único estado. A partir da H2 ela é o que o `domain.md` sempre disse que
 era: **invariante de toda transição**.
 
-- `[P]` ⚠️ **S26** — Todo comando tem teste de conservação **depois** de aplicado,
+- `[D]` **S26** — Todo comando tem teste de conservação **depois** de aplicado,
   não só o estado inicial.
 
 > Comprar move uma carta de um lugar para outro; descartar também. São as duas operações mais
@@ -220,7 +220,7 @@ A interface **nunca** valida (T6). Ela filtra o que mostra pela lista, e a lista
 
 ## 5. Interface
 
-- `[P]` ⚠️ **S27** — Descartar exige **selecionar e confirmar**, em dois passos.
+- `[D]` **S27** — Descartar exige **selecionar e confirmar**, em dois passos.
   Um toque só seleciona; um segundo elemento confirma.
 
 > A T8 fixou "tocar e confirmar" para a interação primária, e a RF2.3 é o que torna isso
@@ -278,9 +278,11 @@ Interface, nível 4:
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-| # | Assunto | Proposta |
+**Não há pendências.** As 11 decisões foram confirmadas em 2026-08-01.
+
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S17** | Escopo | Só `comprarDoMonte`; `pegarLixo` fica inteiro para a H7 |
 | **S18** | Escopo | Após o descarte a mesa fica **inerte** — sem IA, a partida para |

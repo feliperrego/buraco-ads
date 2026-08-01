@@ -234,8 +234,22 @@ Seis comandos, decorrentes de M3 e M4:
 | `regularizarCuringa` | `Acao` | R6.5, R6.6 |
 | `descartar` | `Acao` | R7.1, R7.2 |
 
-- `[D]` A engine expõe `movimentosValidos(partida) → Comando[]`, que
+- `[D]` A engine expõe `movimentosValidos(visao) → Comando[]`, que
   enumera **todos** os comandos legais no estado atual.
+
+> **Corrigido em 2026-08-01, ao escrever a [spec 0002](specs/0002-comprar-e-descartar.md).**
+> Esta linha dizia `movimentosValidos(partida)`, contradizendo o **M12** logo abaixo, que
+> decide que a função opera sobre `VisaoDoJogador` e **não** sobre `Partida`. As duas estavam
+> marcadas `[D]`, e a H2 é onde a função nasce — não dava para adiar.
+>
+> Prevaleceu o M12, e o argumento decisivo não foi a RF5.2: é que a **`Partida` não sabe de
+> quem é a pergunta**. `movimentosValidos(partida)` teria de receber também um `JogadorId`, ou
+> assumir o `jogadorDaVez`. Assumir tornaria impossível perguntar "o que o adversário poderia
+> fazer?", que é exatamente o que a IA da H15 vai precisar. A visão já carrega o `eu`.
+>
+> A contradição passou por duas revisões sem ser notada porque as duas frases estão a quarenta
+> linhas de distância e cada uma parece certa isolada. É o tipo de coisa que só aparece quando
+> alguém precisa escrever a assinatura.
 
 > M10 é a peça de desenho mais importante deste documento, porque **um único mecanismo
 > atende três necessidades distintas**:
