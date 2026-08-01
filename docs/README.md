@@ -56,7 +56,7 @@ testada, os testes passam a ser a especificação viva.
 | Spec | História | Status |
 |---|---|---|
 | [0001-mesa-inicial.md](specs/0001-mesa-inicial.md) | H1 — mesa inicial | **Implementada** — 20 critérios verdes |
-| [0002-comprar-e-descartar.md](specs/0002-comprar-e-descartar.md) | H2 — comprar e descartar | Confirmada — 11 decisões |
+| [0002-comprar-e-descartar.md](specs/0002-comprar-e-descartar.md) | H2 — comprar e descartar | **Implementada** — 20 critérios verdes |
 
 ## Verificação
 

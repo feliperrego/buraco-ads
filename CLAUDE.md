@@ -125,19 +125,18 @@ git log --oneline | grep -i tarefa    # tarefas do Marco 0 concluídas
 git log --oneline | head -20
 ```
 
-As ondas de documentação (0 a 3) estão **completas e confirmadas** — `vision`, `glossary`,
-`rules`, `requirements`, `domain`, `architecture`, `user-stories`, `screens`,
-`acceptance-tests`, `testing-strategy`, `roadmap`, mais a spec da H1.
+As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** e da
+**H2** estão fechadas e implementadas.
 
-O **Marco 0** está fechado e a **H1 está pronta** — a engine existe, e clicar em "iniciar
-partida" mostra uma mesa de verdade. O próximo trabalho é a **H2** (comprar e descartar), que
-ainda **não tem spec**: escrevê-la é o passo 1.
+O **Marco 0**, a **H1** e a **H2** estão prontos: dá para iniciar uma partida, comprar do monte
+e descartar. O próximo trabalho é a **H3** (turno da IA), que ainda **não tem spec**.
 
-As quatro camadas estão de pé e exercitadas: `engine/` (puro, determinístico), `estado/`
-(`useReducer` + Context, única fonte de `Math.random()`), `ui/`. `ia/` nasce na H3.
+As camadas `engine/` (puro, determinístico), `estado/` (`useReducer` + Context, única fonte de
+`Math.random()`) e `ui/` estão de pé e exercitadas. `ia/` nasce na H3.
 
-A mesa **não responde a clique**, e isso é intencional (spec 0001 S1): a H1 provou a
-integração, a interatividade começa na H2.
+**A partida trava depois de uma jogada, e isso é a spec, não bug.** A S18 fixou que sem IA a
+vez passa ao adversário e a mesa congela. Medido: como a R2.6 sorteia quem começa, **~54% das
+partidas nascem já congeladas**, sem nenhuma jogada para o humano. É a H3 que destrava.
 
 As tabelas do `docs/roadmap.md` §1 e do `docs/user-stories.md` são a fonte do que está pronto;
 se divergirem daqui, elas vencem.

@@ -170,9 +170,8 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Excluir `/assets/` do *rewrite* de SPA | **Ao primeiro `Unexpected token '<'` no console** — asset ausente devolve HTML em vez de 404 | ADR-0008 |
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
-| Loop autônomo nos passos 3–6 do ciclo | **Ao começar a H2** — critérios já confirmados; medir quantos commits precisaram de retrabalho | RD9 |
 | `eventos[]` no retorno de `aplicar` | **Ao escrever a H12** — decidir entre acrescentá-los ou derivar a apuração do estado | M8, S21 |
-| Critério de ponta a ponta da H1 | **Ao escrever os testes da H2** — nenhum dos 20 critérios cobre clique → engine → mesa | spec 0001 §1 |
+| Critério de ponta a ponta | **Ao escrever a spec da H3** — o turno da IA exige o fluxo completo de qualquer forma | spec 0001 §1 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
@@ -229,6 +228,15 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 - **RD1** é a única tarefa do Marco 0 que exige verificar a própria ferramenta. Sem ela, a A2 seria fé.
 - **RD3** faz o ritmo depender de nós dois, coerente com "não temos pressa".
 - A **tabela de gatilhos da seção 3** é o conteúdo real deste documento.
+- **RD9 foi medida na H2, em 2026-08-01.** O loop rodou os passos 3–6 em três iterações e
+  **nenhum commit precisou ser refeito**. Três correções aconteceram antes de commitar — trocar
+  uma biblioteca de teste por outra já instalada, dar valores distintos a um *fixture* de
+  cartas, e acrescentar âncora a um critério negativo — e as três eram sobre software, nenhuma
+  sobre Buraco. É o que a divisão previa.
+  > O achado inesperado veio do próprio loop: **dois dos vinte critérios da H2 eram asserções
+  > negativas, e passavam sem implementação nenhuma.** "Não deve existir X" é trivialmente
+  > verdade num componente vazio. Virou padrão de revisão — todo critério negativo precisa de
+  > uma afirmação positiva antes, provando que há o que negar.
 - **RD9** divide o ciclo §4 pela natureza do trabalho, não pela dificuldade. Os passos 1–2 são
   julgamento sobre o domínio; os 3–6 são mecânicos, e o próprio §4 já diz que o teste é
   "transcrição, não invenção" porque o critério de aceite veio antes.

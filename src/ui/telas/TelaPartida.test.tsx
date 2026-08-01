@@ -50,6 +50,18 @@ function descartesDe(visao: VisaoDoJogador): readonly Comando[] {
   return visao.mao.map((daMao) => ({ tipo: 'descartar', carta: daMao.id }))
 }
 
+/**
+ * Os dois critérios abaixo se parecem e cobrem coisas diferentes, de propósito.
+ *
+ * O CA-S1-1 nasceu na H1, quando a mesa nunca respondia. Depois da H2 ele passou
+ * a valer como caso de **componente**: dada uma lista de movimentos vazia, a
+ * tela não oferece nada. O CA-S18-1 cobre o caso de **turno**, que é a razão
+ * pela qual a lista chega vazia na prática.
+ *
+ * Mantê-los separados foi decisão explícita: se um dia a tela passar a inventar
+ * interatividade que não veio da lista, é o CA-S1-1 que reprova — e ele reprova
+ * mesmo que a regra de vez esteja certa.
+ */
 describe('S1 e S18 — quando a mesa não responde', () => {
   it('CA-S1-1 — sem movimentos disponíveis, nenhum elemento da mesa responde a clique', () => {
     render(<TelaPartida visao={visaoInicial()} movimentos={[]} aoJogar={vi.fn()} />)
