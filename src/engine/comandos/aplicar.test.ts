@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { Partida } from '../dominio/partida.ts'
-import { cartas, construirPartida } from '../testing/construtor.ts'
+import { cartas, construirPartida, outrasCartas } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
-import type { Comando } from './comando.ts'
+import type { CartaBaixada, Comando } from './comando.ts'
 
 /**
  * Critérios de aceite da spec 0002 §6.
@@ -210,30 +210,41 @@ describe('M9 — conservação após o descarte', () => {
  * têm nada a ver com baixar.
  */
 
+/** A mão do adversário sai do resto do baralho, nunca de uma lista escrita à mão. */
+function comAdversarioDoResto(
+  mao: readonly Carta[],
+): readonly [readonly Carta[], readonly Carta[]] {
+  return [mao, outrasCartas(mao, 11)]
+}
+
 const SEQUENCIA = '5♥ 6♥ 7♥'
 const RESTO = '9♠ J♦ 4♣ K♠ 2♦ 8♣ 10♠ Q♦ 3♣'
 
 function comSequenciaNaMao(): Partida {
   return construirPartida({
-    maos: [cartas(`${SEQUENCIA} ${RESTO}`), cartas('A♠ 4♦ 7♣ 9♥ J♠ 2♣ 6♦ 10♣ Q♠ K♦ 3♥')],
+    maos: comAdversarioDoResto(cartas(`${SEQUENCIA} ${RESTO}`)),
     jogadorDaVez: 0,
     fase: 'Acao',
   })
 }
 
-function idsDe(notacao: string): readonly string[] {
-  return cartas(notacao).map((carta) => carta.id)
+/**
+ * S51 — o comando passa a carregar o papel de cada carta. Sem `representa`, a
+ * carta é natural, que é o caso inteiro da H4.
+ */
+function baixadasDe(notacao: string): readonly CartaBaixada[] {
+  return cartas(notacao).map((carta) => ({ carta: carta.id }))
 }
 
 describe('R6.1 e R3.4 — baixar um jogo novo na mesa', () => {
   it('CA-R6.1-1 — as cartas saem da mão e o jogo aparece em meusJogos', () => {
     const antes = comSequenciaNaMao()
-    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
 
     expect(antes.jogadores[0].mao).toHaveLength(12)
     expect(depois.jogadores[0].mao).toHaveLength(9)
 
-    for (const id of idsDe(SEQUENCIA)) {
+    for (const id of baixadasDe(SEQUENCIA)) {
       expect(depois.jogadores[0].mao.map((carta) => carta.id)).not.toContain(id)
     }
 
@@ -247,7 +258,7 @@ describe('R6.1 e R3.4 — baixar um jogo novo na mesa', () => {
 
   it('CA-R6.1-2 — a fase continua Acao e a vez não passa', () => {
     const antes = comSequenciaNaMao()
-    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
 
     // S44/R3.3 — "quantas ações quiser, em qualquer ordem". Só o descarte
     // encerra o turno, e é a diferença que a H2 não tinha como mostrar.
@@ -258,13 +269,19 @@ describe('R6.1 e R3.4 — baixar um jogo novo na mesa', () => {
   it('CA-R6.1-3 — baixar cartas que não estão na mão é recusado', () => {
     // A carta existe no baralho e a sequência é válida; o que falha é a posse.
     // A RF2.1 garante que a interface nunca envia isto (S22).
-    const resultado = aplicar(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe('5♦ 6♦ 7♦') })
+    const resultado = aplicar(comSequenciaNaMao(), {
+      tipo: 'baixar',
+      cartas: baixadasDe('5♦ 6♦ 7♦'),
+    })
 
     expect(resultado.tipo).toBe('recusa')
   })
 
   it('CA-R6.1-3 — baixar uma sequência inválida é recusado', () => {
-    const resultado = aplicar(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe('5♥ 7♥ 9♠') })
+    const resultado = aplicar(comSequenciaNaMao(), {
+      tipo: 'baixar',
+      cartas: baixadasDe('5♥ 7♥ 9♠'),
+    })
 
     expect(resultado.tipo).toBe('recusa')
   })
@@ -276,25 +293,25 @@ describe('R6.1 e R3.4 — baixar um jogo novo na mesa', () => {
     // parece vazio e não é: é a ausência de uma regra que quase todo baralho tem.
     expect(antes.jogadores[0].jogos).toHaveLength(0)
 
-    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
 
     expect(depois.jogadores[0].jogos).toHaveLength(1)
   })
 
   it('CA-R6.1-3 — baixar na fase de compra é recusado (R3.2)', () => {
     const naCompra = construirPartida({
-      maos: [cartas(`${SEQUENCIA} ${RESTO}`), cartas('A♠ 4♦ 7♣ 9♥ J♠ 2♣ 6♦ 10♣ Q♠ K♦ 3♥')],
+      maos: comAdversarioDoResto(cartas(`${SEQUENCIA} ${RESTO}`)),
       jogadorDaVez: 0,
       fase: 'Compra',
     })
 
-    expect(aplicar(naCompra, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) }).tipo).toBe('recusa')
+    expect(aplicar(naCompra, { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) }).tipo).toBe('recusa')
   })
 })
 
 describe('M9 — conservação após baixar', () => {
   it('CA-M9-7 — após baixar, as 104 cartas se conservam', () => {
-    const depois = aplicado(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    const depois = aplicado(comSequenciaNaMao(), { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
     const ids = todasAsCartas(depois).map((carta) => carta.id)
 
     // As cartas mudaram de lugar, não de existência: saíram da mão e entraram
@@ -308,8 +325,72 @@ describe('M9 — conservação após baixar', () => {
     const antes = comSequenciaNaMao()
     const copia = JSON.parse(JSON.stringify(antes)) as Partida
 
-    aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    aplicado(antes, { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
 
     expect(antes).toEqual(copia)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0005 §6.2 — baixar com curinga.
+ */
+
+const COM_CURINGA = '5♥ 6♥ 2♠'
+const RESTO_H5 = 'K♦ 9♣ 3♣ J♦ 4♣ Q♦ 8♣ 10♦ A♣'
+
+function comCuringaNaMao(): Partida {
+  return construirPartida({
+    maos: comAdversarioDoResto(cartas(`${COM_CURINGA} ${RESTO_H5}`)),
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+}
+
+/** O `baixar` de `5♥ 6♥` com o `2♠` fazendo papel de `7♥` (S51). */
+function baixarComCuringa(): readonly CartaBaixada[] {
+  return [{ carta: 'COPAS-5-1' }, { carta: 'COPAS-6-1' }, { carta: 'ESPADAS-2-1', representa: '7' }]
+}
+
+describe('S51 — o comando carrega o papel de cada carta', () => {
+  it('CA-S51-1 — baixar sem representa produz jogo só de posições naturais', () => {
+    const depois = aplicado(comSequenciaNaMao(), { tipo: 'baixar', cartas: baixadasDe(SEQUENCIA) })
+    const jogo = depois.jogadores[0].jogos[0]
+
+    expect(jogo?.posicoes.filter((posicao) => posicao.tipo === 'Curinga')).toHaveLength(0)
+  })
+
+  it('CA-S51-2 — baixar com representa produz uma posição Curinga', () => {
+    const depois = aplicado(comCuringaNaMao(), { tipo: 'baixar', cartas: baixarComCuringa() })
+    const jogo = depois.jogadores[0].jogos[0]
+
+    // O par decisivo da §2.1: as mesmas cartas, papéis diferentes, jogos
+    // diferentes. É a razão pela qual o comando precisou crescer.
+    expect(jogo?.naipe).toBe('COPAS')
+    expect(jogo?.posicoes).toHaveLength(3)
+    expect(jogo?.posicoes[2]?.tipo).toBe('Curinga')
+    expect(depois.jogadores[0].mao).toHaveLength(9)
+  })
+
+  it('CA-S51-3 — baixar com representa numa carta que não está na mão é recusado', () => {
+    const resultado = aplicar(comCuringaNaMao(), {
+      tipo: 'baixar',
+      cartas: [
+        { carta: 'COPAS-5-1' },
+        { carta: 'COPAS-6-1' },
+        { carta: 'PAUS-2-1', representa: '7' },
+      ],
+    })
+
+    expect(resultado.tipo).toBe('recusa')
+  })
+})
+
+describe('M9 — conservação após baixar com curinga', () => {
+  it('CA-M9-8 — após baixar com curinga, as 104 cartas se conservam', () => {
+    const depois = aplicado(comCuringaNaMao(), { tipo: 'baixar', cartas: baixarComCuringa() })
+    const ids = todasAsCartas(depois).map((carta) => carta.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
   })
 })

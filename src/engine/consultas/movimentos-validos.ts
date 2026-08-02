@@ -1,7 +1,7 @@
-import type { Comando } from '../comandos/comando.ts'
+import type { CartaBaixada, Comando } from '../comandos/comando.ts'
 import { NAIPES } from '../dominio/carta.ts'
-import type { Carta } from '../dominio/carta.ts'
-import { casasDe } from '../dominio/jogo.ts'
+import type { Carta, Naipe } from '../dominio/carta.ts'
+import { CASAS, casasDe, valorDaCasa } from '../dominio/jogo.ts'
 import type { VisaoDoJogador } from './visao-de.ts'
 
 /**
@@ -41,8 +41,8 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
  * S47 — cartas repetidas geram um comando só, e a canônica de cada casa é a de
  * menor `id`. A M1 diz que as regras comparam só naipe e valor, então as cópias
  * são intercambiáveis: oferecer as duas seria ruído na interface sem escolha
- * real por trás. A lista completa fica porque o Ás precisa dela — ver
- * `canonicasDo`.
+ * real por trás. A lista completa fica porque o Ás precisa dela — ele aparece na
+ * casa 0 e na 13, e um trecho que use as duas pontas precisa de dois Ases.
  */
 function porCasa(doNaipe: readonly Carta[]): ReadonlyMap<number, readonly Carta[]> {
   const mapa = new Map<number, Carta[]>()
@@ -59,85 +59,150 @@ function porCasa(doNaipe: readonly Carta[]): ReadonlyMap<number, readonly Carta[
   return mapa
 }
 
-/**
- * A carta canônica de cada casa do trecho, sem repetir carta.
- *
- * O único caso em que uma carta serve a duas casas é o Ás, que aparece na 0 e na
- * 13 (S42). Um trecho que use as duas pontas precisa, portanto, de dois Ases —
- * é a exceção da R5.6, e aqui ela cai de graça: se o segundo não existir, o
- * trecho não vira comando.
- */
-function canonicasDo(
-  trecho: readonly number[],
-  mapa: ReadonlyMap<number, readonly Carta[]>,
-): readonly Carta[] | null {
-  const usadas = new Set<string>()
-  const escolhidas: Carta[] = []
-
-  for (const casa of trecho) {
-    const candidata = (mapa.get(casa) ?? []).find((carta) => !usadas.has(carta.id))
-
-    if (candidata === undefined) {
-      return null
-    }
-
-    usadas.add(candidata.id)
-    escolhidas.push(candidata)
-  }
-
-  return escolhidas
+type Janela = {
+  /** Uma entrada por casa da janela, na ordem das casas. */
+  readonly naturais: readonly (Carta | undefined)[]
+  /** Índice, dentro da janela, da única casa sem carta natural. */
+  readonly buraco: number | null
 }
 
 /**
- * S46 — a enumeração é por **corridas de casas**, não por subconjuntos da mão.
+ * Resolve uma janela de casas contra a mão: quem preenche cada casa com carta
+ * natural, e qual casa fica vazia.
+ *
+ * Devolve `null` quando sobra mais de uma casa vazia — a I4 admite **um**
+ * curinga por jogo, então duas lacunas não viram jogada nenhuma. É o corte que
+ * mantém o espaço de busca pequeno.
+ */
+function resolverJanela(
+  inicio: number,
+  fim: number,
+  mapa: ReadonlyMap<number, readonly Carta[]>,
+): Janela | null {
+  const usadas = new Set<string>()
+  const naturais: (Carta | undefined)[] = []
+  let buraco: number | null = null
+
+  for (let casa = inicio; casa <= fim; casa++) {
+    const candidata = (mapa.get(casa) ?? []).find((carta) => !usadas.has(carta.id))
+
+    if (candidata === undefined) {
+      if (buraco !== null) {
+        return null
+      }
+
+      buraco = casa - inicio
+      naturais.push(undefined)
+      continue
+    }
+
+    usadas.add(candidata.id)
+    naturais.push(candidata)
+  }
+
+  return { naturais, buraco }
+}
+
+/**
+ * S56 — um curinga candidato por **naipe de `2`**, e não um só.
+ *
+ * A S47 continua valendo dentro do naipe: as duas cópias do `2♠` são
+ * intercambiáveis, e a canônica é a de menor `id`. Entre naipes ela deixa de
+ * valer, porque a R6.5 só deixa regularizar o `2` do naipe da própria sequência
+ * — então `2♥` e `2♠` numa sequência de copas valem o mesmo hoje e valem
+ * diferente na H9. Oferecer um só esconderia a jogada melhor.
+ *
+ * O teto é 4, não 8.
+ */
+function curingasDisponiveis(mao: readonly Carta[], usadas: ReadonlySet<string>): readonly Carta[] {
+  const porNaipe = new Map<Naipe, Carta>()
+
+  for (const carta of [...mao].sort((uma, outra) => uma.id.localeCompare(outra.id))) {
+    if (carta.valor !== '2' || usadas.has(carta.id) || porNaipe.has(carta.naipe)) {
+      continue
+    }
+
+    porNaipe.set(carta.naipe, carta)
+  }
+
+  return [...porNaipe.values()]
+}
+
+/**
+ * S46 e S57 — a enumeração percorre **janelas de casas**, não subconjuntos da
+ * mão.
  *
  * A intuição de "todos os subconjuntos" dá `2^22`, mais de quatro milhões, e foi
  * ela que assustou a T7. Mas sequência é trecho contíguo de uma linha de catorze
- * casas: o espaço tem no máximo `4 naipes × 14 × 14` candidatos, e na prática
- * muito menos. O medo era de um algoritmo que ninguém precisa escrever.
+ * casas: são 78 janelas por naipe, 312 ao todo, e cada uma rende no máximo um
+ * comando natural mais quatro com curinga.
+ *
+ * A janela também é o que dispensa tratar as três formas da S57 — tapar buraco,
+ * estender à esquerda, estender à direita — como casos diferentes. Numa janela,
+ * as três são a mesma coisa: a casa vazia está no meio ou numa ponta, e o código
+ * não precisa saber qual.
  */
 function baixares(mao: readonly Carta[]): readonly Comando[] {
   const comandos: Comando[] = []
 
   for (const naipe of NAIPES) {
-    const doNaipe = mao.filter((carta) => carta.naipe === naipe)
+    const mapa = porCasa(mao.filter((carta) => carta.naipe === naipe))
 
-    if (doNaipe.length < 3) {
+    if (mapa.size === 0) {
       continue
     }
 
-    const mapa = porCasa(doNaipe)
-    const ocupadas = [...mapa.keys()].sort((uma, outra) => uma - outra)
+    for (let inicio = 0; inicio < CASAS; inicio++) {
+      for (let fim = inicio + 2; fim < CASAS; fim++) {
+        const janela = resolverJanela(inicio, fim, mapa)
 
-    for (let inicio = 0; inicio < ocupadas.length; inicio++) {
-      for (let fim = inicio + 2; fim < ocupadas.length; fim++) {
-        const primeira = ocupadas[inicio] ?? 0
-        const ultima = ocupadas[fim] ?? 0
-
-        // Achou buraco: nenhum trecho maior começando aqui será contíguo.
-        if (ultima - primeira !== fim - inicio) {
-          break
-        }
-
-        const escolhidas = canonicasDo(ocupadas.slice(inicio, fim + 1), mapa)
-
-        if (escolhidas === null) {
+        if (janela === null) {
           continue
         }
 
-        // S45 — a única decisão do projeto que restringe o jogo além das regras.
-        // Baixar tudo deixaria o jogador sem carta para descartar, e a R7.1
-        // exige o descarte; a exceção é a batida (R7.3), que é a H10. Sem a
-        // guarda, a partida alcança um estado sem especificação. Sai junto com
-        // a batida.
-        if (escolhidas.length === mao.length) {
+        if (janela.buraco === null) {
+          adicionar(
+            comandos,
+            mao,
+            janela.naturais.flatMap((carta) => (carta ? [{ carta: carta.id }] : [])),
+          )
           continue
         }
 
-        comandos.push({ tipo: 'baixar', cartas: escolhidas.map((carta) => carta.id) })
+        const usadas = new Set(janela.naturais.flatMap((carta) => (carta ? [carta.id] : [])))
+        const representa = valorDaCasa(inicio + janela.buraco)
+
+        // A casa vazia nunca é a do `2` do próprio naipe com aquele `2` na mão:
+        // se estivesse, ela teria sido preenchida como natural acima. É por isso
+        // que a S54 não precisa de guarda aqui — ela vive em `criarJogo`, onde
+        // protege a engine de um chamador com bug (S22).
+        for (const curinga of curingasDisponiveis(mao, usadas)) {
+          adicionar(
+            comandos,
+            mao,
+            janela.naturais.map((carta) =>
+              carta ? { carta: carta.id } : { carta: curinga.id, representa },
+            ),
+          )
+        }
       }
     }
   }
 
   return comandos
+}
+
+/**
+ * S45 — a única decisão do projeto que restringe o jogo além das regras.
+ *
+ * Baixar tudo deixaria o jogador sem carta para descartar, e a R7.1 exige o
+ * descarte; a exceção é a batida (R7.3), que é a H10. Sem a guarda, a partida
+ * alcança um estado sem especificação. Sai junto com a batida.
+ */
+function adicionar(comandos: Comando[], mao: readonly Carta[], cartas: readonly CartaBaixada[]) {
+  if (cartas.length === mao.length) {
+    return
+  }
+
+  comandos.push({ tipo: 'baixar', cartas })
 }

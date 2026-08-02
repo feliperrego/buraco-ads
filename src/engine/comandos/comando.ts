@@ -1,4 +1,19 @@
+import type { Valor } from '../dominio/carta.ts'
 import type { Partida } from '../dominio/partida.ts'
+
+/**
+ * S51 — uma carta que vai para a mesa, **com o papel que ela exerce**.
+ *
+ * Sem `representa`, a carta é natural. Com, ela é curinga fazendo papel daquele
+ * valor (R5.5). O campo existe porque um conjunto de cartas **não determina um
+ * jogo**: `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural, ou `3-4-[5]` com o 2 de curinga,
+ * e as duas são legais. Escolher é do jogador — pela R8.5 uma vira canastra limpa
+ * e a outra suja, e pela R6.5 só a segunda tem curinga para regularizar depois.
+ */
+export type CartaBaixada = {
+  readonly carta: string
+  readonly representa?: Valor
+}
 
 /**
  * Os comandos da H2, mais o `baixar` da H4. O domain.md §6 prevê seis ao todo;
@@ -9,12 +24,13 @@ import type { Partida } from '../dominio/partida.ts'
  *
  * S43 — `baixar` aceita as cartas em **qualquer ordem**, e a engine ordena.
  * Exigir ordem faria a interface ordenar, e ordenar exige saber onde o Ás vai —
- * que é regra, não apresentação (T6).
+ * que é regra, não apresentação (T6). O que a interface **precisa** dizer é o
+ * papel de cada carta (S51), e só isso.
  */
 export type Comando =
   | { readonly tipo: 'comprarDoMonte' }
   | { readonly tipo: 'descartar'; readonly carta: string }
-  | { readonly tipo: 'baixar'; readonly cartas: readonly string[] }
+  | { readonly tipo: 'baixar'; readonly cartas: readonly CartaBaixada[] }
 
 /**
  * S21 — `sucesso` carrega só a partida nova. O M8 previu também uma lista de

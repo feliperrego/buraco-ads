@@ -12,7 +12,7 @@ export { movimentosValidos } from './consultas/movimentos-validos.ts'
 export { aplicar } from './comandos/aplicar.ts'
 export { criarAleatorio } from './aleatorio/criar-aleatorio.ts'
 
-export type { Comando, Resultado } from './comandos/comando.ts'
+export type { CartaBaixada, Comando, Resultado } from './comandos/comando.ts'
 export type { Aleatorio } from './aleatorio/criar-aleatorio.ts'
 
 export type { Carta, Naipe, Valor } from './dominio/carta.ts'

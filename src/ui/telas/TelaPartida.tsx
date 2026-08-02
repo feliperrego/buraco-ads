@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Carta, Comando, VisaoDoJogador } from '../../engine/index.ts'
+import type { Carta, CartaBaixada, Comando, Posicao, VisaoDoJogador } from '../../engine/index.ts'
 
 /**
  * Tela de partida (screens.md §1, layout da Opção B em T2). Sem estilo — o
@@ -24,6 +24,19 @@ function nomeDa(carta: Carta): string {
 }
 
 /**
+ * O nome de uma posição na mesa, com o papel visível.
+ *
+ * Sem isto, o jogo baixado com curinga é indistinguível do mesmo conjunto de
+ * cartas baixado sem — e a escolha entre as duas leituras é a decisão central da
+ * H5 (spec 0005 §2.1). O jogador escolheria e não veria o resultado.
+ */
+function nomeDaPosicao(posicao: Posicao): string {
+  return posicao.tipo === 'Natural'
+    ? nomeDa(posicao.carta)
+    : `${nomeDa(posicao.carta)} valendo ${posicao.representa}`
+}
+
+/**
  * S48 — o comando visto como conjunto de cartas. É o que unifica o que a H2
  * fazia à mão: `descartar` vira o caso de conjunto unitário e perde o caminho
  * próprio.
@@ -34,7 +47,35 @@ type Jogada = {
   readonly rotulo: string
 }
 
-function jogadasDe(movimentos: readonly Comando[]): readonly Jogada[] {
+/**
+ * S60 — quando mais de um comando casa com a seleção, cada botão se nomeia pelo
+ * que o distingue.
+ *
+ * É consequência direta da §2.1 da spec 0005: as mesmas três cartas podem formar
+ * dois jogos diferentes, e o jogador precisa poder pedir um deles. A tela
+ * continua sem saber o que é uma sequência — ela lê `representa` do comando e
+ * monta o rótulo (T6).
+ */
+function rotuloDoBaixar(cartas: readonly CartaBaixada[], mao: readonly Carta[]): string {
+  const curinga = cartas.find((baixada) => baixada.representa !== undefined)
+  const carta = mao.find((daMao) => daMao.id === curinga?.carta)
+
+  if (curinga?.representa === undefined || carta === undefined) {
+    return 'Baixar'
+  }
+
+  // O naipe do jogo vem de uma posição natural: a do curinga pode ser outra, e é
+  // justamente isso que torna a canastra permanentemente suja na R6.5.
+  const natural = mao.find(
+    (daMao) => daMao.id === cartas.find((baixada) => baixada.representa === undefined)?.carta,
+  )
+
+  return `Baixar com ${nomeDa(carta)} valendo ${curinga.representa} de ${
+    natural?.naipe.toLowerCase() ?? carta.naipe.toLowerCase()
+  }`
+}
+
+function jogadasDe(movimentos: readonly Comando[], mao: readonly Carta[]): readonly Jogada[] {
   return movimentos.flatMap((comando): Jogada[] => {
     switch (comando.tipo) {
       case 'comprarDoMonte':
@@ -42,7 +83,13 @@ function jogadasDe(movimentos: readonly Comando[]): readonly Jogada[] {
       case 'descartar':
         return [{ comando, cartas: new Set([comando.carta]), rotulo: 'Descartar' }]
       case 'baixar':
-        return [{ comando, cartas: new Set(comando.cartas), rotulo: 'Baixar' }]
+        return [
+          {
+            comando,
+            cartas: new Set(comando.cartas.map((baixada) => baixada.carta)),
+            rotulo: rotuloDoBaixar(comando.cartas, mao),
+          },
+        ]
     }
   })
 }
@@ -57,7 +104,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
 
   const podeComprar = movimentos.some((comando) => comando.tipo === 'comprarDoMonte')
-  const jogadas = jogadasDe(movimentos)
+  const jogadas = jogadasDe(movimentos, visao.mao)
 
   // Uma seleção só vale enquanto alguma jogada ainda a contiver. Assim a troca
   // de fase ou de vez a invalida sozinha, sem efeito colateral.
@@ -159,9 +206,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
         ) : (
           <ul>
             {visao.meusJogos.map((jogo) => (
-              <li key={jogo.id}>
-                {jogo.posicoes.map((posicao) => nomeDa(posicao.carta)).join(', ')}
-              </li>
+              <li key={jogo.id}>{jogo.posicoes.map(nomeDaPosicao).join(', ')}</li>
             ))}
           </ul>
         )}

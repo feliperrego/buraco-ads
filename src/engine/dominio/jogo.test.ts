@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cartas } from '../testing/construtor.ts'
+import { posicoes } from '../testing/construtor.ts'
 import { criarJogo } from './jogo.ts'
 import type { Invariante, ResultadoDeJogo } from './jogo.ts'
 
@@ -16,7 +16,7 @@ import type { Invariante, ResultadoDeJogo } from './jogo.ts'
 const DONO = 0
 
 function jogoDe(notacao: string): ResultadoDeJogo {
-  return criarJogo(DONO, cartas(notacao))
+  return criarJogo(DONO, posicoes(notacao))
 }
 
 /** Desembrulha o sucesso, falhando alto com os invariantes violados. */
@@ -139,5 +139,106 @@ describe('S43 — a engine ordena as cartas', () => {
     // Exigir ordem faria a interface ordenar — e ordenar exige saber onde o Ás
     // vai, que é regra (S43).
     expect(jogo.posicoes.map((posicao) => posicao.carta.valor)).toEqual(['5', '6', '7'])
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0005 §6.1 e §6.2 — o `2` como curinga.
+ *
+ * A notação `2♠>7` é o `[2♠→7♥]` dos critérios: a carta à esquerda fazendo papel
+ * do valor à direita. Sem `>`, a posição é natural.
+ */
+
+function curingasDe(notacao: string) {
+  return valido(notacao).posicoes.filter((posicao) => posicao.tipo === 'Curinga')
+}
+
+describe('R1.3 — o mesmo 2 com papéis opostos', () => {
+  it('CA-R1.3-1 — A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ é válida e não tem nenhuma posição Curinga', () => {
+    // A asserção original pedia canastra LIMPA, que é R8 e chega na H8 (S50/S61).
+    // Aqui ela vira asserção de posição, que é o que a H5 tem — e o que os dois
+    // critérios provam continua intacto: o 2♥ está na casa dele.
+    expect(curingasDe('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥')).toHaveLength(0)
+  })
+
+  it('CA-R1.3-2 — 5♥ 6♥ 7♥ [2♥→8] 9♥ 10♥ J♥ é válida e tem exatamente uma posição Curinga', () => {
+    const curingas = curingasDe('5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥')
+
+    // O par decisivo do M2: **a mesma carta** com resultados opostos. Se a
+    // implementação guardasse `ehCuringa` na carta, um dos dois falharia.
+    expect(curingas).toHaveLength(1)
+    expect(curingas[0]?.carta.id).toBe('COPAS-2-1')
+  })
+})
+
+describe('R1.4 e R5.4 — no máximo um curinga', () => {
+  it('CA-R1.4-1 — sequência com 2♠ e 2♦ como curingas é inválida (I4)', () => {
+    expect(violados('5♥ 2♠>6 2♦>7')).toContain('I4')
+  })
+
+  it('CA-R1.4-2 — A♥ 2♥ 3♥ mais 2♠ como curinga é válida: o 2♥ é natural', () => {
+    const curingas = curingasDe('A♥ 2♥ 3♥ 2♠>4')
+
+    // Só o 2♠ conta. É a diferença entre olhar o valor impresso e olhar o papel.
+    expect(curingas).toHaveLength(1)
+    expect(curingas[0]?.carta.naipe).toBe('ESPADAS')
+  })
+
+  it('CA-R5.4-1 — 5♥ [2♠→6] [2♦→7] é inválida por dois curingas (I4)', () => {
+    expect(violados('5♥ 2♠>6 2♦>7')).toContain('I4')
+  })
+})
+
+describe('R5.5 — o curinga em qualquer posição, inclusive as pontas', () => {
+  it('CA-R5.5-1 — 5♥ 6♥ [2♠→7] é válida: curinga na ponta direita', () => {
+    const jogo = valido('5♥ 6♥ 2♠>7')
+
+    expect(jogo.posicoes).toHaveLength(3)
+    expect(jogo.posicoes[2]?.tipo).toBe('Curinga')
+  })
+
+  it('CA-R5.5-2 — [2♠→4] 5♥ 6♥ é válida: curinga na ponta esquerda', () => {
+    const jogo = valido('2♠>4 5♥ 6♥')
+
+    // A S43 ordena por casa, então o curinga da casa 3 vem primeiro mesmo tendo
+    // sido descrito primeiro por acaso.
+    expect(jogo.posicoes[0]?.tipo).toBe('Curinga')
+    expect(jogo.naipe).toBe('COPAS')
+  })
+})
+
+describe('I7 e S54 — quem pode ser curinga', () => {
+  it('CA-I7-1 — 5♥ 6♥ [7♥→8] é inválida: só o 2 é curinga (I7)', () => {
+    expect(violados('5♥ 6♥ 7♥>8')).toContain('I7')
+  })
+
+  it('CA-S54-1 — A♥ [2♥→2] 3♥ é inválida: aquele 2 é natural, não curinga (R1.3)', () => {
+    // S54 — declarar o 2 do próprio naipe como curinga da própria casa descreve
+    // a mesma casa por um caminho que a R1.3 não abre.
+    expect(violados('A♥ 2♥>2 3♥')).toContain('I7')
+  })
+
+  it('CA-S54-1 — o mesmo 2♥ como curinga de outra casa continua válido', () => {
+    // A âncora: sem ela, um validador que recusasse todo 2♥ curinga passaria no
+    // critério acima e estaria errado.
+    expect(curingasDe('5♥ 6♥ 2♥>7')).toHaveLength(1)
+  })
+})
+
+describe('S55 — I5 olha o valor representado', () => {
+  it('CA-S55-1 — A♥ 2♥ 3♥ 4♥ 5♥ 6♥ [2♥→7] é válida com as duas cópias do 2♥', () => {
+    const jogo = valido('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♥>7')
+    const dois = jogo.posicoes.filter((posicao) => posicao.carta.valor === '2')
+
+    // As duas cópias no mesmo jogo, uma na casa 1 e outra na casa 6. Pelo M2 não
+    // há repetição de **valor na sequência**, que é o que a R5.6 proíbe.
+    expect(dois).toHaveLength(2)
+    expect(dois.map((posicao) => posicao.tipo).sort()).toEqual(['Curinga', 'Natural'])
+    expect(jogo.posicoes).toHaveLength(7)
+  })
+
+  it('CA-S55-1 — dois curingas representando o mesmo valor continuam repetição (I5)', () => {
+    // A âncora do outro lado: a S55 afrouxa a leitura de I5, não a desliga.
+    expect(violados('5♥ 6♥ 2♠>7 2♦>7')).toContain('I5')
   })
 })

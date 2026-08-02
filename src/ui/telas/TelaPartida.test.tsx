@@ -167,7 +167,7 @@ describe('S27 — descartar exige selecionar e confirmar', () => {
 const SEQUENCIA: readonly Valor[] = ['5', '6', '7']
 
 function baixarDe(valores: readonly Valor[]): Comando {
-  return { tipo: 'baixar', cartas: valores.map((valor) => carta('COPAS', valor).id) }
+  return { tipo: 'baixar', cartas: valores.map((valor) => ({ carta: carta('COPAS', valor).id })) }
 }
 
 describe('S48 e S49 — seleção por conjunto', () => {
@@ -259,5 +259,109 @@ describe('R6.1 — o jogo baixado fica visível na mesa', () => {
     expect(painel.textContent).toMatch(/6 de copas/i)
     expect(painel.textContent).toMatch(/7 de copas/i)
     expect(painel.textContent).not.toMatch(/nenhum jogo/i)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0005 §6.3.
+ *
+ * S60 — as mesmas três cartas podem formar dois jogos diferentes (spec 0005
+ * §2.1), então dois comandos passam a casar com a mesma seleção. O rótulo é o
+ * que os distingue, e a tela o monta lendo `representa` — sem saber o que é uma
+ * sequência (T6).
+ */
+describe('S60 — dois comandos para a mesma seleção', () => {
+  const SEM_CURINGA: Comando = {
+    tipo: 'baixar',
+    cartas: [
+      { carta: carta('COPAS', '2').id },
+      { carta: carta('COPAS', '3').id },
+      { carta: carta('COPAS', '4').id },
+    ],
+  }
+
+  const COM_CURINGA: Comando = {
+    tipo: 'baixar',
+    cartas: [
+      { carta: carta('COPAS', '3').id },
+      { carta: carta('COPAS', '4').id },
+      { carta: carta('COPAS', '2').id, representa: '5' },
+    ],
+  }
+
+  function selecionarAsTres() {
+    for (const valor of ['2', '3', '4'] as const) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${valor} de copas$`, 'i') }))
+    }
+  }
+
+  it('CA-S60-1 — com as duas leituras disponíveis, aparecem dois botões com rótulos diferentes', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), SEM_CURINGA, COM_CURINGA]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    selecionarAsTres()
+
+    const confirmacoes = screen
+      .getAllByRole('button')
+      .map((botao) => botao.textContent)
+      .filter((texto) => /^baixar/i.test(texto))
+
+    expect(confirmacoes).toHaveLength(2)
+    expect(new Set(confirmacoes).size).toBe(2)
+  })
+
+  it('CA-S60-2 — o botão da leitura com curinga baixa o jogo com a posição Curinga', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), SEM_CURINGA, COM_CURINGA]}
+        aoJogar={aoJogar}
+      />,
+    )
+
+    selecionarAsTres()
+
+    // O rótulo nomeia o que distingue: qual carta é o curinga e o que ela vale.
+    fireEvent.click(screen.getByRole('button', { name: /2 de copas valendo 5/i }))
+
+    expect(aoJogar).toHaveBeenCalledWith(COM_CURINGA)
+  })
+})
+
+describe('R1.3 — o papel do curinga é visível na mesa', () => {
+  it('CA-R1.3-2 — um jogo com curinga mostra o que a carta está valendo', () => {
+    const meusJogos = [
+      {
+        id: 'J0-OUROS-3-1',
+        dono: 0 as const,
+        naipe: 'OUROS' as const,
+        posicoes: [
+          { tipo: 'Natural' as const, carta: carta('OUROS', '3') },
+          { tipo: 'Natural' as const, carta: carta('OUROS', '4') },
+          { tipo: 'Curinga' as const, carta: carta('OUROS', '2'), representa: '5' as const },
+        ],
+      },
+    ]
+
+    render(<TelaPartida visao={visaoInicial({ meusJogos })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /meus jogos/i })
+
+    // Sem isto, este jogo é indistinguível de `2-3-4` baixado sem curinga — e
+    // escolher entre os dois é a decisão central da fatia. A verificação no
+    // navegador foi o que encontrou a falta: a mesa mostrava as três cartas e
+    // nada mais.
+    expect(painel.textContent).toMatch(/2 de ouros valendo 5/i)
+    expect(painel.textContent).toMatch(/3 de ouros/i)
   })
 })

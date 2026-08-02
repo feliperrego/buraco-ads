@@ -1,7 +1,7 @@
 import { NAIPES, VALORES, baralhoCanonico } from '../dominio/carta.ts'
 import type { Carta, Naipe, Valor } from '../dominio/carta.ts'
 import { criarJogo } from '../dominio/jogo.ts'
-import type { Jogo } from '../dominio/jogo.ts'
+import type { Jogo, Posicao } from '../dominio/jogo.ts'
 import type { FaseDoTurno, Jogador, JogadorId, Partida } from '../dominio/partida.ts'
 
 /**
@@ -62,6 +62,42 @@ export function cartas(notacao: string): readonly Carta[] {
     })
 }
 
+/**
+ * Lê `'5♥ 6♥ 2♠>7'` como posições, na notação em que os critérios da H5 estão
+ * escritos: `carta>valor` é a carta fazendo papel daquele valor (S51). Sem `>`,
+ * a posição é natural.
+ *
+ * As cópias são contadas sobre a notação inteira, então `'2♥ ... 2♥>7'` produz
+ * `COPAS-2-1` natural e `COPAS-2-2` curinga — o fixture da CA-S55-1.
+ */
+export function posicoes(notacao: string): readonly Posicao[] {
+  const semPapel = notacao.replace(/>[^\s]+/g, '')
+  const cartasDaNotacao = cartas(semPapel)
+
+  return notacao
+    .split(/\s+/)
+    .filter((token) => token.length > 0)
+    .map((token, indice): Posicao => {
+      const carta = cartasDaNotacao[indice]
+
+      if (carta === undefined) {
+        throw new Error(`notação inválida: sem carta na posição ${String(indice)}`)
+      }
+
+      const papel = token.split('>')[1]
+
+      if (papel === undefined) {
+        return { tipo: 'Natural', carta }
+      }
+
+      if (!VALORES_VALIDOS.has(papel)) {
+        throw new Error(`notação inválida: '${papel}' não é um valor de carta`)
+      }
+
+      return { tipo: 'Curinga', carta, representa: papel as Valor }
+    })
+}
+
 /** Uma carta por naipe e valor, sem passar pela notação. */
 export function carta(naipe: Naipe, valor: Valor, copia: 1 | 2 = 1): Carta {
   return { id: `${naipe}-${valor}-${String(copia)}`, naipe, valor }
@@ -70,20 +106,20 @@ export function carta(naipe: Naipe, valor: Valor, copia: 1 | 2 = 1): Carta {
 export type DescricaoDaPartida = {
   /** Índice = `JogadorId`. */
   readonly maos: readonly [readonly Carta[], readonly Carta[]]
-  /** Cada jogo é descrito pelas cartas; o construtor o valida com `criarJogo`. */
-  readonly jogos?: readonly [readonly (readonly Carta[])[], readonly (readonly Carta[])[]]
+  /** Cada jogo é descrito pelas posições; o construtor o valida com `criarJogo`. */
+  readonly jogos?: readonly [readonly (readonly Posicao[])[], readonly (readonly Posicao[])[]]
   readonly lixo?: readonly Carta[]
   readonly jogadorDaVez?: JogadorId
   readonly fase?: FaseDoTurno
   readonly semente?: number
 }
 
-function montarJogos(dono: JogadorId, descritos: readonly (readonly Carta[])[]): readonly Jogo[] {
+function montarJogos(dono: JogadorId, descritos: readonly (readonly Posicao[])[]): readonly Jogo[] {
   return descritos.map((doJogo) => {
     const resultado = criarJogo(dono, doJogo)
 
     if (resultado.tipo !== 'valido') {
-      const cartasDoJogo = doJogo.map((umaCarta) => umaCarta.id).join(' ')
+      const cartasDoJogo = doJogo.map((posicao) => posicao.carta.id).join(' ')
 
       throw new Error(
         `descrição impossível: [${cartasDoJogo}] viola ${resultado.violados.join(', ')}`,
@@ -186,6 +222,27 @@ export function construirPartida(descricao: DescricaoDaPartida): Partida {
   }
 
   return partida
+}
+
+/**
+ * Cartas do baralho que a descrição ainda não usou.
+ *
+ * Existe porque escrever a mão do adversário à mão é um gerador de colisão: três
+ * fixtures desta suíte já bateram com ela, e o construtor reprovou os três. A
+ * mão do adversário quase nunca é o objeto do teste — quando não é, ela deve
+ * sair daqui e parar de participar.
+ */
+export function outrasCartas(usadas: readonly Carta[], quantas: number): readonly Carta[] {
+  const reservadas = new Set(usadas.map((umaCarta) => umaCarta.id))
+  const resto = baralhoCanonico().filter((umaCarta) => !reservadas.has(umaCarta.id))
+
+  if (resto.length < quantas) {
+    throw new Error(
+      `descrição impossível: pedidas ${String(quantas)}, sobram ${String(resto.length)}`,
+    )
+  }
+
+  return resto.slice(0, quantas)
 }
 
 /** Todos os valores de um naipe, em ordem, para montar mãos longas. */

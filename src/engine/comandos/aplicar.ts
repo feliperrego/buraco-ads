@@ -1,7 +1,8 @@
 import type { Carta } from '../dominio/carta.ts'
 import { criarJogo } from '../dominio/jogo.ts'
+import type { Posicao } from '../dominio/jogo.ts'
 import type { Jogador, JogadorId, Partida } from '../dominio/partida.ts'
-import type { Comando, Resultado } from './comando.ts'
+import type { CartaBaixada, Comando, Resultado } from './comando.ts'
 
 /**
  * M8 — comandos são funções puras: `aplicar(partida, comando)` devolve uma
@@ -30,26 +31,38 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
  * ações quiser, em qualquer ordem" —, e a diferença que a H2 não tinha como
  * mostrar, porque tinha um comando só na fase de ação.
  */
-function baixar(partida: Partida, cartaIds: readonly string[]): Resultado {
+function baixar(partida: Partida, baixadas: readonly CartaBaixada[]): Resultado {
   if (partida.fase !== 'Acao') {
     return { tipo: 'recusa', motivo: 'R3.2: não se baixa antes de comprar' }
   }
 
   const quem = partida.jogadorDaVez
   const mao = partida.jogadores[quem].mao
-  const pedidos = new Set(cartaIds)
+  const pedidos = new Set(baixadas.map((baixada) => baixada.carta))
 
-  if (pedidos.size !== cartaIds.length) {
+  if (pedidos.size !== baixadas.length) {
     return { tipo: 'recusa', motivo: 'R6.1: a mesma carta foi pedida duas vezes' }
   }
 
-  const escolhidas = mao.filter((daMao) => pedidos.has(daMao.id))
+  // S52 — a conversão para posições acontece aqui, junto com a checagem de posse.
+  // `criarJogo` recebe as posições prontas e passa a conferir, não a inferir.
+  const posicoes: Posicao[] = []
 
-  if (escolhidas.length !== pedidos.size) {
-    return { tipo: 'recusa', motivo: 'R6.1: alguma carta não está na mão de quem joga' }
+  for (const baixada of baixadas) {
+    const carta = mao.find((daMao) => daMao.id === baixada.carta)
+
+    if (carta === undefined) {
+      return { tipo: 'recusa', motivo: `R6.1: a carta ${baixada.carta} não está na mão` }
+    }
+
+    posicoes.push(
+      baixada.representa === undefined
+        ? { tipo: 'Natural', carta }
+        : { tipo: 'Curinga', carta, representa: baixada.representa },
+    )
   }
 
-  const resultado = criarJogo(quem, escolhidas)
+  const resultado = criarJogo(quem, posicoes)
 
   if (resultado.tipo !== 'valido') {
     return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
