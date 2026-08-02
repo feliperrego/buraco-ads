@@ -456,6 +456,10 @@ function cartasCitadasPor(comando: Comando): readonly string[] {
       return []
     case 'descartar':
       return [comando.carta]
+    case 'regularizarCuringa':
+      // S96 — este leva **identificadores**, não `CartaBaixada`: o comando não
+      // tem campo `representa`, então não cabe curinga novo nele.
+      return comando.cartas
     case 'baixar':
     case 'aumentar':
       return comando.cartas.map((baixada) => baixada.carta)
@@ -813,5 +817,61 @@ describe('S80 — o custo da enumeração com a mão inchada pelo lixo, medido',
     // margem que a próxima fatia com comando novo precisa reconferir.
     expect(movimentos.length).toBeLessThan(2000)
     expect(decorrido).toBeLessThan(50)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0009 §8.1 — a enumeração de `regularizarCuringa`.
+ *
+ * S99 — as janelas são `[novoInicio, novoFim]` com `novoInicio ∈ {0, 1}`: a casa
+ * 1 é obrigatória, porque é para lá que o `2` vai, e a casa 0 é opcional. Não há
+ * terceira opção — começar em 2 ou mais deixaria a casa 1 vazia. E **nenhuma**
+ * casa pode ficar vazia, porque o curinga foi gasto na própria operação (I4).
+ */
+function regularizacoesDe(partida: Partida): readonly Comando[] {
+  return movimentosValidos(visaoDaVez(partida)).filter(
+    (comando) => comando.tipo === 'regularizarCuringa',
+  )
+}
+
+describe('S99 — a enumeração das regularizações', () => {
+  it('CA-S99-2 — com o Ás na mão há duas: com ele e sem ele', () => {
+    const partida = emAcaoComJogos(cartas('A♥ 3♥ 4♥ 8♥ K♦ 9♣'), [
+      posicoes('5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥'),
+    ])
+    const regularizacoes = regularizacoesDe(partida)
+    const tamanhos = regularizacoes
+      .map((comando) => (comando.tipo === 'regularizarCuringa' ? comando.cartas.length : 0))
+      .sort()
+
+    // Janela [1,10] usa 3♥ 4♥ 8♥; janela [0,10] acrescenta o A♥. As duas são
+    // legais, e a S48 casa botão com a seleção **exata** — sem as duas, uma das
+    // seleções ficaria sem botão.
+    expect(regularizacoes).toHaveLength(2)
+    expect(tamanhos).toEqual([3, 4])
+  })
+
+  it('CA-S99-1 — sem a carta reposta na mão, nenhuma regularização é oferecida', () => {
+    // A âncora é a CA-S99-2 acima: lá o mesmo jogo rende duas. Aqui falta o 8♥,
+    // e a casa que o curinga deixaria vaga não tem quem a preencha (I3).
+    const partida = emAcaoComJogos(cartas('A♥ 3♥ 4♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥')])
+
+    expect(regularizacoesDe(partida)).toHaveLength(0)
+  })
+
+  it('CA-S98-2 — curinga de outro naipe nunca aparece na lista', () => {
+    const partida = emAcaoComJogos(cartas('A♥ 3♥ 4♥ 8♥ K♦ 9♣'), [
+      posicoes('5♥ 6♥ 7♥ 2♠>8 9♥ 10♥ J♥'),
+    ])
+
+    expect(regularizacoesDe(partida)).toHaveLength(0)
+  })
+
+  it('CA-S98-1 — com a casa 1 já ocupada, nenhuma regularização é oferecida', () => {
+    // O fixture da CA-S55-1: duas cópias do 2♥, uma natural na casa 1 e outra de
+    // curinga na casa 6. Naipe certo, casa tomada — permanentemente suja.
+    const partida = emAcaoComJogos(cartas('7♥ 8♥ 9♥ K♦ 9♣'), [posicoes('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♥>7')])
+
+    expect(regularizacoesDe(partida)).toHaveLength(0)
   })
 })

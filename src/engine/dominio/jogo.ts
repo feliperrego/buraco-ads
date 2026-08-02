@@ -227,6 +227,61 @@ export function janelaDe(jogo: Jogo): Janela {
   }
 }
 
+/**
+ * S98 — a casa natural do `2`: a única entre o Ás e o `3` (S41). É para cá que o
+ * curinga vai quando é regularizado, e daqui sai o pré-requisito da R6.5 —
+ * a janela do jogo precisa **não** cobrir esta casa ainda.
+ */
+export const CASA_DO_DOIS = 1
+
+/**
+ * R6.5, R6.6 — o curinga deixa de ser curinga ao ocupar sua casa natural, e
+ * **permanece no jogo**.
+ *
+ * S97 — a operação inteira é converter uma posição `Curinga` em `Natural` e
+ * passar tudo pela porta única de sempre. As **três** condições da R6.5 não
+ * viram verificação nenhuma aqui:
+ *
+ * | Condição da R6.5 | Quem a garante |
+ * |---|---|
+ * | O curinga é o `2` do **naipe da sequência** | **I2** — um `2♠` virado natural num jogo de copas é carta de outro naipe |
+ * | A sequência **alcança a casa do 2** | **I3** — a casa 1 e as do caminho precisam estar preenchidas |
+ * | A carta substituída é **reposta** | **I3** — a casa que o curinga deixou é um buraco |
+ *
+ * Era esta a previsão que o domain.md §2 fez em julho, e o gatilho do
+ * roadmap.md §3 mandou cobrar aqui: *"a impossibilidade é estrutural, não uma
+ * verificação extra"*. Nenhum `if` de naipe foi escrito.
+ *
+ * S63/S100 — e o `id` é restaurado, pelo mesmo motivo do `aumentarJogo`:
+ * regularizar troca a primeira posição do jogo sem que ele deixe de ser o mesmo.
+ */
+export function regularizarJogo(jogo: Jogo, novas: readonly Carta[]): ResultadoDeJogo {
+  const regularizadas = jogo.posicoes.map((posicao): Posicao =>
+    posicao.tipo === 'Curinga' ? { tipo: 'Natural', carta: posicao.carta } : posicao,
+  )
+
+  return comMesmaIdentidade(jogo, [
+    ...regularizadas,
+    ...novas.map((carta): Posicao => ({ tipo: 'Natural', carta })),
+  ])
+}
+
+/**
+ * S63 — reconstrói um jogo pela porta única **preservando a identidade**.
+ *
+ * Vive numa função só de propósito. Os dois comandos que mudam um jogo já na
+ * mesa — `aumentar` e `regularizarCuringa` — trocam a primeira posição dele, e
+ * um `id` recalculado faria o alvo sumir entre duas jogadas do mesmo turno
+ * (R3.3). Com o mecanismo em dois lugares, bastaria esquecer de um.
+ */
+function comMesmaIdentidade(jogo: Jogo, posicoes: readonly Posicao[]): ResultadoDeJogo {
+  const resultado = criarJogo(jogo.dono, posicoes)
+
+  return resultado.tipo === 'valido'
+    ? { tipo: 'valido', jogo: { ...resultado.jogo, id: jogo.id } }
+    : resultado
+}
+
 /** R8.2 — as quatro categorias, **mutuamente exclusivas**. Não há uma quinta. */
 export type CategoriaCanastra = 'DE_1000' | 'DE_500' | 'LIMPA' | 'SUJA'
 
@@ -297,11 +352,7 @@ export function ehCanastra(jogo: Jogo): boolean {
  * jogo alvo sumiria entre duas jogadas do mesmo turno (R3.3).
  */
 export function aumentarJogo(jogo: Jogo, novas: readonly Posicao[]): ResultadoDeJogo {
-  const resultado = criarJogo(jogo.dono, [...jogo.posicoes, ...novas])
-
-  return resultado.tipo === 'valido'
-    ? { tipo: 'valido', jogo: { ...resultado.jogo, id: jogo.id } }
-    : resultado
+  return comMesmaIdentidade(jogo, [...jogo.posicoes, ...novas])
 }
 
 /**

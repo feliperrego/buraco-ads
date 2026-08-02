@@ -1,5 +1,5 @@
 import type { Carta } from '../dominio/carta.ts'
-import { aumentarJogo, criarJogo } from '../dominio/jogo.ts'
+import { aumentarJogo, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
 import type { Posicao } from '../dominio/jogo.ts'
 import type { Jogador, JogadorId, Partida } from '../dominio/partida.ts'
 import type { CartaBaixada, Comando, Resultado } from './comando.ts'
@@ -24,6 +24,74 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
       return baixar(partida, comando.cartas)
     case 'aumentar':
       return aumentar(partida, comando.jogo, comando.cartas)
+    case 'regularizarCuringa':
+      return regularizarCuringa(partida, comando.jogo, comando.cartas)
+  }
+}
+
+/**
+ * R6.5, R6.6 — regularizar o curinga do jogo, repondo a carta que ele fazia.
+ *
+ * S96 — as cartas chegam como **identificadores**, sem `representa`: depois de
+ * regularizar o jogo não tem curinga, a I4 aceitaria um novo, e o comando
+ * simplesmente não permite pedi-lo. Acrescentar curinga é o que o `aumentar`
+ * faz, e a R3.3 deixa fazer as duas coisas em sequência.
+ *
+ * A posse é estrutural pelo mesmo caminho da S66, e a fase pelo da R3.2.
+ */
+function regularizarCuringa(
+  partida: Partida,
+  jogoId: string,
+  pedidas: readonly string[],
+): Resultado {
+  if (partida.fase !== 'Acao') {
+    return { tipo: 'recusa', motivo: 'R3.2: não se regulariza antes de comprar' }
+  }
+
+  const quem = partida.jogadorDaVez
+  const jogador = partida.jogadores[quem]
+  const alvo = jogador.jogos.find((umJogo) => umJogo.id === jogoId)
+
+  if (alvo === undefined) {
+    return { tipo: 'recusa', motivo: `R6.2: ${jogoId} não é um jogo de quem está jogando` }
+  }
+
+  if (!alvo.posicoes.some((posicao) => posicao.tipo === 'Curinga')) {
+    // Não é invariante violado: é um comando sem objeto. A I4 permite zero
+    // curingas, então `criarJogo` não teria o que reprovar.
+    return { tipo: 'recusa', motivo: `R6.5: o jogo ${jogoId} não tem curinga a regularizar` }
+  }
+
+  const daMao = posicoesDaMao(
+    jogador.mao,
+    pedidas.map((carta) => ({ carta })),
+    'R6.5',
+  )
+
+  if (daMao.tipo === 'recusa') {
+    return daMao
+  }
+
+  const resultado = regularizarJogo(
+    alvo,
+    daMao.posicoes.map((posicao) => posicao.carta),
+  )
+
+  if (resultado.tipo !== 'valido') {
+    return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
+  }
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores: comJogador(partida, quem, {
+        ...jogador,
+        // R6.5 — o `2` **permanece no jogo**. A mão só perde as cartas repostas.
+        mao: daMao.sobraram,
+        jogos: jogador.jogos.map((umJogo) => (umJogo.id === jogoId ? resultado.jogo : umJogo)),
+      }),
+    },
   }
 }
 

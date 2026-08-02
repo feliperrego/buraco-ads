@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { carta, posicoes } from '../testing/construtor.ts'
-import { aumentarJogo, categoriaDe, criarJogo, ehCanastra, janelaDe } from './jogo.ts'
+import { carta, cartas, posicoes } from '../testing/construtor.ts'
+import {
+  aumentarJogo,
+  categoriaDe,
+  criarJogo,
+  ehCanastra,
+  janelaDe,
+  regularizarJogo,
+} from './jogo.ts'
 import type { Invariante, Posicao, ResultadoDeJogo } from './jogo.ts'
 
 /**
@@ -535,5 +542,109 @@ describe('R8.5 — a categoria é derivada, nunca um campo', () => {
     // Ausência não aparece em `grep`, então ela vira asserção de forma: quatro
     // campos, e um quinto reprova. A Alternativa C da §2 morre aqui.
     expect(Object.keys(valido(SETE_LIMPA)).sort()).toEqual(['dono', 'id', 'naipe', 'posicoes'])
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0009 §8.1 — regularizar o curinga.
+ *
+ * S97 — a operação é converter uma posição `Curinga` em `Natural` e passar tudo
+ * pela porta única de sempre. As **três** condições da R6.5 caem dos
+ * invariantes: mesmo naipe é I2, alcançar a casa do 2 é I3, repor a carta
+ * substituída é I3 de novo. Nenhuma vira verificação nova, e é isso que o
+ * gatilho do roadmap.md §3 pediu para medir.
+ */
+
+/** O jogo de sete com o `2♥` fazendo papel de `8♥` — o cenário da CA-R6.5-1. */
+const SUJA_REGULARIZAVEL = '5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥'
+
+function regularizado(base: string, novas: string) {
+  return regularizarJogo(valido(base), cartas(novas))
+}
+
+describe('R6.5 e R6.6 — o curinga ocupa sua casa e deixa de ser curinga', () => {
+  it('CA-R6.6-1 — o 2♥ vai para a casa 1 e o 8♥ reposto fecha o buraco', () => {
+    const resultado = regularizado(SUJA_REGULARIZAVEL, 'A♥ 3♥ 4♥ 8♥')
+
+    if (resultado.tipo !== 'valido') {
+      throw new Error(`esperava regularizar, veio ${resultado.violados.join(', ')}`)
+    }
+
+    const jogo = resultado.jogo
+
+    // Onze posições, da casa 0 à 10, e **nenhuma** curinga: o 2♥ passou a
+    // natural na casa dele, e o 8♥ ocupou a casa que ele deixou.
+    expect(jogo.posicoes).toHaveLength(11)
+    expect(jogo.posicoes.filter((posicao) => posicao.tipo === 'Curinga')).toHaveLength(0)
+    expect(jogo.posicoes.map((posicao) => posicao.carta.valor)).toEqual([
+      'A',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      'J',
+    ])
+    expect(janelaDe(jogo)).toEqual({ inicio: 0, fim: 10 })
+
+    // R8.5 — a categoria muda sem que nada seja recalculado, porque não há campo.
+    expect(categoriaDe(valido(SUJA_REGULARIZAVEL))).toBe('SUJA')
+    expect(categoriaDe(jogo)).toBe('LIMPA')
+  })
+
+  it('CA-R6.6-2 — as cartas que já estavam lá continuam na mesma ordem relativa', () => {
+    const antes = valido(SUJA_REGULARIZAVEL)
+    const resultado = regularizado(SUJA_REGULARIZAVEL, 'A♥ 3♥ 4♥ 8♥')
+
+    if (resultado.tipo !== 'valido') {
+      throw new Error('esperava regularizar')
+    }
+
+    // A R6.6 é exceção à R6.4 **só** para o curinga. Todas as outras posições
+    // seguem na mesma ordem entre si — o que muda é onde o 2♥ está.
+    const naturaisAntes = antes.posicoes
+      .filter((posicao) => posicao.tipo === 'Natural')
+      .map((posicao) => posicao.carta.id)
+    const depois = resultado.jogo.posicoes.map((posicao) => posicao.carta.id)
+
+    expect(depois.filter((id) => naturaisAntes.includes(id))).toEqual(naturaisAntes)
+  })
+
+  it('CA-S100-1 — o jogo regularizado preserva o id', () => {
+    const antes = valido(SUJA_REGULARIZAVEL)
+    const resultado = regularizado(SUJA_REGULARIZAVEL, 'A♥ 3♥ 4♥ 8♥')
+
+    // A S63 na fatia que a H6 previu: a primeira posição do jogo muda — a janela
+    // cresce para baixo — e mesmo assim é o mesmo jogo.
+    expect(resultado.tipo === 'valido' ? resultado.jogo.id : '').toBe(antes.id)
+  })
+
+  it('CA-S99-1 — sem a carta reposta, a casa do curinga fica vazia (I3)', () => {
+    const resultado = regularizado(SUJA_REGULARIZAVEL, 'A♥ 3♥ 4♥')
+
+    expect(resultado.tipo === 'invalido' ? resultado.violados : []).toContain('I3')
+  })
+
+  it('CA-S98-2 — um curinga de outro naipe não se regulariza, e é a I2 que impede', () => {
+    // A previsão do domain.md §2, cobrada: *"a impossibilidade é estrutural, não
+    // uma verificação extra"*. Não existe checagem de naipe escrita em lugar
+    // nenhum — o `2♠` virando `Natural` numa sequência de copas é uma carta de
+    // espadas num jogo de copas, e a I2 recusa.
+    const resultado = regularizado('5♥ 6♥ 7♥ 2♠>8 9♥ 10♥ J♥', 'A♥ 3♥ 4♥ 8♥')
+
+    expect(resultado.tipo === 'invalido' ? resultado.violados : []).toContain('I2')
+  })
+
+  it('CA-S98-1 — com a casa 1 ocupada pela outra cópia, não há como regularizar', () => {
+    // O fixture da CA-S55-1: as duas cópias do 2♥ no mesmo jogo, uma natural na
+    // casa 1 e outra de curinga na casa 6. O curinga é do naipe **certo** e
+    // mesmo assim a canastra é permanentemente suja — a casa dele está tomada.
+    const resultado = regularizado('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♥>7', '7♥ 8♥ 9♥')
+
+    expect(resultado.tipo === 'invalido' ? resultado.violados : []).toContain('I5')
   })
 })

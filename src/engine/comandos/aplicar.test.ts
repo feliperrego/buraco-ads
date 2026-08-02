@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { FaseDoTurno, Partida } from '../dominio/partida.ts'
+import { categoriaDe } from '../dominio/jogo.ts'
 import type { Jogo, Posicao } from '../dominio/jogo.ts'
 import { carta, cartas, construirPartida, outrasCartas, posicoes } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
@@ -671,5 +672,96 @@ describe('M9 — conservação após pegar o lixo', () => {
     aplicado(antes, { tipo: 'pegarLixo' })
 
     expect(antes).toEqual(copia)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0009 §8.1 — o comando `regularizarCuringa`.
+ *
+ * É o sexto e último comando do domain.md §6. Depois dele a tabela de comandos
+ * está fechada, e a fase de `Acao` também.
+ */
+
+const JOGO_SUJO = '5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥'
+const MAO_H9 = 'A♥ 3♥ 4♥ 8♥ K♦ 9♣ 3♣'
+
+function comJogoSujo(notacaoDaMao = MAO_H9, notacaoDoJogo = JOGO_SUJO): Partida {
+  const mao = cartas(notacaoDaMao)
+  const jogo = posicoes(notacaoDoJogo)
+  const naMesa = jogo.map((posicao) => posicao.carta)
+
+  return construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [[jogo], []],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+}
+
+function regularizar(jogo: string, cartasDaMao: string): Comando {
+  return { tipo: 'regularizarCuringa', jogo, cartas: cartas(cartasDaMao).map((uma) => uma.id) }
+}
+
+describe('R6.5 — o curinga deixa de ser curinga e fica no jogo', () => {
+  it('CA-R6.5-1 — o 2♥ passa a Natural e a canastra vira LIMPA', () => {
+    const antes = comJogoSujo()
+    const alvo = jogoNaMesa(antes, 0).id
+    const depois = aplicado(antes, regularizar(alvo, 'A♥ 3♥ 4♥ 8♥'))
+
+    const jogo = jogoNaMesa(depois, 0)
+
+    expect(jogo.posicoes).toHaveLength(11)
+    expect(jogo.posicoes.filter((posicao) => posicao.tipo === 'Curinga')).toHaveLength(0)
+  })
+
+  it('CA-R6.5-3 — o 2 fica no jogo: a mão perde só as quatro cartas repostas', () => {
+    const antes = comJogoSujo()
+    const depois = aplicado(antes, regularizar(jogoNaMesa(antes, 0).id, 'A♥ 3♥ 4♥ 8♥'))
+
+    // A R6.5 é explícita: o curinga **permanece no jogo**, não volta para a mão.
+    // Sete menos quatro, e nenhum 2♥ de volta.
+    expect(antes.jogadores[0].mao).toHaveLength(7)
+    expect(depois.jogadores[0].mao).toHaveLength(3)
+    expect(depois.jogadores[0].mao.map((uma) => uma.id)).not.toContain('COPAS-2-1')
+  })
+
+  it('CA-R8.5-1 — a mesma canastra vale SUJA antes e LIMPA depois, na mesma rodada', () => {
+    const antes = comJogoSujo()
+    const depois = aplicado(antes, regularizar(jogoNaMesa(antes, 0).id, 'A♥ 3♥ 4♥ 8♥'))
+
+    // S100 — a R8.5 deixa de ser honrada por ausência e passa a ser provada.
+    // Mesmo `id`, categoria diferente, nada recalculado à mão.
+    expect(categoriaDe(jogoNaMesa(antes, 0))).toBe('SUJA')
+    expect(categoriaDe(jogoNaMesa(depois, 0))).toBe('LIMPA')
+    expect(jogoNaMesa(depois, 0).id).toBe(jogoNaMesa(antes, 0).id)
+  })
+
+  it('CA-R6.5-1 — regularizar na fase de compra é recusado (R3.2)', () => {
+    const emAcao = comJogoSujo()
+    const naCompra: Partida = { ...emAcao, fase: 'Compra' }
+
+    expect(aplicar(naCompra, regularizar(jogoNaMesa(naCompra, 0).id, 'A♥ 3♥ 4♥ 8♥')).tipo).toBe(
+      'recusa',
+    )
+  })
+
+  it('CA-R6.5-1 — regularizar um jogo sem curinga é recusado', () => {
+    // A mão perde o `8♥` de propósito: ele está no jogo limpo, e o construtor
+    // validado da C4 reprovou o fixture com a carta em dois lugares antes de ele
+    // virar teste. É a quarta vez que essa rede pega uma colisão.
+    const antes = comJogoSujo('A♥ 3♥ 4♥ K♦ 9♣ 3♣', '5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+
+    expect(aplicar(antes, regularizar(jogoNaMesa(antes, 0).id, 'A♥ 3♥ 4♥')).tipo).toBe('recusa')
+  })
+})
+
+describe('M9 — conservação após regularizar', () => {
+  it('CA-M9-11 — após regularizarCuringa, as 104 cartas se conservam', () => {
+    const antes = comJogoSujo()
+    const depois = aplicado(antes, regularizar(jogoNaMesa(antes, 0).id, 'A♥ 3♥ 4♥ 8♥'))
+    const ids = todasAsCartas(depois).map((uma) => uma.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
   })
 })

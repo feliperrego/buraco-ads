@@ -1,6 +1,6 @@
 # Spec 0009 — Regularizar o curinga
 
-> Status: **rascunho** — 7 propostas aguardando confirmação
+> Status: **confirmado** — 7 decisões, nenhuma pendência
 > História: **H9** — "Estendo a sequência até o curinga ocupar sua casa e a canastra fica limpa"
 > Fecha: R6.5, R6.6, R8.5
 > Última atualização: 2026-08-02
@@ -28,7 +28,7 @@ recalculado à mão, porque não há campo a recalcular.
 | Pegar morto e bater (R9, R10) | H10, H11 |
 | Somar pontos na apuração (R11) | H12 |
 
-- `[P]` **S95** — A H9 não acrescenta nada além do comando. Em particular,
+- `[D]` **S95** — A H9 não acrescenta nada além do comando. Em particular,
   ela **não** remove a guarda da S45/S70 — a jogada que esvaziaria a mão continua fora da lista,
   e agora são **três** comandos passando pela mesma guarda em `adicionar`. Ela sai na H10,
   junto com a batida, e o gatilho do [roadmap.md](../roadmap.md) §3 passa a citar as três.
@@ -68,7 +68,7 @@ A R6.5 exige três coisas ao mesmo tempo. Sob o M2, nenhuma delas vira verifica�
 | 2. A sequência **alcança a casa do 2** | **I3** — sem buraco. O `2` vai para a casa 1, e as casas entre ela e o início atual precisam ser preenchidas |
 | 3. A carta substituída é **reposta** | **I3** de novo — a casa que o curinga deixou vaga é um buraco, e um buraco reprova |
 
-- `[P]` **S97** — `regularizarJogo(jogo, novasCartas)` vive em `jogo.ts`, ao
+- `[D]` **S97** — `regularizarJogo(jogo, novasCartas)` vive em `jogo.ts`, ao
   lado de `aumentarJogo`, e é implementada **sobre `criarJogo`** pelo mesmo caminho da S64:
 
 ```ts
@@ -85,7 +85,7 @@ A conversão é uma linha — `{ tipo: 'Natural', carta }` no lugar de
 
 ### 3.1 O caso que prova que a impossibilidade é estrutural
 
-- `[P]` **S98** — A casa natural do `2` é a **casa 1** — a única entre o Ás e
+- `[D]` **S98** — A casa natural do `2` é a **casa 1** — a única entre o Ás e
   o `3` (S41). Disso sai o pré-requisito, e ele é uma comparação: **`inicio ≥ 2`**.
 
 Se a janela do jogo já cobre a casa 1, ela está ocupada, e o `2` não tem para onde ir. Isso
@@ -105,7 +105,7 @@ dele está tomada pela irmã. Nenhum `if` diz isso; a I5 diria, se a tentativa f
 
 ## 4. A forma do comando
 
-- `[P]` **S96** — O comando aponta o jogo e leva **só identificadores de
+- `[D]` **S96** — O comando aponta o jogo e leva **só identificadores de
   carta**:
 
 ```ts
@@ -127,7 +127,7 @@ que faz duas jogadas.
 
 Regularizar é alargar a janela **para baixo** até a casa 1, preenchendo tudo com naturais.
 
-- `[P]` **S99** — A enumeração percorre `[novoInicio, novoFim]` com
+- `[D]` **S99** — A enumeração percorre `[novoInicio, novoFim]` com
   **`novoInicio ∈ {0, 1}`** e `novoFim ∈ [fim, 13]`, e **nenhuma casa pode ficar vazia** — o
   curinga foi gasto na própria operação (I4).
 
@@ -148,7 +148,7 @@ Duas consequências que valem dizer:
 
 ## 6. O que a H9 prova sobre a H8
 
-- `[P]` **S100** — A **R8.5** deixa de ser honrada por ausência e passa a ser
+- `[D]` **S100** — A **R8.5** deixa de ser honrada por ausência e passa a ser
   **provada**: a mesma canastra, com o mesmo `id`, vale `SUJA` antes do comando e `LIMPA`
   depois, na mesma rodada. Nada é recalculado, porque a S85 fez da categoria uma função.
 
@@ -169,7 +169,7 @@ critério é o mesmo par.
 
 ## 7. Interface
 
-- `[P]` **S101** — O rótulo usa o nome que a própria R6.5 dá à operação:
+- `[D]` **S101** — O rótulo usa o nome que a própria R6.5 dá à operação:
   *"Limpar a canastra com 8 de copas"*, nomeando a carta **reposta** — que é a que distingue
   esta jogada de um `aumentar` qualquer sobre o mesmo jogo.
 
@@ -210,11 +210,11 @@ testes como estão:
 
 ---
 
-## 9. Pendências
+## 9. Decisões
 
-Sete propostas. Responda no formato *"todas ok exceto S96 e S99"*.
+Sete, confirmadas em bloco em 2026-08-02.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S95** | Escopo | A guarda da S45/S70 continua, agora servindo **três** comandos |
 | **S96** | API | `{ tipo, jogo, cartas: string[] }` — **sem** `representa`, então não cabe curinga novo |

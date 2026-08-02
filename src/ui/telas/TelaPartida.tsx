@@ -185,6 +185,33 @@ function rotuloDoAumentar(
     : `${base} com ${nomeDa(carta)} valendo ${curinga.representa}`
 }
 
+/**
+ * S101 — o rótulo usa o nome que a própria R6.5 dá à operação — "limpar a
+ * canastra" — e nomeia a carta **reposta**.
+ *
+ * É ela que distingue esta jogada de um `aumentar` sobre o mesmo jogo, e os dois
+ * comandos nunca têm o mesmo conjunto de cartas: um `aumentar` que incluísse a
+ * carta reposta violaria a I5, porque o curinga ainda ocuparia aquele valor.
+ *
+ * A tela acha a reposta cruzando o valor que o curinga representa com a seleção.
+ * Continua sem saber o que é uma sequência (T6) — ela lê `representa`, como já
+ * fazia no `nomeDaPosicao` desde a H5.
+ */
+function rotuloDoRegularizar(
+  alvo: string,
+  cartas: readonly string[],
+  mao: readonly Carta[],
+  meusJogos: readonly Jogo[],
+): string {
+  const jogo = meusJogos.find((umJogo) => umJogo.id === alvo)
+  const curinga = jogo?.posicoes.find((posicao) => posicao.tipo === 'Curinga')
+  const reposta = mao.find(
+    (daMao) => cartas.includes(daMao.id) && daMao.valor === curinga?.representa,
+  )
+
+  return reposta === undefined ? 'Limpar a canastra' : `Limpar a canastra com ${nomeDa(reposta)}`
+}
+
 function jogadasDe(
   movimentos: readonly Comando[],
   mao: readonly Carta[],
@@ -210,6 +237,18 @@ function jogadasDe(
             cartas: new Set(comando.cartas.map((baixada) => baixada.carta)),
             rotulo,
             chave: rotulo,
+          },
+        ]
+      }
+      case 'regularizarCuringa': {
+        const rotulo = rotuloDoRegularizar(comando.jogo, comando.cartas, mao, meusJogos)
+
+        return [
+          {
+            comando,
+            cartas: new Set(comando.cartas),
+            rotulo,
+            chave: `${comando.jogo}|${rotulo}`,
           },
         ]
       }

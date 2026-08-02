@@ -51,6 +51,20 @@ export type Comando =
    * sumir entre duas jogadas do mesmo turno, que é o que a R3.3 autoriza.
    */
   | { readonly tipo: 'aumentar'; readonly jogo: string; readonly cartas: readonly CartaBaixada[] }
+  /**
+   * S96 — o sexto e último comando do domain.md §6, e o único que **não** reusa
+   * `CartaBaixada`.
+   *
+   * A ausência do campo `representa` é a decisão: depois de regularizar o jogo
+   * fica sem curinga, e a I4 aceitaria um novo — mas acrescentar curinga é o que
+   * o `aumentar` faz. Misturar as duas coisas seria um comando que faz duas
+   * jogadas, e a R3.3 já deixa fazê-las em sequência.
+   */
+  | {
+      readonly tipo: 'regularizarCuringa'
+      readonly jogo: string
+      readonly cartas: readonly string[]
+    }
 
 /**
  * S21 — `sucesso` carrega só a partida nova. O M8 previu também uma lista de

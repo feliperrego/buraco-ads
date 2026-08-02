@@ -1,7 +1,14 @@
 import type { CartaBaixada, Comando } from '../comandos/comando.ts'
 import { NAIPES } from '../dominio/carta.ts'
 import type { Carta, Naipe } from '../dominio/carta.ts'
-import { CASAS, casasDe, janelaDe, valorDaCasa } from '../dominio/jogo.ts'
+import {
+  CASAS,
+  CASA_DO_DOIS,
+  casasDe,
+  janelaDe,
+  regularizarJogo,
+  valorDaCasa,
+} from '../dominio/jogo.ts'
 import type { Jogo } from '../dominio/jogo.ts'
 import type { VisaoDoJogador } from './visao-de.ts'
 
@@ -50,6 +57,7 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
     ...visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id })),
     ...baixares(visao.mao),
     ...aumentares(visao.mao, visao.meusJogos),
+    ...regularizacoes(visao.mao, visao.meusJogos),
   ]
 }
 
@@ -241,6 +249,75 @@ function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly
 }
 
 /**
+ * S99 — a enumeração de `regularizarCuringa`.
+ *
+ * Regularizar é alargar a janela **para baixo** até a casa do `2`, e por isso
+ * `novoInicio` tem dois valores e não catorze: a casa 1 é obrigatória — é para
+ * lá que o curinga vai — e a casa 0 é opcional, se o jogador tiver o Ás.
+ * Começar em 2 ou mais deixaria a casa 1 vazia.
+ *
+ * `novoFim` varia porque a S48 casa botão com a **seleção exata**: quem
+ * selecionou o Ás, as cartas do caminho, a reposta **e** uma carta para a outra
+ * ponta fez uma jogada só, e sem o comando correspondente aquela seleção não
+ * teria botão. É o mesmo argumento da S72.
+ *
+ * **Nenhuma casa pode ficar vazia**, porque o curinga foi gasto na própria
+ * operação (I4) — daí `casaVazia !== null` cortar o candidato.
+ *
+ * A validade é conferida **construindo**: o candidato passa por
+ * `regularizarJogo`, e é a I2 que recusa o curinga de outro naipe. Nenhuma
+ * checagem de naipe é escrita aqui, que é o que a `CA-S98-2` cobra.
+ */
+function regularizacoes(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly Comando[] {
+  const comandos: Comando[] = []
+
+  for (const jogo of meusJogos) {
+    if (!jogo.posicoes.some((posicao) => posicao.tipo === 'Curinga')) {
+      continue
+    }
+
+    const { inicio, fim } = janelaDe(jogo)
+    const mapa = porCasa(mao.filter((carta) => carta.naipe === jogo.naipe))
+
+    // As casas que já têm carta natural. A do curinga fica de fora de propósito:
+    // ela precisa ser preenchida pela carta reposta.
+    const ocupadas = new Set(
+      jogo.posicoes.flatMap((posicao, indice) =>
+        posicao.tipo === 'Natural' ? [inicio + indice] : [],
+      ),
+    )
+
+    for (const novoInicio of [0, CASA_DO_DOIS]) {
+      for (let novoFim = fim; novoFim < CASAS; novoFim++) {
+        const casasNovas = casasEntre(novoInicio, novoFim).filter(
+          (casa) => casa !== CASA_DO_DOIS && !ocupadas.has(casa),
+        )
+
+        const resolvida = resolverCasas(casasNovas, mapa)
+
+        if (resolvida === null || resolvida.casaVazia !== null) {
+          continue
+        }
+
+        const escolhidas = resolvida.naturais.flatMap((carta) => (carta ? [carta] : []))
+
+        if (regularizarJogo(jogo, escolhidas).tipo !== 'valido') {
+          continue
+        }
+
+        adicionar(comandos, mao, {
+          tipo: 'regularizarCuringa',
+          jogo: jogo.id,
+          cartas: escolhidas.map((carta) => carta.id),
+        })
+      }
+    }
+  }
+
+  return comandos
+}
+
+/**
  * As formas de preencher um conjunto de casas com cartas da mão: nenhuma, uma
  * (todas naturais) ou uma por naipe de `2` disponível quando sobra uma casa.
  *
@@ -297,7 +374,7 @@ function leiturasDe(
 function adicionar(
   comandos: Comando[],
   mao: readonly Carta[],
-  comando: Extract<Comando, { readonly cartas: readonly CartaBaixada[] }>,
+  comando: Extract<Comando, { readonly cartas: readonly (CartaBaixada | string)[] }>,
 ) {
   if (comando.cartas.length === mao.length) {
     return

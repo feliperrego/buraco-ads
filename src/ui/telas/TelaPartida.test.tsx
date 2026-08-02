@@ -26,6 +26,11 @@ function carta(naipe: Naipe, valor: Valor, copia = 1): Carta {
   return { id: `${naipe}-${valor}-${String(copia)}`, naipe, valor }
 }
 
+/** O nome que a tela dá a uma carta, para achar o botão dela. */
+function nomeLegivel(uma: Carta): string {
+  return `${uma.valor} de ${uma.naipe.toLowerCase()}`
+}
+
 const ONZE_VALORES: readonly Valor[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J']
 
 function visaoInicial(ajustes: Partial<VisaoDoJogador> = {}): VisaoDoJogador {
@@ -737,5 +742,90 @@ describe('S93 — o rótulo de categoria na mesa', () => {
     // algo que a R8.2 não define. A âncora positiva é a CA-S93-1 acima.
     expect(painel.textContent).toMatch(/5 de copas/i)
     expect(painel.textContent).not.toMatch(/canastra/i)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0009 §8.2.
+ *
+ * S101 — o rótulo usa o nome que a própria R6.5 dá à operação, e nomeia a carta
+ * **reposta**, que é a que distingue esta jogada de um `aumentar` qualquer sobre
+ * o mesmo jogo.
+ */
+describe('S101 — limpar a canastra', () => {
+  const SUJO = {
+    id: 'J0-COPAS-5-1',
+    dono: 0 as const,
+    naipe: 'COPAS' as const,
+    posicoes: [
+      { tipo: 'Natural' as const, carta: carta('COPAS', '5') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '6') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '7') },
+      { tipo: 'Curinga' as const, carta: carta('COPAS', '2'), representa: '8' as const },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '9') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '10') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', 'J') },
+    ],
+  }
+
+  const REPOSTAS = [carta('COPAS', '3'), carta('COPAS', '4'), carta('COPAS', '8')]
+
+  const LIMPAR: Comando = {
+    tipo: 'regularizarCuringa',
+    jogo: SUJO.id,
+    cartas: REPOSTAS.map((uma) => uma.id),
+  }
+
+  it('CA-S101-1 — o botão nomeia a carta reposta', () => {
+    const visao = visaoInicial({
+      fase: 'Acao',
+      mao: [...REPOSTAS, carta('OUROS', 'K')],
+      meusJogos: [SUJO],
+    })
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida visao={visao} movimentos={[...descartesDe(visao), LIMPAR]} aoJogar={aoJogar} />,
+    )
+
+    for (const uma of REPOSTAS) {
+      fireEvent.click(
+        screen.getByRole('button', { name: new RegExp(`^${nomeLegivel(uma)}$`, 'i') }),
+      )
+    }
+
+    // "Limpar a canastra" é o apelido que a própria R6.5 dá à operação, e o 8 de
+    // copas é a carta reposta — a que o curinga estava representando.
+    fireEvent.click(screen.getByRole('button', { name: /limpar a canastra com 8 de copas/i }))
+
+    expect(aoJogar).toHaveBeenCalledWith(LIMPAR)
+  })
+
+  it('CA-S101-2 — depois de limpar, a mesa mostra a canastra sem "valendo"', () => {
+    // A metade observável: o jogo deixa de ter posição com papel declarado, e a
+    // categoria muda junto — que é a R8.5 vista da tela.
+    const limpo = {
+      ...SUJO,
+      posicoes: [
+        { tipo: 'Natural' as const, carta: carta('COPAS', '2') },
+        { tipo: 'Natural' as const, carta: carta('COPAS', '3') },
+        { tipo: 'Natural' as const, carta: carta('COPAS', '4') },
+        ...SUJO.posicoes.filter((posicao) => posicao.tipo === 'Natural'),
+        { tipo: 'Natural' as const, carta: carta('COPAS', '8') },
+      ],
+    }
+
+    render(
+      <TelaPartida
+        visao={visaoInicial({ meusJogos: [limpo] })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /meus jogos/i })
+
+    expect(painel.textContent).not.toMatch(/valendo/i)
+    expect(painel.textContent).toMatch(/canastra limpa/i)
   })
 })
