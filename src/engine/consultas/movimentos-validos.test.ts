@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { aplicar } from '../comandos/aplicar.ts'
 import type { Comando } from '../comandos/comando.ts'
+import type { Carta, Naipe, Valor } from '../dominio/carta.ts'
+import type { Posicao } from '../dominio/jogo.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { JogadorId, Partida } from '../dominio/partida.ts'
 import {
@@ -9,6 +11,7 @@ import {
   construirPartida,
   naipeInteiro,
   outrasCartas,
+  posicoes,
 } from '../testing/construtor.ts'
 import { movimentosValidos } from './movimentos-validos.ts'
 import { visaoDe } from './visao-de.ts'
@@ -333,5 +336,257 @@ describe('S59 — o custo da enumeração com curinga, medido', () => {
 
     expect(decorrido).toBeLessThan(50)
     expect(comCuringas.length).toBeGreaterThan(0)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0006 §6.1 e §6.2 — a enumeração dos `aumentar`.
+ *
+ * S72 — a enumeração percorre as janelas que **contêm** a janela atual do jogo.
+ * É a mesma escolha da S46 aplicada a outro ponto de partida: aumentar é alargar
+ * um trecho, e na janela "estender à esquerda", "estender à direita" e "os dois"
+ * deixam de ser casos diferentes.
+ */
+
+const QUATORZE = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥'
+
+function emAcaoComJogos(
+  mao: readonly Carta[],
+  meus: readonly (readonly Posicao[])[],
+  doAdversario: readonly (readonly Posicao[])[] = [],
+): Partida {
+  const naMesa = [...meus, ...doAdversario].flatMap((jogo) =>
+    jogo.map((posicao) => posicao.carta),
+  )
+
+  return construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [meus, doAdversario],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+}
+
+function aumentaresDe(partida: Partida): readonly Comando[] {
+  return movimentosValidos(visaoDaVez(partida)).filter((comando) => comando.tipo === 'aumentar')
+}
+
+/** As cartas de um `aumentar`, ordenadas, para comparar sem depender da ordem. */
+function cartasDoAumentar(comando: Comando | undefined): readonly string[] {
+  if (comando?.tipo !== 'aumentar') {
+    throw new Error(`esperava um comando aumentar, veio ${comando?.tipo ?? 'nenhum'}`)
+  }
+
+  return comando.cartas.map((baixada) => baixada.carta).sort()
+}
+
+/** O papel de curinga declarado num comando, se houver. */
+function curingaDo(comando: Comando): { readonly carta: string; readonly representa: string } | null {
+  if (comando.tipo !== 'aumentar' && comando.tipo !== 'baixar') {
+    return null
+  }
+
+  const achado = comando.cartas.find((baixada) => baixada.representa !== undefined)
+
+  return achado?.representa === undefined
+    ? null
+    : { carta: achado.carta, representa: achado.representa }
+}
+
+describe('R6.2 — a posse é estrutural', () => {
+  it('CA-R6.2-3 — com um jogo meu e um do adversário aumentáveis, só o meu é oferecido', () => {
+    const partida = emAcaoComJogos(
+      cartas('8♥ 8♦ K♠ 9♣'),
+      [posicoes('5♥ 6♥ 7♥')],
+      [posicoes('5♦ 6♦ 7♦')],
+    )
+    const meu = partida.jogadores[0].jogos[0]?.id
+    const dele = partida.jogadores[1].jogos[0]?.id
+
+    const aumentares = aumentaresDe(partida)
+    const alvos = new Set(
+      aumentares.map((comando) => (comando.tipo === 'aumentar' ? comando.jogo : '')),
+    )
+
+    // A âncora positiva vem primeiro: o `8♦` estende o jogo dele tão bem quanto
+    // o `8♥` estende o meu, e é isso que dá sentido à ausência abaixo.
+    expect(aumentares.length).toBeGreaterThan(0)
+    expect(alvos).toContain(meu)
+    expect(alvos).not.toContain(dele)
+  })
+})
+
+describe('R6.3 — o jogo de catorze não cresce', () => {
+  it('CA-R6.3-2 — nenhum aumentar é oferecido para o jogo de catorze posições', () => {
+    const partida = emAcaoComJogos([carta('COPAS', '5', 2), ...cartas('6♦ K♠')], [
+      posicoes(QUATORZE),
+      posicoes('3♦ 4♦ 5♦'),
+    ])
+    const deCatorze = partida.jogadores[0].jogos[0]?.id
+    const aumentares = aumentaresDe(partida)
+
+    // A âncora: o jogo de ouros na mesma mesa **é** aumentável pelo 6♦, então a
+    // ausência abaixo não é "a enumeração não oferece nada".
+    expect(aumentares.length).toBeGreaterThan(0)
+    expect(
+      aumentares.map((comando) => (comando.tipo === 'aumentar' ? comando.jogo : '')),
+    ).not.toContain(deCatorze)
+  })
+})
+
+describe('R6.4 — nenhum comando move carta que já está na mesa', () => {
+  it('CA-R6.4-2 — todo comando oferecido cita apenas cartas da mão', () => {
+    const partida = emAcaoComJogos(cartas('4♥ 8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+    const naMao = new Set(partida.jogadores[0].mao.map((umaCarta) => umaCarta.id))
+    const movimentos = movimentosValidos(visaoDaVez(partida))
+
+    // A âncora positiva, de novo antes do negativo: "nenhum comando move cartas
+    // entre jogos" é verdade numa lista vazia, e já passou de graça duas vezes
+    // neste projeto (CA-S1-1 e CA-S27-1).
+    expect(aumentaresDe(partida).length).toBeGreaterThan(0)
+
+    for (const comando of movimentos) {
+      const citadas =
+        comando.tipo === 'descartar'
+          ? [comando.carta]
+          : comando.tipo === 'comprarDoMonte'
+            ? []
+            : comando.cartas.map((baixada) => baixada.carta)
+
+      for (const id of citadas) {
+        expect(naMao).toContain(id)
+      }
+    }
+  })
+})
+
+describe('S69 — o curinga no aumentar', () => {
+  it('CA-S69-1 — um jogo que já tem curinga só recebe cartas naturais', () => {
+    const partida = emAcaoComJogos(cartas('4♥ 2♦ K♦ 9♣'), [posicoes('5♥ 6♥ 2♠>7')])
+    const aumentares = aumentaresDe(partida)
+
+    // A âncora: o 4♥ estende este jogo, então há o que negar.
+    expect(aumentares.length).toBeGreaterThan(0)
+    expect(aumentares.map(curingaDo).filter((papel) => papel !== null)).toHaveLength(0)
+  })
+
+  it('CA-S69-2 — sem curinga no jogo, cada valor representado rende um comando por naipe de 2', () => {
+    const partida = emAcaoComJogos(cartas('2♠ 2♦ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+    const papeis = aumentaresDe(partida)
+      .map(curingaDo)
+      .filter((papel) => papel !== null)
+
+    const porValor = new Map<string, string[]>()
+
+    for (const papel of papeis) {
+      porValor.set(papel.representa, [...(porValor.get(papel.representa) ?? []), papel.carta])
+    }
+
+    // A S56 é herdada sem alteração: `2♠` e `2♦` numa sequência de copas valem o
+    // mesmo hoje e valem diferente na H9, porque a R6.5 só deixa regularizar o
+    // `2` do naipe da própria sequência. Oferecer um só esconderia a jogada boa.
+    expect([...porValor.keys()].sort()).toEqual(['4', '8'])
+
+    for (const [, usados] of porValor) {
+      expect(usados.sort()).toEqual(['ESPADAS-2-1', 'OUROS-2-1'])
+    }
+  })
+})
+
+describe('S70 — o aumentar que esvaziaria a mão não é oferecido', () => {
+  it('CA-S70-1 — com uma carta a mais na mão, o aumentar aparece', () => {
+    // A âncora positiva, mesma forma da CA-S45-1.
+    expect(aumentaresDe(emAcaoComJogos(cartas('4♥ K♦'), [posicoes('5♥ 6♥ 7♥')]))).toHaveLength(1)
+  })
+
+  it('CA-S70-1 — com a mão contendo só a carta do aumento, ele não é oferecido', () => {
+    // A R7.1 exige o descarte e a batida é a H10, exatamente como na S45. A
+    // propriedade que isto preserva é mais forte do que parece: com a guarda por
+    // comando, **nenhuma sequência** de jogadas oferecidas esvazia a mão, porque
+    // cada uma deixa ao menos uma carta.
+    expect(aumentaresDe(emAcaoComJogos(cartas('4♥'), [posicoes('5♥ 6♥ 7♥')]))).toHaveLength(0)
+  })
+})
+
+describe('S71 — a janela do jogo limita a enumeração', () => {
+  it('CA-S71-1 — um jogo terminado no Ás alto não é aumentado à direita', () => {
+    const aumentares = aumentaresDe(emAcaoComJogos(cartas('J♥ K♦ 9♣'), [posicoes('Q♥ K♥ A♥')]))
+
+    // Casa 13 é o fim da linha (S41). Um único comando, e ele estende à
+    // esquerda: quem tratasse a ordem como anel ofereceria o 2♥ depois do Ás.
+    expect(aumentares).toHaveLength(1)
+    expect(cartasDoAumentar(aumentares[0])).toEqual(['COPAS-J-1'])
+  })
+
+  it('CA-S71-2 — um jogo começado no Ás baixo não é aumentado à esquerda', () => {
+    const aumentares = aumentaresDe(emAcaoComJogos(cartas('4♥ K♦ 9♣'), [posicoes('A♥ 2♥ 3♥')]))
+
+    expect(aumentares).toHaveLength(1)
+    expect(cartasDoAumentar(aumentares[0])).toEqual(['COPAS-4-1'])
+  })
+})
+
+describe('S72 — janelas que contêm a janela atual', () => {
+  it('CA-S72-1 — com 4♥ e 8♥ na mão, as duas pontas cabem num comando só', () => {
+    const aumentares = aumentaresDe(emAcaoComJogos(cartas('4♥ 8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')]))
+    const conjuntos = aumentares.map((comando) => cartasDoAumentar(comando))
+
+    // O jogador que selecionou as duas cartas em volta da sequência fez **uma**
+    // jogada na cabeça dele, e a S48 casa botão com seleção exata: sem o comando
+    // de dois lados, aquela seleção não teria botão e pareceria ilegal.
+    expect(aumentares).toHaveLength(3)
+    expect(conjuntos).toContainEqual(['COPAS-4-1', 'COPAS-8-1'])
+    expect(conjuntos).toContainEqual(['COPAS-4-1'])
+    expect(conjuntos).toContainEqual(['COPAS-8-1'])
+  })
+})
+
+describe('S73 — o custo da enumeração com jogos na mesa, medido', () => {
+  it('CA-S73-1 — com 22 cartas na mão e quatro jogos na mesa, responde em menos de 50 ms', () => {
+    // A T7 foi medida duas vezes, e nenhuma das duas cobre esta fatia — por um
+    // motivo novo. Até aqui a enumeração dependia só da mão; agora depende
+    // também do **estado da mesa**, e um jogador com vários jogos enumera várias
+    // vezes mais janelas.
+    const naturaisDe = (
+      naipe: Naipe,
+      valores: readonly Valor[],
+      copia: 1 | 2,
+    ): readonly Posicao[] =>
+      valores.map((valor) => ({ tipo: 'Natural', carta: carta(naipe, valor, copia) }))
+
+    const mao = [
+      ...naipeInteiro('COPAS'),
+      carta('COPAS', 'A', 2),
+      ...cartas('A♦ 2♦ 3♦ 4♦ 5♦ 6♦ 7♦ 8♦'),
+    ]
+
+    expect(mao).toHaveLength(22)
+
+    const meus = [
+      naturaisDe('COPAS', ['5', '6', '7'], 2),
+      naturaisDe('COPAS', ['10', 'J', 'Q'], 2),
+      naturaisDe('OUROS', ['3', '4', '5'], 2),
+      naturaisDe('ESPADAS', ['A', '2', '3'], 1),
+    ]
+
+    const partida = emAcaoComJogos(mao, meus)
+
+    const inicio = performance.now()
+    const movimentos = movimentosValidos(visaoDaVez(partida))
+    const decorrido = performance.now() - inicio
+
+    const aumentares = movimentos.filter((comando) => comando.tipo === 'aumentar')
+    const baixares = movimentos.filter((comando) => comando.tipo === 'baixar')
+
+    console.log(
+      `CA-S73-1: ${String(movimentos.length)} comandos, ${String(baixares.length)} baixar, ` +
+        `${String(aumentares.length)} aumentar em ${decorrido.toFixed(2)} ms`,
+    )
+
+    // O limiar de ~2000 comandos é o que reabriria a consulta `validar` da
+    // screens.md §3.1, e o de 50 ms é rede, não meta.
+    expect(decorrido).toBeLessThan(50)
+    expect(aumentares.length).toBeGreaterThan(0)
+    expect(movimentos.length).toBeLessThan(2000)
   })
 })

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { Partida } from '../dominio/partida.ts'
-import { cartas, construirPartida, outrasCartas } from '../testing/construtor.ts'
+import type { Jogo, Posicao } from '../dominio/jogo.ts'
+import { carta, cartas, construirPartida, outrasCartas, posicoes } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
 import type { CartaBaixada, Comando } from './comando.ts'
 
@@ -392,5 +393,181 @@ describe('M9 — conservação após baixar com curinga', () => {
 
     expect(ids).toHaveLength(104)
     expect(new Set(ids).size).toBe(104)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0006 §6.1 — o comando `aumentar`.
+ *
+ * S66 — a posse da R6.2 é **estrutural**: `aplicar` procura o jogo alvo somente
+ * entre os jogos de quem está jogando. Um `id` do adversário não é recusado por
+ * uma checagem de dono; ele simplesmente não é encontrado. Uma segunda checagem
+ * — "achei o jogo, agora confiro o dono" — é uma linha a mais que um refactor
+ * pode esquecer; uma busca na lista errada não tem como estar certa por acaso.
+ */
+
+const QUATORZE = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥'
+
+/** Uma partida em ação com jogos **já na mesa**, dos dois lados. */
+function comJogosNaMesa(
+  mao: readonly Carta[],
+  meus: readonly (readonly Posicao[])[],
+  doAdversario: readonly (readonly Posicao[])[] = [],
+): Partida {
+  const naMesa = [...meus, ...doAdversario].flatMap((jogo) =>
+    jogo.map((posicao) => posicao.carta),
+  )
+
+  return construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [meus, doAdversario],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+}
+
+/** O jogo de um jogador, falhando alto em vez de devolver `undefined`. */
+function jogoNaMesa(partida: Partida, quem: 0 | 1, indice = 0): Jogo {
+  const jogo = partida.jogadores[quem].jogos[indice]
+
+  if (jogo === undefined) {
+    throw new Error(`cenário impossível: jogador ${String(quem)} sem jogo ${String(indice)}`)
+  }
+
+  return jogo
+}
+
+function aumentar(jogo: string, cartas: readonly CartaBaixada[]): Comando {
+  return { tipo: 'aumentar', jogo, cartas }
+}
+
+describe('R6.2 — aumentar é acrescentar carta a um jogo próprio', () => {
+  it('CA-R6.2-1 — a carta sai da mão e o jogo passa a ter quatro posições', () => {
+    const antes = comJogosNaMesa(cartas('8♥ K♦ 9♣ 3♣'), [posicoes('5♥ 6♥ 7♥')])
+    const alvo = jogoNaMesa(antes, 0)
+    const depois = aplicado(antes, aumentar(alvo.id, [{ carta: 'COPAS-8-1' }]))
+
+    expect(jogoNaMesa(antes, 0).posicoes).toHaveLength(3)
+    expect(jogoNaMesa(depois, 0).posicoes).toHaveLength(4)
+    expect(jogoNaMesa(depois, 0).posicoes.map((posicao) => posicao.carta.valor)).toEqual([
+      '5',
+      '6',
+      '7',
+      '8',
+    ])
+    expect(depois.jogadores[0].mao).toHaveLength(3)
+    expect(depois.jogadores[0].mao.map((umaCarta) => umaCarta.id)).not.toContain('COPAS-8-1')
+  })
+
+  it('CA-R6.2-2 — aumentar um jogo do adversário é recusado, e o jogo dele não muda', () => {
+    const antes = comJogosNaMesa(cartas('8♦ K♠ 9♣'), [], [posicoes('5♦ 6♦ 7♦')])
+    const dele = jogoNaMesa(antes, 1)
+
+    const resultado = aplicar(antes, aumentar(dele.id, [{ carta: 'OUROS-8-1' }]))
+
+    // S66 — a recusa não vem de uma checagem de dono. O `id` existe, e mesmo
+    // assim não é encontrado, porque a busca acontece na lista de quem joga.
+    expect(resultado.tipo).toBe('recusa')
+    expect(jogoNaMesa(antes, 1).posicoes).toHaveLength(3)
+  })
+
+  it('CA-R6.2-2 — aumentar um jogo que não existe é recusado pelo mesmo caminho', () => {
+    const antes = comJogosNaMesa(cartas('8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+
+    expect(aplicar(antes, aumentar('J0-INEXISTENTE', [{ carta: 'COPAS-8-1' }])).tipo).toBe('recusa')
+  })
+
+  it('CA-R6.2-1 — aumentar na fase de compra é recusado (R3.2)', () => {
+    const emAcao = comJogosNaMesa(cartas('8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+    const naCompra: Partida = { ...emAcao, fase: 'Compra' }
+
+    expect(
+      aplicar(naCompra, aumentar(jogoNaMesa(naCompra, 0).id, [{ carta: 'COPAS-8-1' }])).tipo,
+    ).toBe('recusa')
+  })
+})
+
+describe('R6.3 — sete cartas não fecham o jogo, catorze fecham', () => {
+  it('CA-R6.3-1 — um jogo de sete posições aceita a oitava', () => {
+    // R6.3 vista pelo tamanho (S62): a palavra "canastra" não existe no código
+    // até a H8, e não precisa existir. O que a regra acrescenta à R5.3 não é um
+    // limite novo — é a negação de uma regra que **não** existe, a de que a
+    // canastra fecharia ao completar sete.
+    const antes = comJogosNaMesa(cartas('Q♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')])
+    const depois = aplicado(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-Q-1' }]))
+
+    expect(jogoNaMesa(antes, 0).posicoes).toHaveLength(7)
+    expect(jogoNaMesa(depois, 0).posicoes).toHaveLength(8)
+  })
+
+  it('CA-R6.3-2 — um jogo de catorze posições recusa a décima quinta (I1)', () => {
+    const antes = comJogosNaMesa(
+      [carta('COPAS', '5', 2), ...cartas('K♦ 9♣')],
+      [posicoes(QUATORZE)],
+    )
+
+    const resultado = aplicar(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-5-2' }]))
+
+    expect(jogoNaMesa(antes, 0).posicoes).toHaveLength(14)
+    expect(resultado.tipo).toBe('recusa')
+    expect(resultado.tipo === 'recusa' ? resultado.motivo : '').toContain('I1')
+  })
+})
+
+describe('R3.3 — quantas ações quiser, no mesmo turno', () => {
+  it('CA-R3.3-1 — dois aumentar seguidos são aceitos e a vez não passa', () => {
+    const antes = comJogosNaMesa(cartas('4♥ 8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+    const alvo = jogoNaMesa(antes, 0).id
+
+    const primeiro = aplicado(antes, aumentar(alvo, [{ carta: 'COPAS-8-1' }]))
+
+    // O segundo comando aponta o **mesmo** `id`. É aqui que a S63 deixa de ser
+    // teoria: com o `id` derivado do conteúdo, o jogo alvo teria sumido entre as
+    // duas jogadas, e a R3.3 é exatamente o que autoriza as duas.
+    const segundo = aplicado(primeiro, aumentar(alvo, [{ carta: 'COPAS-4-1' }]))
+
+    expect(jogoNaMesa(segundo, 0).posicoes).toHaveLength(5)
+    expect(jogoNaMesa(segundo, 0).posicoes.map((posicao) => posicao.carta.valor)).toEqual([
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+    ])
+    expect(segundo.fase).toBe('Acao')
+    expect(segundo.jogadorDaVez).toBe(0)
+    expect(segundo.jogadores[0].jogos).toHaveLength(1)
+  })
+
+  it('CA-S72-1 — as duas pontas num comando só são aceitas por aplicar', () => {
+    const antes = comJogosNaMesa(cartas('4♥ 8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
+
+    const depois = aplicado(
+      antes,
+      aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-4-1' }, { carta: 'COPAS-8-1' }]),
+    )
+
+    expect(jogoNaMesa(depois, 0).posicoes).toHaveLength(5)
+    expect(depois.jogadores[0].mao).toHaveLength(2)
+  })
+})
+
+describe('M9 — conservação após aumentar', () => {
+  it('CA-M9-9 — após aumentar, as 104 cartas se conservam sem id repetido', () => {
+    const antes = comJogosNaMesa(cartas('8♥ K♦ 9♣ 3♣'), [posicoes('5♥ 6♥ 7♥')])
+    const depois = aplicado(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-8-1' }]))
+    const ids = todasAsCartas(depois).map((umaCarta) => umaCarta.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+
+  it('CA-M9-9 — aumentar não muta a partida de entrada', () => {
+    const antes = comJogosNaMesa(cartas('8♥ K♦ 9♣ 3♣'), [posicoes('5♥ 6♥ 7♥')])
+    const copia = JSON.parse(JSON.stringify(antes)) as Partida
+
+    aplicado(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-8-1' }]))
+
+    expect(antes).toEqual(copia)
   })
 })

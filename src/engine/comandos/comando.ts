@@ -31,6 +31,15 @@ export type Comando =
   | { readonly tipo: 'comprarDoMonte' }
   | { readonly tipo: 'descartar'; readonly carta: string }
   | { readonly tipo: 'baixar'; readonly cartas: readonly CartaBaixada[] }
+  /**
+   * S65 — o `aumentar` aponta o jogo alvo pelo `id` e reusa `CartaBaixada`.
+   *
+   * `jogo` é o campo que nenhum comando anterior tinha: é a primeira vez que um
+   * comando aponta para algo que **já está na mesa**. É por isso que a S63
+   * precisou vir antes — um `id` recalculado a cada crescimento faria o alvo
+   * sumir entre duas jogadas do mesmo turno, que é o que a R3.3 autoriza.
+   */
+  | { readonly tipo: 'aumentar'; readonly jogo: string; readonly cartas: readonly CartaBaixada[] }
 
 /**
  * S21 — `sucesso` carrega só a partida nova. O M8 previu também uma lista de

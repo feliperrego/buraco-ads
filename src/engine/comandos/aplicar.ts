@@ -1,5 +1,5 @@
 import type { Carta } from '../dominio/carta.ts'
-import { criarJogo } from '../dominio/jogo.ts'
+import { aumentarJogo, criarJogo } from '../dominio/jogo.ts'
 import type { Posicao } from '../dominio/jogo.ts'
 import type { Jogador, JogadorId, Partida } from '../dominio/partida.ts'
 import type { CartaBaixada, Comando, Resultado } from './comando.ts'
@@ -20,6 +20,64 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
       return descartar(partida, comando.carta)
     case 'baixar':
       return baixar(partida, comando.cartas)
+    case 'aumentar':
+      return aumentar(partida, comando.jogo, comando.cartas)
+  }
+}
+
+/**
+ * R6.2 — aumentar é acrescentar cartas da mão a um jogo **próprio** já na mesa.
+ *
+ * S66 — a posse é **estrutural**: o jogo alvo é procurado somente entre os jogos
+ * de quem está jogando. Um `id` do adversário não é recusado por uma checagem de
+ * dono; ele simplesmente não é encontrado, e cai na mesma recusa de `id`
+ * inexistente. É o formato da RF5.2 na visão — o dado que não chega não pode ser
+ * usado. Uma segunda checagem seria uma linha a mais que um refactor esquece;
+ * uma busca na lista errada não tem como estar certa por acaso.
+ *
+ * S44/R3.3 vale igual ao `baixar`: a fase continua `Acao` e a vez não passa.
+ */
+function aumentar(
+  partida: Partida,
+  jogoId: string,
+  acrescentadas: readonly CartaBaixada[],
+): Resultado {
+  if (partida.fase !== 'Acao') {
+    return { tipo: 'recusa', motivo: 'R3.2: não se aumenta antes de comprar' }
+  }
+
+  const quem = partida.jogadorDaVez
+  const jogador = partida.jogadores[quem]
+  const alvo = jogador.jogos.find((umJogo) => umJogo.id === jogoId)
+
+  if (alvo === undefined) {
+    return { tipo: 'recusa', motivo: `R6.2: ${jogoId} não é um jogo de quem está jogando` }
+  }
+
+  const daMao = posicoesDaMao(jogador.mao, acrescentadas, 'R6.2')
+
+  if (daMao.tipo === 'recusa') {
+    return daMao
+  }
+
+  const resultado = aumentarJogo(alvo, daMao.posicoes)
+
+  if (resultado.tipo !== 'valido') {
+    return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
+  }
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores: comJogador(partida, quem, {
+        ...jogador,
+        mao: daMao.sobraram,
+        // R6.4 — o jogo é substituído no lugar, e nenhum outro é tocado. A ordem
+        // da lista se mantém, o que deixa estável a chave de renderização.
+        jogos: jogador.jogos.map((umJogo) => (umJogo.id === jogoId ? resultado.jogo : umJogo)),
+      }),
+    },
   }
 }
 
@@ -37,22 +95,69 @@ function baixar(partida: Partida, baixadas: readonly CartaBaixada[]): Resultado 
   }
 
   const quem = partida.jogadorDaVez
-  const mao = partida.jogadores[quem].mao
-  const pedidos = new Set(baixadas.map((baixada) => baixada.carta))
+  const jogador = partida.jogadores[quem]
+  const daMao = posicoesDaMao(jogador.mao, baixadas, 'R6.1')
 
-  if (pedidos.size !== baixadas.length) {
-    return { tipo: 'recusa', motivo: 'R6.1: a mesma carta foi pedida duas vezes' }
+  if (daMao.tipo === 'recusa') {
+    return daMao
   }
 
-  // S52 — a conversão para posições acontece aqui, junto com a checagem de posse.
-  // `criarJogo` recebe as posições prontas e passa a conferir, não a inferir.
+  const resultado = criarJogo(quem, daMao.posicoes)
+
+  if (resultado.tipo !== 'valido') {
+    return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
+  }
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores: comJogador(partida, quem, {
+        ...jogador,
+        mao: daMao.sobraram,
+        jogos: [...jogador.jogos, resultado.jogo],
+      }),
+    },
+  }
+}
+
+type DaMao =
+  | {
+      readonly tipo: 'posicoes'
+      readonly posicoes: readonly Posicao[]
+      /** A mão sem as cartas pedidas, já filtrada. */
+      readonly sobraram: readonly Carta[]
+    }
+  | { readonly tipo: 'recusa'; readonly motivo: string }
+
+/**
+ * S52 — a conversão de cartas pedidas para **posições**, junto com a checagem de
+ * posse. `criarJogo` recebe as posições prontas e passa a conferir, não a
+ * inferir, e é aqui que a S51 vira estrutura: sem `representa` a carta é
+ * natural, com `representa` ela é curinga fazendo papel daquele valor.
+ *
+ * `baixar` e `aumentar` compartilham isto por inteiro. A `regra` só muda o texto
+ * da recusa — R6.1 num caso, R6.2 no outro —, e essa é a única diferença entre
+ * os dois caminhos até `criarJogo`.
+ */
+function posicoesDaMao(
+  mao: readonly Carta[],
+  pedidas: readonly CartaBaixada[],
+  regra: string,
+): DaMao {
+  const pedidos = new Set(pedidas.map((baixada) => baixada.carta))
+
+  if (pedidos.size !== pedidas.length) {
+    return { tipo: 'recusa', motivo: `${regra}: a mesma carta foi pedida duas vezes` }
+  }
+
   const posicoes: Posicao[] = []
 
-  for (const baixada of baixadas) {
+  for (const baixada of pedidas) {
     const carta = mao.find((daMao) => daMao.id === baixada.carta)
 
     if (carta === undefined) {
-      return { tipo: 'recusa', motivo: `R6.1: a carta ${baixada.carta} não está na mão` }
+      return { tipo: 'recusa', motivo: `${regra}: a carta ${baixada.carta} não está na mão` }
     }
 
     posicoes.push(
@@ -62,38 +167,25 @@ function baixar(partida: Partida, baixadas: readonly CartaBaixada[]): Resultado 
     )
   }
 
-  const resultado = criarJogo(quem, posicoes)
-
-  if (resultado.tipo !== 'valido') {
-    return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
-  }
-
-  const jogador = partida.jogadores[quem]
-  const atualizado: Jogador = {
-    ...jogador,
-    mao: mao.filter((daMao) => !pedidos.has(daMao.id)),
-    jogos: [...jogador.jogos, resultado.jogo],
-  }
-
-  return {
-    tipo: 'sucesso',
-    partida: {
-      ...partida,
-      jogadores:
-        quem === 0 ? [atualizado, partida.jogadores[1]] : [partida.jogadores[0], atualizado],
-    },
-  }
+  return { tipo: 'posicoes', posicoes, sobraram: mao.filter((carta) => !pedidos.has(carta.id)) }
 }
 
-/** Substitui a mão de um jogador, preservando a tupla de dois. */
+/** Substitui um jogador, preservando a tupla de dois. */
+function comJogador(
+  partida: Partida,
+  quem: JogadorId,
+  jogador: Jogador,
+): readonly [Jogador, Jogador] {
+  return quem === 0 ? [jogador, partida.jogadores[1]] : [partida.jogadores[0], jogador]
+}
+
+/** O caso em que só a mão muda: comprar e descartar. */
 function comMao(
   partida: Partida,
   quem: JogadorId,
   mao: readonly Carta[],
 ): readonly [Jogador, Jogador] {
-  const atualizado: Jogador = { ...partida.jogadores[quem], mao }
-
-  return quem === 0 ? [atualizado, partida.jogadores[1]] : [partida.jogadores[0], atualizado]
+  return comJogador(partida, quem, { ...partida.jogadores[quem], mao })
 }
 
 function comprarDoMonte(partida: Partida): Resultado {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { Carta, CartaBaixada, Comando, Posicao, VisaoDoJogador } from '../../engine/index.ts'
+import { valorDa } from '../../engine/index.ts'
+import type { Carta, CartaBaixada, Comando, Jogo, Posicao, VisaoDoJogador } from '../../engine/index.ts'
 
 /**
  * Tela de partida (screens.md §1, layout da Opção B em T2). Sem estilo — o
@@ -45,6 +46,13 @@ type Jogada = {
   readonly comando: Comando
   readonly cartas: ReadonlySet<string>
   readonly rotulo: string
+  /**
+   * A chave de renderização. Era o próprio rótulo até a H6, e isso bastava
+   * enquanto nenhum comando tinha alvo. Com dois jogos de **mesmas pontas** na
+   * mesa — possível com o baralho duplo (R1.2) —, dois rótulos coincidem, e a
+   * chave passa a incluir o `id` do jogo, que é a identidade que a S63 criou.
+   */
+  readonly chave: string
 }
 
 /**
@@ -75,21 +83,78 @@ function rotuloDoBaixar(cartas: readonly CartaBaixada[], mao: readonly Carta[]):
   }`
 }
 
-function jogadasDe(movimentos: readonly Comando[], mao: readonly Carta[]): readonly Jogada[] {
+/**
+ * S74 — o rótulo do `aumentar` nomeia o jogo alvo pelas **pontas**, porque com
+ * dois jogos do mesmo naipe a mesma carta aumenta os dois e a seleção não os
+ * distingue.
+ *
+ * A S60 continua valendo por cima, e fecha o que a S74 sozinha deixaria aberto:
+ * `[2♠→4]` e `[2♠→8]` sobre `5♥ 6♥ 7♥` têm as mesmas cartas **e** o mesmo alvo,
+ * e só o papel do curinga os separa. Por isso o rótulo é composto.
+ *
+ * A tela lê as pontas de `meusJogos` e continua sem saber o que é uma sequência
+ * (T6): para ela, "ponta" é a primeira e a última entrada de uma lista.
+ */
+function rotuloDoAumentar(
+  alvo: string,
+  cartas: readonly CartaBaixada[],
+  mao: readonly Carta[],
+  meusJogos: readonly Jogo[],
+): string {
+  const jogo = meusJogos.find((umJogo) => umJogo.id === alvo)
+  const pontas = jogo === undefined ? [] : [jogo.posicoes[0], jogo.posicoes[jogo.posicoes.length - 1]]
+  const [primeira, ultima] = pontas
+
+  const base =
+    jogo === undefined || primeira === undefined || ultima === undefined
+      ? 'Aumentar'
+      : `Aumentar o jogo de ${valorDa(primeira)} a ${valorDa(ultima)} de ${jogo.naipe.toLowerCase()}`
+
+  const curinga = cartas.find((baixada) => baixada.representa !== undefined)
+  const carta = mao.find((daMao) => daMao.id === curinga?.carta)
+
+  return curinga?.representa === undefined || carta === undefined
+    ? base
+    : `${base} com ${nomeDa(carta)} valendo ${curinga.representa}`
+}
+
+function jogadasDe(
+  movimentos: readonly Comando[],
+  mao: readonly Carta[],
+  meusJogos: readonly Jogo[],
+): readonly Jogada[] {
   return movimentos.flatMap((comando): Jogada[] => {
     switch (comando.tipo) {
       case 'comprarDoMonte':
         return []
       case 'descartar':
-        return [{ comando, cartas: new Set([comando.carta]), rotulo: 'Descartar' }]
-      case 'baixar':
+        return [
+          { comando, cartas: new Set([comando.carta]), rotulo: 'Descartar', chave: 'Descartar' },
+        ]
+      case 'baixar': {
+        const rotulo = rotuloDoBaixar(comando.cartas, mao)
+
         return [
           {
             comando,
             cartas: new Set(comando.cartas.map((baixada) => baixada.carta)),
-            rotulo: rotuloDoBaixar(comando.cartas, mao),
+            rotulo,
+            chave: rotulo,
           },
         ]
+      }
+      case 'aumentar': {
+        const rotulo = rotuloDoAumentar(comando.jogo, comando.cartas, mao, meusJogos)
+
+        return [
+          {
+            comando,
+            cartas: new Set(comando.cartas.map((baixada) => baixada.carta)),
+            rotulo,
+            chave: `${comando.jogo}|${rotulo}`,
+          },
+        ]
+      }
     }
   })
 }
@@ -104,7 +169,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
 
   const podeComprar = movimentos.some((comando) => comando.tipo === 'comprarDoMonte')
-  const jogadas = jogadasDe(movimentos, visao.mao)
+  const jogadas = jogadasDe(movimentos, visao.mao, visao.meusJogos)
 
   // Uma seleção só vale enquanto alguma jogada ainda a contiver. Assim a troca
   // de fase ou de vez a invalida sozinha, sem efeito colateral.
@@ -240,7 +305,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
             toque acidental é irreversível. */}
         {confirmaveis.map((jogada) => (
           <button
-            key={jogada.rotulo}
+            key={jogada.chave}
             type="button"
             onClick={() => {
               confirmar(jogada)

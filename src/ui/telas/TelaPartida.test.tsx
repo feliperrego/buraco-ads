@@ -365,3 +365,157 @@ describe('R1.3 — o papel do curinga é visível na mesa', () => {
     expect(painel.textContent).toMatch(/3 de ouros/i)
   })
 })
+
+/**
+ * Critérios de interface da spec 0006 §6.3.
+ *
+ * S74 — o `aumentar` é o primeiro comando que aponta para algo **já na mesa**, e
+ * com dois jogos do mesmo naipe a mesma carta aumenta os dois. O rótulo nomeia o
+ * alvo pelas pontas do jogo; a tela lê `meusJogos` e monta o texto, continuando
+ * sem saber o que é uma sequência (T6).
+ */
+describe('S74 — o rótulo nomeia o jogo alvo', () => {
+  const JOGO_BAIXO = {
+    id: 'J0-COPAS-A-1',
+    dono: 0 as const,
+    naipe: 'COPAS' as const,
+    posicoes: [
+      { tipo: 'Natural' as const, carta: carta('COPAS', 'A') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '2') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '3') },
+    ],
+  }
+
+  const JOGO_ALTO = {
+    id: 'J0-COPAS-5-1',
+    dono: 0 as const,
+    naipe: 'COPAS' as const,
+    posicoes: [
+      { tipo: 'Natural' as const, carta: carta('COPAS', '5') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '6') },
+      { tipo: 'Natural' as const, carta: carta('COPAS', '7') },
+    ],
+  }
+
+  const QUATRO = carta('COPAS', '4')
+
+  const AUMENTAR_BAIXO: Comando = {
+    tipo: 'aumentar',
+    jogo: JOGO_BAIXO.id,
+    cartas: [{ carta: QUATRO.id }],
+  }
+
+  const AUMENTAR_ALTO: Comando = {
+    tipo: 'aumentar',
+    jogo: JOGO_ALTO.id,
+    cartas: [{ carta: QUATRO.id }],
+  }
+
+  function visaoComDoisJogos(): VisaoDoJogador {
+    return visaoInicial({
+      fase: 'Acao',
+      mao: [QUATRO, carta('OUROS', 'K'), carta('PAUS', '9')],
+      meusJogos: [JOGO_BAIXO, JOGO_ALTO],
+    })
+  }
+
+  it('CA-S74-1 — com dois jogos aumentáveis, aparecem dois botões com rótulos diferentes', () => {
+    const visao = visaoComDoisJogos()
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), AUMENTAR_BAIXO, AUMENTAR_ALTO]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^4 de copas$/i }))
+
+    const confirmacoes = screen
+      .getAllByRole('button')
+      .map((botao) => botao.textContent)
+      .filter((texto) => /^aumentar/i.test(texto))
+
+    // As mesmas cartas, dois alvos. Sem as pontas no rótulo, os dois botões
+    // seriam "Aumentar" e "Aumentar", e o jogador escolheria no escuro — a mesma
+    // falha que a S60 corrigiu na H5 para as duas leituras do mesmo conjunto.
+    expect(confirmacoes).toHaveLength(2)
+    expect(confirmacoes.some((texto) => /de a a 3 de copas/i.test(texto ?? ''))).toBe(true)
+    expect(confirmacoes.some((texto) => /de 5 a 7 de copas/i.test(texto ?? ''))).toBe(true)
+  })
+
+  it('CA-S74-2 — o botão do jogo alto envia o comando daquele jogo', () => {
+    const visao = visaoComDoisJogos()
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), AUMENTAR_BAIXO, AUMENTAR_ALTO]}
+        aoJogar={aoJogar}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^4 de copas$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /de 5 a 7 de copas/i }))
+
+    expect(aoJogar).toHaveBeenCalledWith(AUMENTAR_ALTO)
+  })
+
+  it('CA-S74-2 — depois do aumento, a mesa mostra o jogo maior e a mão perde a carta', () => {
+    // A metade **observável**, e é a que escapou duas vezes seguidas: na H4 o
+    // jogo baixado não aparecia na mesa, na H5 o jogo com curinga aparecia
+    // idêntico ao sem. Nos dois casos a suíte estava verde.
+    const crescido = {
+      ...JOGO_ALTO,
+      posicoes: [{ tipo: 'Natural' as const, carta: QUATRO }, ...JOGO_ALTO.posicoes],
+    }
+
+    const visao = visaoInicial({
+      fase: 'Acao',
+      mao: [carta('OUROS', 'K'), carta('PAUS', '9')],
+      meusJogos: [crescido],
+    })
+
+    render(<TelaPartida visao={visao} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const mesa = screen.getByRole('region', { name: /meus jogos/i })
+    const mao = screen.getByRole('region', { name: /minha mão/i })
+
+    expect(mesa.textContent).toMatch(/4 de copas/i)
+    expect(mesa.textContent).toMatch(/7 de copas/i)
+    expect(mao.textContent).not.toMatch(/4 de copas/i)
+  })
+
+  it('CA-S74-2 — o id do jogo é preservado, e é o que o segundo aumento aponta', () => {
+    // A consequência da S63 vista da tela: o botão continua apontando o mesmo
+    // jogo depois de ele crescer, que é o que a R3.3 autoriza no mesmo turno.
+    const crescido = {
+      ...JOGO_ALTO,
+      posicoes: [{ tipo: 'Natural' as const, carta: QUATRO }, ...JOGO_ALTO.posicoes],
+    }
+
+    const oito = carta('COPAS', '8')
+    const visao = visaoInicial({
+      fase: 'Acao',
+      mao: [oito, carta('OUROS', 'K')],
+      meusJogos: [crescido],
+    })
+    const segundo: Comando = {
+      tipo: 'aumentar',
+      jogo: JOGO_ALTO.id,
+      cartas: [{ carta: oito.id }],
+    }
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida visao={visao} movimentos={[...descartesDe(visao), segundo]} aoJogar={aoJogar} />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^8 de copas$/i }))
+    fireEvent.click(screen.getByRole('button', { name: /de 4 a 7 de copas/i }))
+
+    expect(aoJogar).toHaveBeenCalledWith(segundo)
+  })
+})

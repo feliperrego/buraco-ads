@@ -183,6 +183,66 @@ function naipeDo(posicoes: readonly Posicao[]): Naipe | undefined {
 }
 
 /**
+ * S71 — o trecho contíguo das catorze casas (S41) que o jogo ocupa.
+ *
+ * **Derivada, nunca armazenada.** A R8.5 fixou isso para a categoria da
+ * canastra, e o motivo vale igual aqui: campo derivado em `Jogo` seria um
+ * segundo lugar para a mesma verdade, e o jogo cresce a partir da H6.
+ */
+export type Janela = { readonly inicio: number; readonly fim: number }
+
+export function janelaDe(jogo: Jogo): Janela {
+  const primeira = jogo.posicoes[0]
+  const ultima = jogo.posicoes[jogo.posicoes.length - 1]
+
+  if (primeira === undefined || ultima === undefined) {
+    // A I1 garante ao menos três posições, e `Jogo` só nasce de `criarJogo`.
+    // Este ramo existe para o compilador, e devolve a linha inteira — a janela
+    // que não admite crescimento nenhum.
+    return { inicio: 0, fim: CASAS - 1 }
+  }
+
+  // A regra do Ás, e é a única sutileza daqui: **Ás na frente está na casa 0,
+  // Ás no fim está na casa 13.** Não é escolha — como o jogo tem ao menos três
+  // posições e está ordenado, um Ás na frente não caberia na casa 13, porque
+  // não haveria casa acima dele para as outras duas. O jogo de 14 tem os dois,
+  // e é justamente o que não pode crescer.
+  const naFrente = casasDe(valorDa(primeira))
+  const atras = casasDe(valorDa(ultima))
+
+  return {
+    inicio: naFrente[0] ?? 0,
+    fim: atras[atras.length - 1] ?? CASAS - 1,
+  }
+}
+
+/**
+ * S64 — aumentar passa pela **mesma porta** que baixar.
+ *
+ * `criarJogo` é a única porta de `Jogo` (S40, S52), e um `Jogo` inválido não é
+ * representável. Ou o aumento passa por ela, ou existe uma segunda porta com os
+ * sete invariantes copiados. O jogo inteiro é revalidado, não só o pedaço novo,
+ * e os sete caem de graça sobre o `aumentar` — I1 pelo limite de 14 (R6.3), I3
+ * pelo buraco, I5 pelo valor repetido, I6 pelo Ás alto.
+ *
+ * Isto só é seguro por causa da S52. Se `criarJogo` ainda inferisse as casas a
+ * partir das cartas, revalidar o conjunto inteiro desfaria em silêncio escolhas
+ * que o jogador já fez — qual carta é curinga, qual ponta o Ás ocupa. Como ela
+ * **confere em vez de inferir**, as posições antigas atravessam intactas.
+ *
+ * S63 — e o `id` é restaurado. Ele nasce no `baixar` e é identidade, não resumo
+ * do conteúdo: sem isto, crescer pela esquerda trocaria a primeira posição e o
+ * jogo alvo sumiria entre duas jogadas do mesmo turno (R3.3).
+ */
+export function aumentarJogo(jogo: Jogo, novas: readonly Posicao[]): ResultadoDeJogo {
+  const resultado = criarJogo(jogo.dono, [...jogo.posicoes, ...novas])
+
+  return resultado.tipo === 'valido'
+    ? { tipo: 'valido', jogo: { ...resultado.jogo, id: jogo.id } }
+    : resultado
+}
+
+/**
  * S52 — `criarJogo` recebe as **posições prontas** e passa a conferir, não a
  * inferir. Um conjunto de cartas não determina um jogo quando há curinga
  * (spec 0005 §2.1): `2♥ 3♥ 4♥` tem duas leituras válidas, e escolher entre elas
@@ -266,8 +326,11 @@ export function criarJogo(dono: JogadorId, posicoes: readonly Posicao[]): Result
     return {
       tipo: 'valido',
       jogo: {
-        // Derivado do conteúdo, como o `id` da carta (S3): uma carta só está em
-        // um jogo, então a primeira posição já identifica o jogo sem contador.
+        // S63 — atribuído **uma vez**, no instante em que o jogo é baixado, e
+        // preservado por `aumentarJogo` a partir daí. Continua saindo da
+        // primeira posição daquele momento; o que mudou na H6 é que ele para de
+        // ser recalculado. Um identificador que muda quando o objeto cresce pela
+        // esquerda e não muda quando cresce pela direita não é identidade.
         id: `J${String(dono)}-${ordenadas[0]?.carta.id ?? ''}`,
         dono,
         naipe,

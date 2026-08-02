@@ -1,7 +1,8 @@
 import type { CartaBaixada, Comando } from '../comandos/comando.ts'
 import { NAIPES } from '../dominio/carta.ts'
 import type { Carta, Naipe } from '../dominio/carta.ts'
-import { CASAS, casasDe, valorDaCasa } from '../dominio/jogo.ts'
+import { CASAS, casasDe, janelaDe, valorDaCasa } from '../dominio/jogo.ts'
+import type { Jogo } from '../dominio/jogo.ts'
 import type { VisaoDoJogador } from './visao-de.ts'
 
 /**
@@ -32,6 +33,7 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
   return [
     ...visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id })),
     ...baixares(visao.mao),
+    ...aumentares(visao.mao, visao.meusJogos),
   ]
 }
 
@@ -59,39 +61,53 @@ function porCasa(doNaipe: readonly Carta[]): ReadonlyMap<number, readonly Carta[
   return mapa
 }
 
-type Janela = {
-  /** Uma entrada por casa da janela, na ordem das casas. */
+type Resolucao = {
+  /** Uma entrada por casa pedida, na mesma ordem. */
   readonly naturais: readonly (Carta | undefined)[]
-  /** Índice, dentro da janela, da única casa sem carta natural. */
-  readonly buraco: number | null
+  /** A única casa sem carta natural — a casa, não o índice. */
+  readonly casaVazia: number | null
+}
+
+/** As casas de `inicio` a `fim`, vazio quando o trecho não existe. */
+function casasEntre(inicio: number, fim: number): readonly number[] {
+  const casas: number[] = []
+
+  for (let casa = inicio; casa <= fim; casa++) {
+    casas.push(casa)
+  }
+
+  return casas
 }
 
 /**
- * Resolve uma janela de casas contra a mão: quem preenche cada casa com carta
- * natural, e qual casa fica vazia.
+ * Resolve uma lista de casas contra a mão: quem preenche cada uma com carta
+ * natural, e qual fica vazia.
  *
  * Devolve `null` quando sobra mais de uma casa vazia — a I4 admite **um**
  * curinga por jogo, então duas lacunas não viram jogada nenhuma. É o corte que
  * mantém o espaço de busca pequeno.
+ *
+ * Recebe uma **lista** de casas, e não um par início/fim, porque o `aumentar` da
+ * H6 pede casas de dois trechos separados: as que ficam à esquerda do jogo e as
+ * que ficam à direita, sem as que ele já ocupa.
  */
-function resolverJanela(
-  inicio: number,
-  fim: number,
+function resolverCasas(
+  casas: readonly number[],
   mapa: ReadonlyMap<number, readonly Carta[]>,
-): Janela | null {
+): Resolucao | null {
   const usadas = new Set<string>()
   const naturais: (Carta | undefined)[] = []
-  let buraco: number | null = null
+  let casaVazia: number | null = null
 
-  for (let casa = inicio; casa <= fim; casa++) {
+  for (const casa of casas) {
     const candidata = (mapa.get(casa) ?? []).find((carta) => !usadas.has(carta.id))
 
     if (candidata === undefined) {
-      if (buraco !== null) {
+      if (casaVazia !== null) {
         return null
       }
 
-      buraco = casa - inicio
+      casaVazia = casa
       naturais.push(undefined)
       continue
     }
@@ -100,7 +116,7 @@ function resolverJanela(
     naturais.push(candidata)
   }
 
-  return { naturais, buraco }
+  return { naturais, casaVazia }
 }
 
 /**
@@ -154,36 +170,8 @@ function baixares(mao: readonly Carta[]): readonly Comando[] {
 
     for (let inicio = 0; inicio < CASAS; inicio++) {
       for (let fim = inicio + 2; fim < CASAS; fim++) {
-        const janela = resolverJanela(inicio, fim, mapa)
-
-        if (janela === null) {
-          continue
-        }
-
-        if (janela.buraco === null) {
-          adicionar(
-            comandos,
-            mao,
-            janela.naturais.flatMap((carta) => (carta ? [{ carta: carta.id }] : [])),
-          )
-          continue
-        }
-
-        const usadas = new Set(janela.naturais.flatMap((carta) => (carta ? [carta.id] : [])))
-        const representa = valorDaCasa(inicio + janela.buraco)
-
-        // A casa vazia nunca é a do `2` do próprio naipe com aquele `2` na mão:
-        // se estivesse, ela teria sido preenchida como natural acima. É por isso
-        // que a S54 não precisa de guarda aqui — ela vive em `criarJogo`, onde
-        // protege a engine de um chamador com bug (S22).
-        for (const curinga of curingasDisponiveis(mao, usadas)) {
-          adicionar(
-            comandos,
-            mao,
-            janela.naturais.map((carta) =>
-              carta ? { carta: carta.id } : { carta: curinga.id, representa },
-            ),
-          )
+        for (const cartas of leiturasDe(casasEntre(inicio, fim), mapa, mao, true)) {
+          adicionar(comandos, mao, { tipo: 'baixar', cartas })
         }
       }
     }
@@ -193,16 +181,114 @@ function baixares(mao: readonly Carta[]): readonly Comando[] {
 }
 
 /**
- * S45 — a única decisão do projeto que restringe o jogo além das regras.
+ * S72 — a enumeração do `aumentar` percorre as janelas que **contêm** a janela
+ * atual do jogo e diferem dela: `0 ≤ i' ≤ inicio` e `fim ≤ f' ≤ 13`.
  *
- * Baixar tudo deixaria o jogador sem carta para descartar, e a R7.1 exige o
- * descarte; a exceção é a batida (R7.3), que é a H10. Sem a guarda, a partida
- * alcança um estado sem especificação. Sai junto com a batida.
+ * É a mesma escolha da S46 aplicada a outro ponto de partida. Um jogo ocupa um
+ * trecho contíguo das catorze casas (S41) e não tem buraco para tapar, então
+ * aumentar é **alargar o trecho** — e na janela, "estender à esquerda",
+ * "estender à direita" e "os dois" deixam de ser casos diferentes. É por isso
+ * que a extensão das duas pontas sai como **um** comando: quem selecionou as
+ * duas cartas fez uma jogada só, e a S48 casa botão com seleção exata.
+ *
+ * A S66 vale aqui pelo mesmo motivo que em `aplicar`: só chegam os jogos
+ * próprios, porque é isso que `visao.meusJogos` carrega. Nenhuma checagem de
+ * dono é escrita, e nenhuma pode ser esquecida.
  */
-function adicionar(comandos: Comando[], mao: readonly Carta[], cartas: readonly CartaBaixada[]) {
-  if (cartas.length === mao.length) {
+function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly Comando[] {
+  const comandos: Comando[] = []
+
+  for (const jogo of meusJogos) {
+    const { inicio, fim } = janelaDe(jogo)
+    const mapa = porCasa(mao.filter((carta) => carta.naipe === jogo.naipe))
+
+    // S69 — jogo que já tem curinga só recebe naturais. A I4 recusaria de todo
+    // modo; não oferecer é o que impede a interface de exibir a jogada morta.
+    const admiteCuringa = !jogo.posicoes.some((posicao) => posicao.tipo === 'Curinga')
+
+    for (let novoInicio = 0; novoInicio <= inicio; novoInicio++) {
+      for (let novoFim = fim; novoFim < CASAS; novoFim++) {
+        if (novoInicio === inicio && novoFim === fim) {
+          continue
+        }
+
+        const casasNovas = [
+          ...casasEntre(novoInicio, inicio - 1),
+          ...casasEntre(fim + 1, novoFim),
+        ]
+
+        for (const cartas of leiturasDe(casasNovas, mapa, mao, admiteCuringa)) {
+          adicionar(comandos, mao, { tipo: 'aumentar', jogo: jogo.id, cartas })
+        }
+      }
+    }
+  }
+
+  return comandos
+}
+
+/**
+ * As formas de preencher um conjunto de casas com cartas da mão: nenhuma, uma
+ * (todas naturais) ou uma por naipe de `2` disponível quando sobra uma casa.
+ *
+ * S56 — um curinga candidato por **naipe de `2`**, e não um só. A S47 continua
+ * valendo dentro do naipe e deixa de valer entre naipes, porque a R6.5 só deixa
+ * regularizar o `2` do naipe da própria sequência.
+ */
+function leiturasDe(
+  casas: readonly number[],
+  mapa: ReadonlyMap<number, readonly Carta[]>,
+  mao: readonly Carta[],
+  admiteCuringa: boolean,
+): readonly (readonly CartaBaixada[])[] {
+  const resolvida = resolverCasas(casas, mapa)
+
+  if (resolvida === null) {
+    return []
+  }
+
+  if (resolvida.casaVazia === null) {
+    return [resolvida.naturais.flatMap((carta) => (carta ? [{ carta: carta.id }] : []))]
+  }
+
+  if (!admiteCuringa) {
+    return []
+  }
+
+  const usadas = new Set(resolvida.naturais.flatMap((carta) => (carta ? [carta.id] : [])))
+  const representa = valorDaCasa(resolvida.casaVazia)
+
+  // A casa vazia nunca é a do `2` do próprio naipe com aquele `2` na mão: se
+  // estivesse, ela teria sido preenchida como natural acima. É por isso que a
+  // S54 não precisa de guarda aqui — ela vive em `criarJogo`, onde protege a
+  // engine de um chamador com bug (S22).
+  return curingasDisponiveis(mao, usadas).map((curinga) =>
+    resolvida.naturais.map((carta) =>
+      carta ? { carta: carta.id } : { carta: curinga.id, representa },
+    ),
+  )
+}
+
+/**
+ * S45 e S70 — a única decisão do projeto que restringe o jogo além das regras.
+ *
+ * Jogar a mão inteira deixaria o jogador sem carta para descartar, e a R7.1
+ * exige o descarte; a exceção é a batida (R7.3), que é a H10. Sem a guarda, a
+ * partida alcança um estado sem especificação. Sai junto com a batida.
+ *
+ * A S70 a estende ao `aumentar`, e a propriedade que isso preserva é mais forte
+ * do que a guarda por comando sugere: como **cada** jogada oferecida deixa ao
+ * menos uma carta, nenhuma sequência delas esvazia a mão — nem baixar seguido de
+ * dois aumentos, que é o que a R3.3 autoriza. A guarda não olha o histórico.
+ */
+function adicionar(
+  comandos: Comando[],
+  mao: readonly Carta[],
+  comando: Extract<Comando, { readonly cartas: readonly CartaBaixada[] }>,
+) {
+  if (comando.cartas.length === mao.length) {
     return
   }
 
-  comandos.push({ tipo: 'baixar', cartas })
+  comandos.push(comando)
 }
