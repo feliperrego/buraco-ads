@@ -129,8 +129,21 @@ As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as spec
 e **H3** estão fechadas e implementadas.
 
 O **Marco 0 e o Marco I estão fechados**: existe um jogo que roda. O humano compra e descarta,
-a IA joga sozinha, e a vez volta — para sempre. O próximo trabalho é a **H4** (baixar
-sequências), que ainda **não tem spec**.
+a IA joga sozinha, e a vez volta — para sempre.
+
+**O trabalho em curso é a H4** (baixar sequências). A
+[spec 0004](docs/specs/0004-baixar-sequencias.md) está **confirmada, com 12 decisões e nenhuma
+pendência**, e **nenhuma linha de código foi escrita**. O próximo passo é o **3 do ciclo** de
+`docs/roadmap.md` §4: os testes falhando, para os 20 critérios da §6 daquela spec — 8 deles
+herdados do `acceptance-tests.md`, que é a primeira vez que isso acontece.
+
+Duas coisas da H4 que valem saber antes de abrir a spec:
+
+- A **S45** é a única decisão do projeto que **restringe o jogo além das regras**: `baixar` que
+  esvaziaria a mão não é oferecido, porque a batida é a H10. É temporária e tem gatilho.
+- A **S46** desarmou o susto da T7. O medo de enumerar `2^22` subconjuntos pressupunha a
+  estrutura errada — sequência é trecho contíguo de uma linha de 14 casas, e o espaço real é de
+  centenas. O gatilho **continua aberto** até o número ser medido, porque a T7 pediu número.
 
 **As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
 hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),
