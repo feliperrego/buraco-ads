@@ -159,6 +159,17 @@ motivos que não têm nada a ver com a batida.
 > "curinga" é papel na sequência, não atributo da carta (M2). Se a implementação guardar
 > `ehCuringa` na carta, um dos dois falha.
 
+> **Adaptação na H5, decidida em 2026-08-02 (spec 0005, S61).** Estes dois critérios foram
+> escritos na Onda 2 mirando o comportamento final, e **atravessam a fronteira de duas fatias**:
+> o papel do `2` é H5, e a categoria da canastra é R8, portanto H8.
+>
+> Na H5 eles são verificados pela **posição**, não pela categoria: `CA-R1.3-1` exige jogo válido
+> com **nenhuma** posição `Curinga`, e `CA-R1.3-2`, jogo válido com **exatamente uma**. O que os
+> dois existem para provar — a mesma carta com resultados opostos — fica intacto.
+>
+> **A asserção de `LIMPA` e `SUJA` volta na H8**, e é ali que estes dois critérios ficam
+> cumpridos por inteiro. Sem esta nota, a H8 os reencontraria parecendo prontos.
+
 ### 4.3 Precedência das categorias — R8.3, R8.4
 
 | # | Dado | Então |

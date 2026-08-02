@@ -1,6 +1,6 @@
 # Spec 0005 — O 2 como curinga
 
-> Status: **rascunho anotado** — 11 propostas aguardando confirmação
+> Status: **confirmado** — 12 decisões, nenhuma pendência
 > História: **H5** — "Uso um 2 como curinga para completar uma sequência"
 > Fecha: R1.3, R1.4, R5.4, R5.5, I4, I7, M2
 > Última atualização: 2026-08-02
@@ -26,7 +26,7 @@ fecha os sete invariantes de `Jogo` do [domain.md](../domain.md) §4.
 | **Categoria da canastra — `LIMPA`, `SUJA` (R8.2, R8.5)** | H8 |
 | Bater e pegar morto (R9, R10) | H10 |
 
-- `[P]` **S50** — A H5 **não** calcula categoria. Isso tem consequência
+- `[D]` **S50** — A H5 **não** calcula categoria. Isso tem consequência
   direta nos critérios herdados, e está na §6.1: os dois `CA-R1.3-*` do
   [acceptance-tests.md](../acceptance-tests.md) §4.2 falam em `LIMPA` e `SUJA`, que é R8.
 
@@ -39,7 +39,7 @@ fecha os sete invariantes de `Jogo` do [domain.md](../domain.md) §4.
 
 ## 2. A decisão que os documentos anteriores não tomaram
 
-Esta é a spec inteira. As outras dez propostas caem dela.
+Esta é a spec inteira. As outras onze decisões caem dela.
 
 ### 2.1 Um conjunto de cartas não determina um jogo
 
@@ -67,7 +67,7 @@ pela R6.5 só a segunda tem curinga para regularizar depois.
 | **B** | O comando segue só com cartas, e a engine resolve por uma regra de precedência (ex.: natural primeiro) | Nada muda na H4 | **A interface perde uma jogada legal.** O jogador não consegue pedir a leitura B, e é ele quem decide se quer a canastra suja com curinga regularizável |
 | **C** | O comando segue só com cartas, e o jogador escolhe o papel numa segunda tela | Comando pequeno | Interface passa a conduzir a regra, contra a T6 |
 
-- `[P]` **S51** — **Alternativa A.** O comando `baixar` passa a carregar,
+- `[D]` **S51** — **Alternativa A.** O comando `baixar` passa a carregar,
   para cada carta, a casa que ela ocupa:
 
 ```ts
@@ -89,7 +89,7 @@ type CartaBaixada = {
 > O custo é real e vale dizer: a H4 migra junto. `descartar` não muda, mas os `baixar` que a
 > H4 enumera passam a nascer com `representa` ausente, e a `CA-R6.1-1` muda de forma.
 
-- `[P]` **S52** — `criarJogo` recebe as posições prontas, não as cartas:
+- `[D]` **S52** — `criarJogo` recebe as posições prontas, não as cartas:
   `criarJogo(dono, posicoes)`. A conversão de `CartaBaixada[]` para `Posicao[]` acontece em
   `aplicar`, junto com a checagem de posse.
 
@@ -102,7 +102,7 @@ type CartaBaixada = {
 
 ### 3.1 Os dois invariantes novos
 
-- `[P]` **S53** — `Invariante` ganha `I4` e `I7`, e o tipo passa a ter os
+- `[D]` **S53** — `Invariante` ganha `I4` e `I7`, e o tipo passa a ter os
   sete do [domain.md](../domain.md) §4:
 
 | # | Invariante | Como a H5 o verifica |
@@ -123,11 +123,11 @@ Os cinco da H4 passam a ler a **casa da posição**, não o valor da carta:
 R1.3 é explícita: um `2` na casa dele, no naipe dele, **é natural**. Duas leituras precisam
 ser proibidas, e nenhuma delas está escrita em lugar nenhum:
 
-- `[P]` **S54** — Uma posição `Curinga` cuja `carta` seja o `2` do naipe do
+- `[D]` **S54** — Uma posição `Curinga` cuja `carta` seja o `2` do naipe do
   jogo e cujo `representa` seja `'2'` é **inválida** — viola `I7` na intenção e a R1.3 na
   letra. Um `2♥` na casa 1 de uma sequência de copas é natural, e ponto.
 
-- `[P]` **S55** — `I5` — "sem valores repetidos" — passa a olhar o **valor
+- `[D]` **S55** — `I5` — "sem valores repetidos" — passa a olhar o **valor
   representado**, não o valor impresso na carta. Consequência: o jogo
   `A♥ 2♥ 3♥ 4♥ 5♥ 6♥ [2♥→7♥]` é **válido**, com um `2♥` natural na casa 1 e o outro `2♥`
   curinga na casa 6.
@@ -142,7 +142,7 @@ ser proibidas, e nenhuma delas está escrita em lugar nenhum:
 A H4 fixou na S47 que cópias são intercambiáveis e geram um comando só. Com curinga isso
 **deixa de valer entre naipes**:
 
-- `[P]` **S56** — `movimentosValidos` oferece um comando por **naipe de `2`
+- `[D]` **S56** — `movimentosValidos` oferece um comando por **naipe de `2`
   disponível**, não um só. Dentro do mesmo naipe, a canônica continua sendo a de menor `id`
   (S47).
 
@@ -158,13 +158,13 @@ A H4 fixou na S47 que cópias são intercambiáveis e geram um comando só. Com 
 
 R5.5 diz que o curinga pode ocupar qualquer posição, **inclusive as pontas**.
 
-- `[P]` **S57** — A enumeração oferece o curinga em três papéis: **tapar um
+- `[D]` **S57** — A enumeração oferece o curinga em três papéis: **tapar um
   buraco** no meio de um trecho, **estender** o trecho à esquerda, e **estender** à direita. A
   ponta esquerda não passa da casa 0 e a direita não passa da 13 (S41 e R5.3 continuam valendo).
 
 ### 3.5 A guarda da S45 continua
 
-- `[P]` **S58** — O `baixar` que esvaziaria a mão continua fora da lista, e
+- `[D]` **S58** — O `baixar` que esvaziaria a mão continua fora da lista, e
   o gatilho continua sendo a H10. Nada nesta fatia o altera.
 
 ---
@@ -178,7 +178,7 @@ tabela do [roadmap.md](../roadmap.md) §3 com esse número.
 trechos com um buraco, as extensões nas duas pontas, e os até quatro naipes de `2`. Não é
 honesto herdar o "não precisa otimizar" sem medir de novo.
 
-- `[P]` **S59** — A H5 mede a enumeração outra vez, com o mesmo teto de
+- `[D]` **S59** — A H5 mede a enumeração outra vez, com o mesmo teto de
   50 ms e a mesma mão de 22 cartas, e **registra o número novo**. Se ele passar de ~2000
   comandos, a consulta `validar` da [screens.md](../screens.md) §3.1 volta à mesa — não pelo
   tempo, mas porque a T6 pressupõe que a interface consegue filtrar a lista.
@@ -194,7 +194,7 @@ honesto herdar o "não precisa otimizar" sem medir de novo.
 A S48 fez o botão de confirmar aparecer para **todo comando cujas cartas sejam exatamente a
 seleção**. Com a §2.1, dois comandos diferentes passam a ter o mesmo conjunto de cartas.
 
-- `[P]` **S60** — Quando mais de um comando casa com a seleção, cada botão
+- `[D]` **S60** — Quando mais de um comando casa com a seleção, cada botão
   se nomeia pelo que o distingue: **"Baixar"** para a leitura sem curinga, e
   **"Baixar com 2♥ valendo 5♥"** para cada leitura com curinga.
 
@@ -229,7 +229,7 @@ Os outros dois pedem categoria de canastra, que é R8 e não existe até a H8:
 > recria. A primeira versão desta seção os pôs em negrito na primeira coluna, que é a forma de
 > definição, e o `verificar-identificadores.py` reprovou. Foi para isto que ele nasceu.
 
-- `[P]` **S61** — A adaptação acima é registrada **no
+- `[D]` **S61** — A adaptação acima é registrada **no
   `acceptance-tests.md`**, não só aqui, com nota de que a asserção de categoria volta na H8. O
   par continua usando a **mesma carta** com resultados opostos, que é o que ele existe para
   provar (M2).
@@ -269,11 +269,11 @@ Interface, nível 4:
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-**Onze propostas, nenhuma confirmada.** Responda no formato *"todas ok exceto S54 e S60"*.
+**Não há pendências.** As 12 decisões foram confirmadas em 2026-08-02, todas sem alteração.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S50** | Escopo | A H5 **não** calcula categoria; os `CA-R1.3-*` são adaptados |
 | **S51** | API | **Alternativa A** — o comando `baixar` carrega o papel de cada carta |
@@ -288,24 +288,27 @@ Interface, nível 4:
 | **S60** | Interface | Rótulo distingue as leituras: *"Baixar com 2♥ valendo 5♥"* |
 | **S61** | Documento | A adaptação dos `CA-R1.3-*` é registrada no `acceptance-tests.md` |
 
-### O que merece sua atenção
+### As três que passaram sem contestação, e por que isso é dado
 
-**Calibragem, e ela pesa mais aqui do que na H4.** A H4 era sobre a forma da sequência, que é
-geometria. A H5 é sobre o que um `2` significa na sua mesa, e é a faixa em que erro a cada
-seis. As três que mais quero que você olhe, em ordem:
+**Calibragem: 12 de 12 aceitas.** A H5 era a faixa de maior risco do projeto — o que um `2`
+significa na mesa dele —, e a série global vai a **61 decisões com 5 quedas**, todas ainda no
+`rules.md`. As três que eu havia sinalizado como mais arriscadas passaram intactas:
 
-- **S55 é a mais arriscada da spec.** Ela permite as duas cópias do `2♥` no mesmo jogo, uma
-  natural e uma curinga. Deduzi isso do M2 e da R5.6, e nenhum dos dois trata do caso
-  explicitamente. Se na sua mesa isso não se faz, cai — e leva junto um critério.
-- **S51 é a maior em custo e a que mais me convence.** Ela troca a forma do comando e obriga a
-  H4 a migrar. Aceitei o custo porque a alternativa barata remove uma escolha do jogador. Se
-  você achar que na sua mesa ninguém pondera "uso este 2 como natural ou como curinga", a B
-  volta a ser a certa e a fatia encolhe pela metade.
-- **S56 depende de uma leitura da R6.5** — a de que usar o `2` do próprio naipe como curinga é
-  jogada boa porque dá para regularizar depois. Se na sua mesa isso raramente compensa, a
-  proposta vira ruído na interface e um comando só bastaria.
+- **S55** permite as duas cópias do `2♥` no mesmo jogo, uma natural e uma curinga. Era a mais
+  arriscada porque deduzi do M2 e da R5.6 sem que nenhum dos dois tratasse do caso. **Confirmada
+  sem alteração** — vale dizer que ela foi deduzida, não pesquisada, e que a `CA-S55-1` é o
+  único ponto onde essa dedução fica registrada em teste.
+- **S51** troca a forma do comando e obriga a H4 a migrar. **Confirmada**, com o custo aceito.
+- **S56** depende da leitura de que usar o `2` do próprio naipe como curinga é jogada boa
+  porque dá para regularizar depois (R6.5). **Confirmada** — e é ela que multiplica a
+  enumeração por até quatro, o que a `CA-S59-1` vai medir.
 
-Sobre software estou tranquilo em duas: a **S52** preserva a propriedade que a H4 comprou —
-`criarJogo` continua a única porta de `Jogo` —, e a **S59** existe justamente porque acabei de
-fechar o gatilho da T7 com um número que **não cobre esta fatia**. Herdar aquele "não precisa
-otimizar" seria o tipo de conclusão que envelhece mal em silêncio.
+Sobre software, duas ficam de pé sozinhas: a **S52** preserva a propriedade que a H4 comprou —
+`criarJogo` continua a única porta de `Jogo` —, e a **S59** existe justamente porque o gatilho
+da T7 foi fechado horas antes com um número que **não cobre esta fatia**. Herdar aquele "não
+precisa otimizar" seria o tipo de conclusão que envelhece mal em silêncio.
+
+> **Nota de processo, para a próxima spec.** O rascunho dizia "onze propostas" em três lugares
+> e a tabela tinha doze. Contagem à mão, no mesmo dia em que a contagem à mão dos critérios da
+> H4 já tinha errado uma vez. As duas foram corrigidas por script; a lição é que **número em
+> documento vivo nasce de script ou não nasce**, inclusive num rascunho.

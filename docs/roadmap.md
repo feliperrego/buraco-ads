@@ -158,7 +158,9 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45 |
+| Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45, S58 |
+| Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | **Ao escrever a H8** — na H5 eles verificam a posição; `LIMPA`/`SUJA` só existe com a R8 | S61 |
+| Custo de enumerar `baixar` **com curinga** | **Ao terminar a H5** — virou a `CA-S59-1`; os 99 da H4 são da enumeração sem curinga | S59 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
