@@ -1,11 +1,11 @@
 # Spec 0008 — A categoria da canastra
 
-> Status: **rascunho** — 9 propostas aguardando confirmação
+> Status: **confirmado com uma pendência** — 9 decisões, e a `S94` aberta (§11)
 > História: **H8** — "Vejo minhas canastras e a categoria de cada uma"
 > Fecha: R8.1, R8.2, R8.3, R8.4, R8.6, RF3.5
 > Última atualização: 2026-08-02
 
-Pendências a partir de **`S85`**, continuando a série global.
+Decisões a partir de **`S85`**, continuando a série global.
 
 ---
 
@@ -29,7 +29,7 @@ implementada.
 | `contaComoLimpaParaBatida` (R10.2) | H11 |
 | Pegar morto e bater (R9, R10) | H10 |
 
-- `[P]` **S89** — A H8 devolve a **categoria**, não os **pontos**. É o mesmo
+- `[D]` **S89** — A H8 devolve a **categoria**, não os **pontos**. É o mesmo
   formato da S50 ("a H5 não calcula categoria") e da S62 ("a H6 verifica a R6.3 por tamanho"),
   agora do outro lado: a tabela da R8.2 tem uma coluna de pontos, e ela fica fechada até a H12.
 
@@ -55,7 +55,7 @@ categoria"*, e essa frase admite duas leituras.
 | **B** | A visão passa a carregar `{ jogo, categoria }` | Lê a frase do domain.md ao pé da letra | Cria uma **segunda forma** de jogo na mesa. `meusJogos[0].id` vira `meusJogos[0].jogo.id`, e todo teste de H4 a H7 muda junto |
 | **C** | Campo `categoria` em `Jogo`, preenchido por `criarJogo` | Consulta direta | **Proibido pela R8.5**, e quebraria na H9: regularizar o curinga mudaria a categoria sem passar por `criarJogo` |
 
-- `[P]` **S85** — **Alternativa A.** `categoriaDe(jogo)` vive em `jogo.ts`,
+- `[D]` **S85** — **Alternativa A.** `categoriaDe(jogo)` vive em `jogo.ts`,
   ao lado de `janelaDe`, e é exportada por `engine/index.ts`. A `VisaoDoJogador` não muda.
 
 ```ts
@@ -81,7 +81,7 @@ Um jogo de três a seis posições não tem categoria: ele não é canastra (R8.
 | **A** | `CategoriaCanastra \| null` | A R8.2 diz **quatro** categorias, e o tipo diz quatro | O chamador trata o `null` |
 | **B** | Um quinto valor, `NENHUMA` | Nada retorna `null` | O tipo passa a dizer cinco onde a regra diz quatro, e `NENHUMA` vira um valor que a R8.2 não nomeia |
 
-- `[P]` **S86** — **Alternativa A.** `null` para jogo com menos de sete
+- `[D]` **S86** — **Alternativa A.** `null` para jogo com menos de sete
   posições, e `ehCanastra(jogo)` é `categoriaDe(jogo) !== null` — sem segunda travessia.
 
 ---
@@ -105,7 +105,7 @@ janelaDe(jogo) // S71 — o trecho contíguo das catorze casas que o jogo ocupa
 | `A 2 3 4 5 6 7 8 9 10 J Q K` | `[0, 12]` | `DE_500` |
 | `2 3 4 5 6 7 8 9 10 J Q K A` | `[1, 13]` | `LIMPA` ou `SUJA` |
 
-- `[P]` **S87** — A R8.6 é lida pela **janela**, não pelo tamanho:
+- `[D]` **S87** — A R8.6 é lida pela **janela**, não pelo tamanho:
   `DE_1000` é `[0, 13]` e `DE_500` é `[0, 12]`. A janela da S71 já lê o valor **representado**
   (S55), então uma canastra especial com curinga na ponta é classificada certo sem tratamento
   extra — que é a R8.4.
@@ -133,7 +133,7 @@ Na implementação, a precedência **é** a ordem dos `if`. Não há como torná
 é a diferença entre esta fatia e as anteriores: a S66 tornou a posse impossível de errar, a S76
 tornou a R4.2 impossível de errar. Aqui não dá — o que resta é rede de teste.
 
-- `[P]` **S88** — Os **seis** casos de precedência da R8.3 e os **três** da
+- `[D]` **S88** — Os **seis** casos de precedência da R8.3 e os **três** da
   R8.6 entram como critérios, e a R8.4 é verificada **dentro** deles, não em separado: ela é a
   consequência de o curinga só ser consultado depois das especiais.
 
@@ -165,7 +165,7 @@ termina com ao menos um jogo baixado, e a maior chegou a **16**. A IA sorteia de
 `movimentosValidos`, e `baixar` está lá desde a H4 — então este painel está errado em toda
 partida que alguém jogou.
 
-- `[P]` **S92** — A H8 corrige isso: os jogos do adversário passam a ser
+- `[D]` **S92** — A H8 corrige isso: os jogos do adversário passam a ser
   desenhados, com a mesma forma dos meus — posições nomeadas (S60/H5) e categoria. O critério
   usa **âncora positiva antes da negativa**, porque "mostra os jogos do adversário" é
   trivialmente falso hoje e trivialmente verdadeiro num painel que mostra tudo.
@@ -184,7 +184,7 @@ partida que alguém jogou.
 
 ## 6. Interface
 
-- `[P]` **S93** — Cada jogo de sete ou mais posições ganha um rótulo de
+- `[D]` **S93** — Cada jogo de sete ou mais posições ganha um rótulo de
   categoria em português, junto das cartas. Jogo menor não ganha rótulo nenhum — a ausência é
   a R8.1, não um "sem categoria" escrito.
 
@@ -208,7 +208,7 @@ partida que alguém jogou.
 
 ## 7. As duas regras que a H8 honra sem fechar
 
-- `[P]` **S91** — A **R8.5** não é da H8 (ela é da H9), e mesmo assim a H8
+- `[D]` **S91** — A **R8.5** não é da H8 (ela é da H9), e mesmo assim a H8
   já a honra **estruturalmente**: não existe campo a atualizar, então não existe recálculo a
   esquecer. O que a H9 acrescenta é a **prova** — regularizar o curinga e ver a mesma canastra
   mudar de `SUJA` para `LIMPA` na mesma rodada, que é a `CA-R8.5-1`.
@@ -226,7 +226,7 @@ O [roadmap.md](../roadmap.md) §3 registrou, na H5:
 > *Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` — **Ao escrever a H8** — na H5 eles
 > verificam a posição; `LIMPA`/`SUJA` só existe com a R8 (S61).*
 
-- `[P]` **S90** — O gatilho dispara aqui. Os dois critérios voltam a afirmar
+- `[D]` **S90** — O gatilho dispara aqui. Os dois critérios voltam a afirmar
   **categoria**, como o `acceptance-tests.md` §4.2 os define, e a nota da S61 naquele documento
   é atualizada para dizer que a adaptação terminou. O gatilho sai da tabela de abertos e entra
   na de disparados.
@@ -272,11 +272,11 @@ forma da consulta e a interface.
 
 ---
 
-## 10. Pendências
+## 10. Decisões
 
-Nove propostas. Responda no formato *"todas ok exceto S85 e S93"*.
+Nove, confirmadas em bloco em 2026-08-02.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S85** | Domínio | `categoriaDe(jogo)` **derivada** e exportada; a `VisaoDoJogador` não muda |
 | **S86** | Domínio | `CategoriaCanastra \| null` — quatro categorias, e `null` abaixo de sete |
@@ -310,3 +310,53 @@ Das de software, a **S92** é a que eu não esperava escrever: ela não é uma d
 um defeito de quatro fatias atrás que só apareceu porque esta spec releu a RF3.5 inteira. Vale
 como aviso para as próximas — o requisito que a fatia "fecha" pode ter partes que nenhuma fatia
 anterior tocou.
+
+---
+
+## 11. A pendência que a implementação abriu
+
+> Status: **`S94` aguardando confirmação.** Os critérios `CA-R8.6-1` e `CA-R8.6-2` estão
+> `skip` na suíte até ela ser respondida.
+
+O passo 4 encontrou o que o passo 1 não previu: **`2…K-A` é inalcançável**, e por isso aqueles
+dois critérios não são satisfazíveis.
+
+```
+descrito como   2 3 4 5 6 7 8 9 10 J Q K A   →   janela [0, 12]   DE_500
+a engine devolve             A 2 3 4 … J Q K
+```
+
+`criarJogo` tenta as duas pontas do Ás (S42) e aceita a primeira que fecha trecho contíguo. A
+ponta baixa vem primeiro na lista, então as mesmas treze cartas saem como `A…K`. Nenhum caminho
+produz o outro arranjo: o `aumentar` revalida pelo mesmo `criarJogo` (S64), e um curinga fazendo
+papel de Ás cai na mesma resolução.
+
+A ambiguidade só existe quando a corrida é exatamente `2..K` mais **um** Ás — corridas menores
+têm uma leitura só, e com dois Ases o jogo é o de catorze. Está medido, e os seis casos estão no
+teste `CA-R8.6-1` que registra o arranjo devolvido hoje.
+
+**A escolha da engine é a certa, e é isso que torna a decisão barata.** `A…K` vale 500 contra
+200, e as duas leituras alcançam 1000 depois — a ponta baixa domina em **todo** momento, então
+nenhum jogador escolheria a outra. O que falta não é o comportamento: é a decisão. `[[0], [13]]`
+com "a primeira ganha" é ordem de array, exatamente o formato do `id` derivado que a S63 teve de
+corrigir na H6 — uma escolha de implementação que só fica consequente numa fatia posterior.
+
+| # | Alternativa | A favor | Contra |
+|---|---|---|---|
+| **A** | A engine resolve o Ás na ponta que **maximiza a categoria** — formaliza o que já acontece | Nenhum código novo, e a escolha é sempre a melhor para o jogador | A R8.6 fica com um exemplo sem caso alcançável, e o `rules.md` precisa dizer isso |
+| **B** | O jogador escolhe a ponta, como escolhe o papel do curinga (S51) | Torna a R8.6 alcançável; coerente com "um conjunto de cartas não determina um jogo" | `Posicao` ganha campo, `baixar` e `aumentar` carregam, a enumeração dobra — para oferecer uma jogada **estritamente pior** |
+| **C** | Adaptar os dois critérios em silêncio | — | Teste verde documentando decisão que ninguém tomou. É o modo de falha que a RD9 nomeia, e por isso os dois estão `skip` e não reescritos |
+
+- `[P]` **S94** — **Alternativa A**, com duas correções de documento: nota na
+  **R8.6** do `rules.md` dizendo que `2…K-A` descreve um arranjo que a engine não produz porque
+  `A…K` domina, e reescrita de `CA-R8.6-1` e `CA-R8.6-2` no `acceptance-tests.md` para afirmar
+  o que é verificável — as mesmas treze cartas produzem `A…K`, e a categoria é `DE_500`.
+
+> A B não é absurda, e vale dizer por que ela cai. A S51 abriu a escolha do curinga ao jogador
+> porque as duas leituras são **taticamente diferentes**: uma vira canastra limpa e a outra
+> suja, e só uma dá para regularizar depois. Aqui não há tática — uma opção domina a outra em
+> pontos e em potencial de crescimento. A S47 já decidiu não oferecer opções sem escolha real,
+> e oferecer uma opção estritamente pior é a mesma coisa com um custo maior.
+>
+> **Esta é decisão de domínio, não de software.** Se na sua mesa alguém já preferiu o Ás em
+> cima por algum motivo que eu não vejo, a A cai e a B passa a valer o custo.

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { valorDa } from '../../engine/index.ts'
+import { categoriaDe, valorDa } from '../../engine/index.ts'
 import type {
   Carta,
   CartaBaixada,
+  CategoriaCanastra,
   Comando,
   Jogo,
   Posicao,
@@ -50,6 +51,52 @@ function quantasCartas(quantas: number): string {
  * cartas baixado sem — e a escolha entre as duas leituras é a decisão central da
  * H5 (spec 0005 §2.1). O jogador escolheria e não veria o resultado.
  */
+/**
+ * S93 — a categoria em português, e **nada** para jogo de menos de sete.
+ *
+ * A ausência é a R8.1, não uma omissão: escrever "sem categoria" faria a tela
+ * afirmar algo que a R8.2 não define, e a R8.1 é justamente sobre o limiar em
+ * que a categoria passa a existir.
+ *
+ * A tela chama `categoriaDe` e traduz. Ela continua sem saber o que é uma
+ * canastra (T6): para ela, categoria é um de quatro rótulos ou nada — o mesmo
+ * arranjo do `valorDa` na H6.
+ */
+const NOME_DA_CATEGORIA: Readonly<Record<CategoriaCanastra, string>> = {
+  DE_1000: 'canastra de 1000',
+  DE_500: 'canastra de 500',
+  LIMPA: 'canastra limpa',
+  SUJA: 'canastra suja',
+}
+
+/**
+ * Um jogo na mesa, com as posições nomeadas e a categoria quando houver.
+ *
+ * S92 — serve aos **dois** painéis. A RF3.5 fala dos jogos dos dois jogadores, e
+ * até a H7 o painel do adversário renderizava um parágrafo vazio quando ele
+ * tinha jogos. Uma função só é o que impede os dois lados de divergirem de novo.
+ */
+function ListaDeJogos({ jogos }: { readonly jogos: readonly Jogo[] }) {
+  if (jogos.length === 0) {
+    return <p>Nenhum jogo na mesa</p>
+  }
+
+  return (
+    <ul>
+      {jogos.map((jogo) => {
+        const categoria = categoriaDe(jogo)
+
+        return (
+          <li key={jogo.id}>
+            {jogo.posicoes.map(nomeDaPosicao).join(', ')}
+            {categoria === null ? null : ` — ${NOME_DA_CATEGORIA[categoria]}`}
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 function nomeDaPosicao(posicao: Posicao): string {
   return posicao.tipo === 'Natural'
     ? nomeDa(posicao.carta)
@@ -252,8 +299,11 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
         <p>{visao.cartasNaMaoDoAdversario} cartas viradas</p>
       </section>
 
+      {/* RF3.5 — os jogos dos **dois** jogadores, com categoria. Até a H7 este
+          painel renderizava um parágrafo vazio quando o adversário tinha jogos,
+          e a IA baixa em toda partida: estava errado desde a H4 (S92). */}
       <section aria-label="Jogos do adversário">
-        <p>{visao.jogosDoAdversario.length === 0 ? 'Nenhum jogo na mesa' : ''}</p>
+        <ListaDeJogos jogos={visao.jogosDoAdversario} />
       </section>
 
       <section aria-label="Monte">
@@ -306,15 +356,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
       </section>
 
       <section aria-label="Meus jogos">
-        {visao.meusJogos.length === 0 ? (
-          <p>Nenhum jogo na mesa</p>
-        ) : (
-          <ul>
-            {visao.meusJogos.map((jogo) => (
-              <li key={jogo.id}>{jogo.posicoes.map(nomeDaPosicao).join(', ')}</li>
-            ))}
-          </ul>
-        )}
+        <ListaDeJogos jogos={visao.meusJogos} />
       </section>
 
       <section aria-label="Minha mão">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { posicoes } from '../testing/construtor.ts'
-import { aumentarJogo, criarJogo, janelaDe } from './jogo.ts'
+import { carta, posicoes } from '../testing/construtor.ts'
+import { aumentarJogo, categoriaDe, criarJogo, ehCanastra, janelaDe } from './jogo.ts'
 import type { Invariante, Posicao, ResultadoDeJogo } from './jogo.ts'
 
 /**
@@ -154,18 +154,22 @@ function curingasDe(notacao: string) {
 }
 
 describe('R1.3 — o mesmo 2 com papéis opostos', () => {
-  it('CA-R1.3-1 — A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ é válida e não tem nenhuma posição Curinga', () => {
-    // A asserção original pedia canastra LIMPA, que é R8 e chega na H8 (S50/S61).
-    // Aqui ela vira asserção de posição, que é o que a H5 tem — e o que os dois
-    // critérios provam continua intacto: o 2♥ está na casa dele.
+  it('CA-R1.3-1 — A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ é canastra LIMPA: o 2♥ está na casa dele', () => {
+    // S90 — o gatilho da S61 disparou na H8. Da H5 até aqui este critério
+    // verificava a **posição** (nenhuma `Curinga`), porque `LIMPA` não existia.
+    // A asserção de categoria voltou, e a de posição fica: ela é o que explica
+    // **por que** a categoria é essa.
+    expect(categoriaDe(valido('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥'))).toBe('LIMPA')
     expect(curingasDe('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥')).toHaveLength(0)
   })
 
-  it('CA-R1.3-2 — 5♥ 6♥ 7♥ [2♥→8] 9♥ 10♥ J♥ é válida e tem exatamente uma posição Curinga', () => {
+  it('CA-R1.3-2 — 5♥ 6♥ 7♥ [2♥→8] 9♥ 10♥ J♥ é canastra SUJA: o mesmo 2♥ agora é curinga', () => {
     const curingas = curingasDe('5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥')
 
     // O par decisivo do M2: **a mesma carta** com resultados opostos. Se a
-    // implementação guardasse `ehCuringa` na carta, um dos dois falharia.
+    // implementação guardasse `ehCuringa` na carta, um dos dois falharia — e
+    // agora a diferença aparece onde a regra a nomeia, que é a categoria.
+    expect(categoriaDe(valido('5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥'))).toBe('SUJA')
     expect(curingas).toHaveLength(1)
     expect(curingas[0]?.carta.id).toBe('COPAS-2-1')
   })
@@ -369,5 +373,168 @@ describe('S71 — a janela do jogo é derivada das pontas', () => {
   it('CA-S71-2 — a janela lê o valor representado, não o impresso no curinga', () => {
     // S55 outra vez: `[2♠→7]` na ponta direita põe o fim na casa 6, não na 1.
     expect(janelaDe(valido('5♥ 6♥ 2♠>7'))).toEqual({ inicio: 4, fim: 6 })
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0008 §9.1, mais os **doze herdados** do
+ * acceptance-tests.md §4.2 e §4.3. É a segunda vez que uma spec herda critérios
+ * em vez de criar — a primeira foi a H4 —, e desta vez a herança é quase total.
+ *
+ * S88 — a precedência da R8.3 **é** a ordem dos `if`. Não há como torná-la
+ * estrutural, como a S66 fez com a posse e a S76 com a R4.2; o que resta é rede
+ * de teste, e é por isso que os seis casos entram inteiros.
+ */
+
+const QUATORZE_COM_CURINGA = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ 2♠>K A♥'
+const AS_ATE_REI = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥'
+const AS_ATE_REI_COM_CURINGA = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ 2♠>K'
+const DOIS_ATE_AS = '2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥'
+const DOIS_ATE_AS_COM_CURINGA = '2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ 2♠>K A♥'
+const SETE_LIMPA = 'A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥'
+const SETE_SUJA = '5♥ 6♥ 7♥ 2♥>8 9♥ 10♥ J♥'
+
+function categoria(notacao: string) {
+  return categoriaDe(valido(notacao))
+}
+
+describe('R8.3 — a precedência das quatro categorias', () => {
+  it('CA-R8.3-1 — 14 cartas sem curinga são DE_1000, não LIMPA', () => {
+    expect(categoria(QUATORZE)).toBe('DE_1000')
+  })
+
+  it('CA-R8.3-2 — 14 cartas com curinga são DE_1000, não SUJA', () => {
+    // R8.4 — as especiais **admitem** curinga, e isso não é uma verificação: é o
+    // que acontece quando o `if` do curinga vem por último. Este critério e o
+    // CA-R8.3-4 são os únicos que reprovam se alguém subir a checagem de curinga
+    // para o topo achando que simplifica.
+    expect(categoria(QUATORZE_COM_CURINGA)).toBe('DE_1000')
+  })
+
+  it('CA-R8.3-3 — A até K sem curinga é DE_500', () => {
+    expect(categoria(AS_ATE_REI)).toBe('DE_500')
+  })
+
+  it('CA-R8.3-4 — A até K com curinga continua DE_500 (R8.4)', () => {
+    expect(categoria(AS_ATE_REI_COM_CURINGA)).toBe('DE_500')
+  })
+
+  it('CA-R8.3-5 — sete cartas sem curinga são LIMPA', () => {
+    expect(categoria(SETE_LIMPA)).toBe('LIMPA')
+  })
+
+  it('CA-R8.3-6 — sete cartas com curinga são SUJA', () => {
+    expect(categoria(SETE_SUJA)).toBe('SUJA')
+  })
+
+  it('CA-R8.3-7 — seis cartas não são canastra, e não têm categoria', () => {
+    expect(categoria('5♥ 6♥ 7♥ 8♥ 9♥ 10♥')).toBeNull()
+  })
+})
+
+describe('R8.6 — DE_500 e DE_1000 dependem da posição, não do tamanho', () => {
+  /**
+   * **Bloqueados na decisão `S94`, que não foi tomada.** Não é falha de
+   * implementação: `2…K-A` é **inalcançável**.
+   *
+   * `criarJogo` tenta as duas pontas do Ás (S42) e aceita a primeira que fecha
+   * trecho contíguo — e a ponta baixa vem primeiro na lista. As mesmas treze
+   * cartas descritas como `2…K-A` saem como `A…K`, e a categoria é `DE_500`.
+   * Nenhum caminho produz o outro arranjo: `aumentar` revalida pelo mesmo
+   * `criarJogo`, e o curinga fazendo papel de Ás cai na mesma resolução.
+   *
+   * A escolha da engine é a **certa** — `A…K` vale 500 contra 200 e as duas
+   * leituras chegam a 1000 depois, então a ponta baixa domina em todo momento.
+   * O que não existe é a **decisão**: "a primeira da lista ganha" é ordem de
+   * array, o mesmo formato do `id` derivado que a S63 corrigiu na H6.
+   *
+   * Ficam `skip` em vez de adaptados porque adaptá-los seria teste verde
+   * documentando uma decisão que ninguém tomou — o modo de falha da RD9. A
+   * spec 0008 §11 tem a proposta e as alternativas.
+   */
+  it.skip('CA-R8.6-1 — 2 até o Ás alto, sem curinga, é LIMPA e não DE_500', () => {
+    expect(categoria(DOIS_ATE_AS)).toBe('LIMPA')
+    expect(janelaDe(valido(DOIS_ATE_AS))).toEqual({ inicio: 1, fim: 13 })
+  })
+
+  it.skip('CA-R8.6-2 — 2 até o Ás alto, com curinga, é SUJA', () => {
+    expect(categoria(DOIS_ATE_AS_COM_CURINGA)).toBe('SUJA')
+  })
+
+  it('CA-R8.6-1 — o arranjo que a engine devolve hoje, medido e não decidido', () => {
+    // Este **não** substitui os dois acima: ele registra o comportamento medido
+    // para que a S94 seja decidida sobre um fato, e para que a mudança apareça
+    // como falha se alguém mexer na resolução do Ás antes da decisão.
+    expect(valido(DOIS_ATE_AS).posicoes.map((posicao) => posicao.carta.valor)).toEqual([
+      'A',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+      '10',
+      'J',
+      'Q',
+      'K',
+    ])
+    expect(categoria(DOIS_ATE_AS)).toBe('DE_500')
+  })
+
+  it('CA-R8.6-3 — A até K mais o segundo Ás passa de DE_500 a DE_1000', () => {
+    const deQuinhentos = valido(AS_ATE_REI)
+    const resultado = aumentarJogo(deQuinhentos, [
+      { tipo: 'Natural', carta: carta('COPAS', 'A', 2) },
+    ])
+
+    if (resultado.tipo !== 'valido') {
+      throw new Error(`esperava aumentar, veio ${resultado.violados.join(', ')}`)
+    }
+
+    // A categoria é **derivada** (R8.5): o mesmo jogo, com identidade preservada
+    // pela S63, muda de categoria porque o conteúdo mudou. Nada foi recalculado
+    // à mão, porque não há campo a recalcular.
+    expect(categoriaDe(deQuinhentos)).toBe('DE_500')
+    expect(categoriaDe(resultado.jogo)).toBe('DE_1000')
+    expect(resultado.jogo.id).toBe(deQuinhentos.id)
+  })
+})
+
+describe('R8.1 — o limiar de sete cartas', () => {
+  it('CA-S86-1 — um jogo de seis não é canastra', () => {
+    const jogo = valido('5♥ 6♥ 7♥ 8♥ 9♥ 10♥')
+
+    expect(categoriaDe(jogo)).toBeNull()
+    expect(ehCanastra(jogo)).toBe(false)
+  })
+
+  it('CA-S86-2 — um jogo de sete é canastra', () => {
+    // O par do limiar. Sem ele, um `categoriaDe` que devolvesse sempre `null`
+    // passaria no critério acima de graça.
+    const jogo = valido('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+
+    expect(categoriaDe(jogo)).toBe('LIMPA')
+    expect(ehCanastra(jogo)).toBe(true)
+  })
+})
+
+describe('S87 — a janela lê o valor representado', () => {
+  it('CA-S87-1 — A até K com o curinga na ponta do Rei é DE_500', () => {
+    // A S55 outra vez: a ponta é lida pelo valor **representado**, não pelo
+    // impresso. Sem isso, a janela terminaria na casa do `2` e a categoria seria
+    // outra — e este é o caso em que a R8.4 e a R8.6 se cruzam.
+    expect(janelaDe(valido(AS_ATE_REI_COM_CURINGA))).toEqual({ inicio: 0, fim: 12 })
+    expect(categoria(AS_ATE_REI_COM_CURINGA)).toBe('DE_500')
+  })
+})
+
+describe('R8.5 — a categoria é derivada, nunca um campo', () => {
+  it('CA-S85-1 — o Jogo não tem campo de categoria', () => {
+    // A R8.5 é a única regra do projeto que descreve uma **não-implementação**.
+    // Ausência não aparece em `grep`, então ela vira asserção de forma: quatro
+    // campos, e um quinto reprova. A Alternativa C da §2 morre aqui.
+    expect(Object.keys(valido(SETE_LIMPA)).sort()).toEqual(['dono', 'id', 'naipe', 'posicoes'])
   })
 })

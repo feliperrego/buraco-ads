@@ -216,6 +216,57 @@ export function janelaDe(jogo: Jogo): Janela {
   }
 }
 
+/** R8.2 — as quatro categorias, **mutuamente exclusivas**. Não há uma quinta. */
+export type CategoriaCanastra = 'DE_1000' | 'DE_500' | 'LIMPA' | 'SUJA'
+
+/** R8.1 — uma canastra é um jogo que atingiu **sete ou mais** cartas. */
+export const CANASTRA = 7
+
+/**
+ * S85 — a categoria é **função derivada**, nunca campo (R8.5).
+ *
+ * A alternativa tentadora era guardá-la em `Jogo`, preenchida por `criarJogo`:
+ * ela funcionaria até a H9, que é exatamente quando o conteúdo do jogo muda sem
+ * passar pelo construtor. É o mesmo formato do erro que a S63 corrigiu na H6 —
+ * uma escolha que só quebra na fatia seguinte.
+ *
+ * S87 — a R8.6 é lida pela **janela**, não pelo tamanho. `DE_500` e `DE_1000`
+ * dependem de **posição**: `A…K` vale 500 e `2…K-A` — as mesmas treze cartas —
+ * vale 200. Uma implementação por tamanho erraria exatamente esse caso, que é o
+ * que a R8.6 nasceu para resolver.
+ *
+ * S88/R8.3 — **a ordem destes `if` é a precedência**, e não há como torná-la
+ * estrutural: `DE_1000 → DE_500 → LIMPA → SUJA`. A R8.4 ("as especiais admitem
+ * curinga") não é uma verificação, é o que acontece porque o curinga só é
+ * consultado depois das especiais. Subir essa checagem para o topo parece
+ * simplificação e quebra as duas.
+ */
+export function categoriaDe(jogo: Jogo): CategoriaCanastra | null {
+  // R8.1 — abaixo de sete não é canastra, e a R8.2 não define categoria para
+  // isso. `null` em vez de uma quinta variante: o tipo diz quatro porque a regra
+  // diz quatro (S86).
+  if (jogo.posicoes.length < CANASTRA) {
+    return null
+  }
+
+  const { inicio, fim } = janelaDe(jogo)
+
+  if (inicio === 0 && fim === CASAS - 1) {
+    return 'DE_1000'
+  }
+
+  if (inicio === 0 && fim === CASAS - 2) {
+    return 'DE_500'
+  }
+
+  return jogo.posicoes.some((posicao) => posicao.tipo === 'Curinga') ? 'SUJA' : 'LIMPA'
+}
+
+/** R8.1 — sete ou mais posições. Sem segunda travessia: é a categoria existir. */
+export function ehCanastra(jogo: Jogo): boolean {
+  return categoriaDe(jogo) !== null
+}
+
 /**
  * S64 — aumentar passa pela **mesma porta** que baixar.
  *

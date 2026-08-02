@@ -633,3 +633,109 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
     expect(mao.textContent).toMatch(/a de paus/i)
   })
 })
+
+/**
+ * Critérios de interface da spec 0008 §9.2.
+ *
+ * S92 — a RF3.5 fala dos jogos **dos dois jogadores**, e metade dela nunca foi
+ * implementada: quando o adversário tinha jogos, o painel dele renderizava um
+ * parágrafo vazio. Em 40 de 40 partidas simuladas entre IAs a mesa termina com
+ * jogo baixado, então isso estava errado em toda partida já jogada.
+ */
+function jogoDe(
+  id: string,
+  dono: 0 | 1,
+  naipe: Carta['naipe'],
+  valores: readonly Valor[],
+  curingaEm?: Valor,
+) {
+  return {
+    id,
+    dono,
+    naipe,
+    posicoes: valores.map((valor) =>
+      valor === curingaEm
+        ? { tipo: 'Curinga' as const, carta: carta('ESPADAS', '2'), representa: valor }
+        : { tipo: 'Natural' as const, carta: carta(naipe, valor) },
+    ),
+  }
+}
+
+const SETE: readonly Valor[] = ['5', '6', '7', '8', '9', '10', 'J']
+
+describe('RF3.5 — os jogos dos dois jogadores, com categoria', () => {
+  it('CA-S92-2 — sem jogos, o painel do adversário diz que a mesa dele está vazia', () => {
+    // A âncora do outro lado, e ela já passava: o defeito só aparecia com jogos.
+    render(<TelaPartida visao={visaoInicial()} movimentos={[]} aoJogar={vi.fn()} />)
+
+    expect(screen.getByRole('region', { name: /jogos do adversário/i }).textContent).toMatch(
+      /nenhum jogo/i,
+    )
+  })
+
+  it('CA-S92-1 — com um jogo, o painel do adversário mostra as cartas dele', () => {
+    const jogosDoAdversario = [jogoDe('J1-COPAS-5-1', 1, 'COPAS', ['5', '6', '7'])]
+
+    render(
+      <TelaPartida visao={visaoInicial({ jogosDoAdversario })} movimentos={[]} aoJogar={vi.fn()} />,
+    )
+
+    const painel = screen.getByRole('region', { name: /jogos do adversário/i })
+
+    // O defeito de quatro fatias: aqui a tela renderizava `<p></p>`.
+    expect(painel.textContent).toMatch(/5 de copas/i)
+    expect(painel.textContent).toMatch(/6 de copas/i)
+    expect(painel.textContent).toMatch(/7 de copas/i)
+    expect(painel.textContent).not.toMatch(/nenhum jogo/i)
+  })
+
+  it('CA-S93-4 — a categoria do jogo do adversário também aparece', () => {
+    const jogosDoAdversario = [jogoDe('J1-COPAS-5-1', 1, 'COPAS', SETE)]
+
+    render(
+      <TelaPartida visao={visaoInicial({ jogosDoAdversario })} movimentos={[]} aoJogar={vi.fn()} />,
+    )
+
+    expect(screen.getByRole('region', { name: /jogos do adversário/i }).textContent).toMatch(
+      /canastra limpa/i,
+    )
+  })
+})
+
+describe('S93 — o rótulo de categoria na mesa', () => {
+  it('CA-S93-1 — sete posições sem curinga aparecem como canastra limpa', () => {
+    const meusJogos = [jogoDe('J0-COPAS-5-1', 0, 'COPAS', SETE)]
+
+    render(<TelaPartida visao={visaoInicial({ meusJogos })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    expect(screen.getByRole('region', { name: /meus jogos/i }).textContent).toMatch(
+      /canastra limpa/i,
+    )
+  })
+
+  it('CA-S93-2 — sete posições com curinga aparecem como canastra suja', () => {
+    const meusJogos = [jogoDe('J0-COPAS-5-1', 0, 'COPAS', SETE, '8')]
+
+    render(<TelaPartida visao={visaoInicial({ meusJogos })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /meus jogos/i })
+
+    // O par que trava a interpretação: as mesmas sete casas, e só o papel de uma
+    // carta muda a categoria. A tela lê `categoriaDe` e traduz (T6).
+    expect(painel.textContent).toMatch(/canastra suja/i)
+    expect(painel.textContent).not.toMatch(/canastra limpa/i)
+  })
+
+  it('CA-S93-3 — um jogo de seis posições não ganha rótulo nenhum', () => {
+    const meusJogos = [jogoDe('J0-COPAS-5-1', 0, 'COPAS', ['5', '6', '7', '8', '9', '10'])]
+
+    render(<TelaPartida visao={visaoInicial({ meusJogos })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /meus jogos/i })
+
+    // A ausência **é** a R8.1. Escrever "sem categoria" faria a tela afirmar
+    // algo que a R8.2 não define. A âncora positiva é a CA-S93-1 acima.
+    expect(painel.textContent).toMatch(/5 de copas/i)
+    expect(painel.textContent).not.toMatch(/canastra/i)
+  })
+})
