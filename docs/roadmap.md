@@ -158,8 +158,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Guarda do `baixar` **e do `aumentar`** que esvazia a mão | **Ao implementar a H10** — remover junto com a batida. É **uma** guarda só desde a H6, em `adicionar`, e as duas jogadas passam por ela | S45, S58, S70 |
-| Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
+| Guarda das jogadas que esvaziam a mão | **Ao implementar a H10** — remover junto com a batida. É **uma** guarda só, em `adicionar`, e desde a H9 servem-se dela **três** comandos: `baixar`, `aumentar` e `regularizarCuringa` | S45, S58, S70, S95 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
 | `useReducer` + Context vs Zustand | **Se houver re-render perceptível** durante Marco VI | A6 |
@@ -188,6 +187,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Custo de enumerar `baixar` **com curinga** | H5, 2026-08-02 | **Medido: 280 comandos, dos quais 258 `baixar` (218 com curinga), em 0,31 ms.** Continua sem precisar otimizar, e bem abaixo do limiar de ~2000 que reabriria a consulta `validar` |
 | Custo de enumerar `aumentar`, **com jogos na mesa** | H6, 2026-08-02 | **Medido: 218 comandos, dos quais 85 `aumentar`, em 1,08 ms**, com a mão de 22 cartas da `CA-S46-1` e quatro jogos na mesa. A estimativa da spec 0006 §4.3 era de "menos de 200 por jogo"; o real ficou em **~21 por jogo**, uma ordem de grandeza abaixo |
 | Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | H8, 2026-08-02 | **Restaurada.** Os dois voltaram a afirmar `LIMPA` e `SUJA`, e a asserção de posição da H5 ficou junto — ela é o que explica **por que** a categoria é essa (S90) |
+| Se o modelo de posições (M2) está certo | H9, 2026-08-02 | **Certo.** `regularizarJogo` é a conversão de uma posição mais uma chamada a `criarJogo`. As **três** condições da R6.5 caem de dois invariantes — I2 para o naipe, I3 para o caminho e para a reposição — e **nenhum `if` de regra foi escrito**. A previsão do domain.md §2 se sustentou |
 | Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro

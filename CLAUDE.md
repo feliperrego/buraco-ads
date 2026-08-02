@@ -133,21 +133,26 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H8** estão fechadas e implementadas.
+**H9** estão fechadas e implementadas.
 
 **O Marco 0, o Marco I e o Marco II estão fechados, e o Marco III começou.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
 monte e pegar o lixo inteiro, e **ver a categoria de cada canastra dos dois lados da mesa**. Os
 **sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4 alcançava cinco, a H5
 trouxe `I4` e `I7`, e a H6 os aplicou ao crescimento sem escrever nenhum deles de novo. A **fase
-de `Compra` também está fechada**: dos seis comandos do `domain.md` §6 só falta o
-`regularizarCuringa`, que é a H9.
+de `Compra` também está fechada**, e desde a H9 **os seis comandos do `domain.md` §6 existem** —
+a tabela de comandos do domínio está completa.
 
-**A próxima é a H9** — regularizar o curinga (R6.5, R6.6, R8.5) —, e ela não tem spec. É a
-fatia que o `roadmap.md` §3 marcou como **teste da qualidade do nosso próprio modelo**: se o M2
-acertou, ela é quase trivial; se errou, é impossível.
+**O gatilho do M2 disparou, e a resposta foi "certo".** O `roadmap.md` §3 marcou a H9 como teste
+da qualidade do nosso próprio modelo: se regularizar o curinga fosse difícil, o modelo estaria
+errado. `regularizarJogo` é a conversão de **uma** posição mais uma chamada a `criarJogo`, e as
+três condições da R6.5 caem de dois invariantes — I2 para o naipe, I3 para o caminho e para a
+reposição. **Nenhum `if` de regra foi escrito.**
 
-Oito coisas que valem saber antes de mexer no que estas cinco fatias deixaram:
+**A próxima é a H10** — pegar morto (R2.3, R9.1–R9.4, M3) —, e ela não tem spec. É também a
+fatia que **remove a guarda da S45**, hoje servindo três comandos.
+
+Nove coisas que valem saber antes de mexer no que estas seis fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -155,16 +160,21 @@ Oito coisas que valem saber antes de mexer no que estas cinco fatias deixaram:
   em vez de inferir** (S52). Qualquer comando novo que mexa em posições herda essa obrigação.
 - A **S55** é a única decisão do projeto **deduzida e não pesquisada**: `I5` lê o valor
   *representado*, o que permite as duas cópias do `2♥` no mesmo jogo, uma natural e uma curinga.
-  A `CA-S55-1` é o único lugar onde essa dedução está presa em teste.
+  Desde a H9 ela tem **dois** lugares presos em teste: a `CA-S55-1` e a `CA-S98-1`, e a segunda
+  lhe deu papel novo — aquele jogo é uma canastra com curinga do **naipe certo** que mesmo assim
+  não se limpa, porque a casa 1 está tomada pela irmã natural.
 - A **S63** decidiu que jogo na mesa tem **identidade**: o `id` nasce no `baixar` e o `aumentar`
   o preserva. Era escolha de implementação registrada em comentário, e a H6 foi a fatia que a
   quebrou — crescer pela esquerda troca a primeira posição. Ela volta na **H9**, quando
   regularizar o curinga mudar o conteúdo do jogo sem que ele deixe de ser o mesmo jogo.
 - A **S45** é a única decisão que **restringe o jogo além das regras**: a jogada que esvaziaria
-  a mão não é oferecida, porque a batida é a H10. A **S70** a estendeu ao `aumentar`, e desde a
-  H6 é **uma guarda só**, em `adicionar`. É temporária e o gatilho continua aberto. Ela vive
+  a mão não é oferecida, porque a batida é a H10. É **uma guarda só**, em `adicionar`, e desde a
+  H9 passam por ela **três** comandos — `baixar`, `aumentar` e `regularizarCuringa`. Ela vive
   **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas enquanto
-  todo chamador escolher da lista.
+  todo chamador escolher da lista. Sai na H10.
+- A identidade do `Jogo` (S63) tem **um lugar só** desde a H9: `comMesmaIdentidade`, em
+  `jogo.ts`. Os dois comandos que mudam jogo na mesa passam por ela, e a mutação que recalcula o
+  `id` reprova três testes — antes reprovava um.
 - A **S41** é a decisão mais fácil de quebrar sem perceber: a ordem é uma **linha de 14 casas**,
   não um anel. Mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
 - **A margem da T7 encolheu na H7, e é o número que mais envelhece mal.** As três primeiras
@@ -237,7 +247,7 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido em sete fatias — H2 a H8: zero retrabalho.** Nenhum commit do loop precisou ser
+**Medido em oito fatias — H2 a H9: zero retrabalho.** Nenhum commit do loop precisou ser
 refeito. (A redação anterior contava commits; o número não é verificável por script
 e envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
 ambos valem vigiar:
@@ -327,6 +337,21 @@ nenhuma reprovou.** Isso é dado, não silêncio:
   não pega. A afirmação foi corrigida no `rules.md` e na spec. A regra 5 do acordo existe para
   isto: **a mutação que passa é a que mostra o que a suíte não está protegendo**, e vale mais
   quando contradiz o que você acabou de escrever.
+
+**A H9 mediu o modelo, e a mutação que não mordeu voltou — pelo mesmo motivo da H8:**
+
+- **A resposta ao gatilho do M2 é a ausência de código.** A tabela que prova que o modelo está
+  certo tem três linhas, e a coluna da direita diz "I2", "I3" e "I3". O risco não era escrever
+  demais: era escrever a condição de naipe como um `if` explícito, que **funcionaria e passaria
+  nos testes**, escondendo que o modelo já a garantia. A `CA-S98-2` existe para isso, e a
+  mutação que troca a conferência por construção reprova duas.
+- **Uma decisão expressa duas vezes é uma decisão sem rede.** A enumeração dizia "`novoInicio ∈
+  {0,1}`" no laço **e** filtrava a casa 1 depois; trocar o laço para `{0,2}` não reprovou nada,
+  porque o filtro já resolvia. Reescrito como "o Ás vem junto ou não", a mesma mutação passou a
+  morder. É a segunda fatia seguida em que a mutação que **passa** ensina mais que as que falham,
+  e as duas vezes o defeito era o mesmo: **duplicação de intenção, não de código**.
+- **O construtor da C4 pegou colisão de fixture pela quarta vez** — um `8♥` na mão e no jogo ao
+  mesmo tempo. Sem ele, teria virado teste passando sobre estado impossível.
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando
