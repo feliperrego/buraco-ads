@@ -58,7 +58,7 @@ testada, os testes passam a ser a especificação viva.
 | [0001-mesa-inicial.md](specs/0001-mesa-inicial.md) | H1 — mesa inicial | **Implementada** — 20 critérios verdes |
 | [0002-comprar-e-descartar.md](specs/0002-comprar-e-descartar.md) | H2 — comprar e descartar | **Implementada** — 20 critérios verdes |
 | [0003-turno-da-ia.md](specs/0003-turno-da-ia.md) | H3 — turno da IA | **Implementada** — 10 critérios verdes |
-| [0004-baixar-sequencias.md](specs/0004-baixar-sequencias.md) | H4 — baixar sequências | Confirmada — 12 decisões |
+| [0004-baixar-sequencias.md](specs/0004-baixar-sequencias.md) | H4 — baixar sequências | **Implementada** — 24 critérios verdes |
 
 ## Verificação
 

@@ -99,6 +99,17 @@ motivos que não têm nada a ver com a batida.
   entre IAs aleatórias ([user-stories.md](user-stories.md) U2) só percorre estados alcançáveis
   por construção.
 
+> **Construído na H4**, em `src/engine/testing/construtor.ts`. Uma ressalva de leitura, para
+> quem comparar o texto acima com o código: ele **delega** os invariantes de `Jogo` a
+> `criarJogo`, que é a mesma função que a engine usa — a C4 está cumprida ao pé da letra. Mas
+> `criarJogo` valida hoje **cinco** invariantes, não sete: `I4` e `I7` dependem do curinga e
+> nascem na H5. O construtor passa a validar os sete no dia em que ela chegar, sem alteração
+> nenhuma aqui, e é justamente por delegar que isso é de graça.
+>
+> Ele pagou no primeiro uso, reprovando dois *fixtures* — duas cópias iguais do mesmo Ás, e
+> uma carta descrita em duas mãos — que teriam virado testes **passando** sobre estado
+> impossível. É o custo da Alternativa B, medido em vez de argumentado.
+
 > C4 e C5 se completam e é isso que faz a combinação funcionar. O construtor cobre **estados
 > específicos** que seriam caros de alcançar; as partidas aleatórias cobrem **alcançabilidade
 > e conservação** em volume. Nenhum dos dois sozinho seria suficiente: o construtor poderia

@@ -125,25 +125,31 @@ git log --oneline | grep -i tarefa    # tarefas do Marco 0 concluídas
 git log --oneline | head -20
 ```
 
-As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1**, **H2**
-e **H3** estão fechadas e implementadas.
+As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
+**H4** estão fechadas e implementadas.
 
-O **Marco 0 e o Marco I estão fechados**: existe um jogo que roda. O humano compra e descarta,
-a IA joga sozinha, e a vez volta — para sempre.
+O **Marco 0 e o Marco I estão fechados**, e a **H4 também**: existe um jogo em que dá para
+baixar sequências. O humano compra, baixa quantos jogos quiser, descarta, e a IA joga sozinha.
 
-**O trabalho em curso é a H4** (baixar sequências). A
-[spec 0004](docs/specs/0004-baixar-sequencias.md) está **confirmada, com 12 decisões e nenhuma
-pendência**, e **nenhuma linha de código foi escrita**. O próximo passo é o **3 do ciclo** de
-`docs/roadmap.md` §4: os testes falhando, para os 20 critérios da §6 daquela spec — 8 deles
-herdados do `acceptance-tests.md`, que é a primeira vez que isso acontece.
+> **Correção de redação.** A versão anterior desta seção dizia "os 20 critérios da §6" da spec
+> 0004. São **24** — 8 herdados do `acceptance-tests.md`, 12 novos, 1 de desempenho e 3 de
+> interface. O número saiu de contagem à mão, que é exatamente o que a regra 4 do global proíbe.
 
-Duas coisas da H4 que valem saber antes de abrir a spec:
+**O trabalho em curso é a H5** (curinga), que ainda **não tem spec**. Ela alarga `Posicao` com a
+variante `Curinga` e acrescenta os invariantes **I4** e **I7** — os dois que a H4 deixou de
+fora de propósito, e é por isso que `criarJogo` hoje valida cinco, não sete.
+
+Três coisas da H4 que valem saber antes de mexer no que ela deixou:
 
 - A **S45** é a única decisão do projeto que **restringe o jogo além das regras**: `baixar` que
-  esvaziaria a mão não é oferecido, porque a batida é a H10. É temporária e tem gatilho.
-- A **S46** desarmou o susto da T7. O medo de enumerar `2^22` subconjuntos pressupunha a
-  estrutura errada — sequência é trecho contíguo de uma linha de 14 casas, e o espaço real é de
-  centenas. O gatilho **continua aberto** até o número ser medido, porque a T7 pediu número.
+  esvaziaria a mão não é oferecido, porque a batida é a H10. É temporária e o gatilho continua
+  aberto. Ela vive **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é
+  seguro apenas enquanto todo chamador escolher da lista.
+- A **S41** é a decisão mais fácil de quebrar sem perceber: a ordem é uma **linha de 14 casas**,
+  não um anel. Duas mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
+- O **construtor validado da C4** nasceu em `src/engine/testing/construtor.ts` e é a forma de
+  montar estado específico nos testes. `ui/`, `ia/` e `estado/` não podem importá-lo, e o
+  `verificar-fronteiras.py` prova isso a cada execução.
 
 **As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
 hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),
@@ -193,7 +199,7 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido na H2 e na H3:** cinco commits de loop, **zero retrabalho**. Dois modos de falha
+**Medido na H2, na H3 e na H4:** sete commits de loop, **zero retrabalho**. Dois modos de falha
 apareceram, e ambos valem vigiar:
 
 - **Critério negativo passa de graça.** "Não deve existir X" é trivialmente verdade num
@@ -202,3 +208,13 @@ apareceram, e ambos valem vigiar:
 - **A tentação de pular o passo 3.** Com os critérios prontos, escrever o código direto parece
   óbvio, e foi o que aconteceu na H3. O conserto é cotar a função e ver o vermelho — mesma
   garantia, mas é conserto, não disciplina.
+
+**A H4 acrescentou duas redes que pegaram erro de verdade**, e nenhuma delas é revisão humana:
+
+- **O construtor validado reprovou dois *fixtures* antes de virarem teste** — duas cópias
+  iguais do mesmo Ás, e uma carta descrita em duas mãos. Sem ele, os dois teriam virado teste
+  **passando** sobre estado impossível, que é o argumento contra a Alternativa B da C4, agora
+  medido em vez de argumentado.
+- **O `tsc` pegou o que o Vitest não pega.** Trocar `Jogo = never` por um tipo real quebrou
+  dois auxiliares de conservação que espalhavam `jogos` como se fossem cartas. A suíte ficou
+  **verde**; só `npm run tipos` viu. Vale lembrar disto ao rodar só `vitest` durante o loop.
