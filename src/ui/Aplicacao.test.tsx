@@ -60,7 +60,9 @@ describe('S37 — a partida continua depois do turno da IA', () => {
       const primeira = mao.querySelectorAll('button')[0]
       expect(primeira).toBeDefined()
       fireEvent.click(primeira as HTMLElement)
-      fireEvent.click(screen.getByRole('button', { name: /descartar a carta selecionada/i }))
+      // O rótulo encurtou na H4: a S48 passou a nomear o botão pelo comando que
+      // ele confirma, e "Descartar" é agora o caso de conjunto unitário.
+      fireEvent.click(screen.getByRole('button', { name: /^descartar$/i }))
 
       // Âncora: a vez precisa ter passado para a IA, senão o resto não prova nada.
       expect(screen.getByRole('region', { name: /vez e fase/i }).textContent).toMatch(

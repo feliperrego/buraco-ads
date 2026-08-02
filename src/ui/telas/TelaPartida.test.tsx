@@ -154,3 +154,110 @@ describe('S27 — descartar exige selecionar e confirmar', () => {
     expect(aoJogar).toHaveBeenCalledWith({ tipo: 'descartar', carta: alvo?.id })
   })
 })
+
+/**
+ * Critérios de interface da spec 0004 §6, nível 4.
+ *
+ * A H2 tinha seleção de **uma** carta. A S48 troca isso por um **conjunto**, e o
+ * botão de confirmar aparece para todo comando cujas cartas sejam exatamente a
+ * seleção. Com isso `descartar` vira o caso unitário e perde o caminho próprio:
+ * a interface filtra a lista e continua sem saber o que é uma sequência (T6).
+ */
+
+const SEQUENCIA: readonly Valor[] = ['5', '6', '7']
+
+function baixarDe(valores: readonly Valor[]): Comando {
+  return { tipo: 'baixar', cartas: valores.map((valor) => carta('COPAS', valor).id) }
+}
+
+describe('S48 e S49 — seleção por conjunto', () => {
+  it('CA-S48-1 — três cartas que formam sequência oferecem Baixar, e ele baixa aquelas três', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+    const baixar = baixarDe(SEQUENCIA)
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida visao={visao} movimentos={[...descartesDe(visao), baixar]} aoJogar={aoJogar} />,
+    )
+
+    for (const valor of SEQUENCIA) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp(`^${valor} de copas$`, 'i') }))
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: /^baixar$/i }))
+
+    expect(aoJogar).toHaveBeenCalledWith(baixar)
+  })
+
+  it('CA-S48-2 — com uma carta selecionada, aparece Descartar e não aparece Baixar', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), baixarDe(SEQUENCIA)]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /^5 de copas$/i }))
+
+    // Nenhum dos dois botões é decidido pela interface: os dois saem do mesmo
+    // filtro sobre `movimentos`. O conjunto unitário casa com `descartar`, e não
+    // com o `baixar` de três cartas.
+    expect(screen.getByRole('button', { name: /descartar/i })).toBeDefined()
+    expect(screen.queryByRole('button', { name: /^baixar$/i })).toBeNull()
+  })
+
+  it('CA-S49-1 — com uma carta selecionada, as que não a acompanham ficam inertes', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[...descartesDe(visao), baixarDe(SEQUENCIA)]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    // Âncora positiva: antes de selecionar, a mão inteira responde.
+    expect(screen.getAllByRole('button')).toHaveLength(visao.mao.length)
+
+    fireEvent.click(screen.getByRole('button', { name: /^5 de copas$/i }))
+
+    // Só 6 e 7 acompanham o 5 em algum comando. O 5 continua respondendo, para
+    // que dê para desfazer a seleção.
+    expect(screen.getByRole('button', { name: /^6 de copas$/i })).toBeDefined()
+    expect(screen.getByRole('button', { name: /^7 de copas$/i })).toBeDefined()
+    expect(screen.queryByRole('button', { name: /^a de copas$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^j de copas$/i })).toBeNull()
+  })
+})
+
+describe('R6.1 — o jogo baixado fica visível na mesa', () => {
+  it('CA-R6.1-1 — com um jogo em meusJogos, a área mostra as cartas dele', () => {
+    const meusJogos = [
+      {
+        id: 'J0-COPAS-5-1',
+        dono: 0 as const,
+        naipe: 'COPAS' as const,
+        posicoes: SEQUENCIA.map((valor) => ({
+          tipo: 'Natural' as const,
+          carta: carta('COPAS', valor),
+        })),
+      },
+    ]
+
+    render(<TelaPartida visao={visaoInicial({ meusJogos })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /meus jogos/i })
+
+    // A metade observável da CA-R6.1-1: a engine põe o jogo em `meusJogos`, e
+    // sem isto o jogador não teria como saber o que baixou. A U5 exige as duas
+    // coisas — regra com teste **e** comportamento observável.
+    expect(painel.textContent).toMatch(/5 de copas/i)
+    expect(painel.textContent).toMatch(/6 de copas/i)
+    expect(painel.textContent).toMatch(/7 de copas/i)
+    expect(painel.textContent).not.toMatch(/nenhum jogo/i)
+  })
+})

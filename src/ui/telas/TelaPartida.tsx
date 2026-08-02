@@ -23,28 +23,76 @@ function nomeDa(carta: Carta): string {
   return `${carta.valor} de ${carta.naipe.toLowerCase()}`
 }
 
+/**
+ * S48 — o comando visto como conjunto de cartas. É o que unifica o que a H2
+ * fazia à mão: `descartar` vira o caso de conjunto unitário e perde o caminho
+ * próprio.
+ */
+type Jogada = {
+  readonly comando: Comando
+  readonly cartas: ReadonlySet<string>
+  readonly rotulo: string
+}
+
+function jogadasDe(movimentos: readonly Comando[]): readonly Jogada[] {
+  return movimentos.flatMap((comando): Jogada[] => {
+    switch (comando.tipo) {
+      case 'comprarDoMonte':
+        return []
+      case 'descartar':
+        return [{ comando, cartas: new Set([comando.carta]), rotulo: 'Descartar' }]
+      case 'baixar':
+        return [{ comando, cartas: new Set(comando.cartas), rotulo: 'Baixar' }]
+    }
+  })
+}
+
+function contem(cartas: ReadonlySet<string>, ids: readonly string[]): boolean {
+  return ids.every((id) => cartas.has(id))
+}
+
 export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
   // T5 — a máquina de estados de seleção vive em `ui/`, separada do domínio. A
-  // engine não sabe o que é "carta selecionada": para ela só existe o descarte.
-  const [selecionada, setSelecionada] = useState<string | null>(null)
+  // engine não sabe o que é "carta selecionada": para ela só existem comandos.
+  const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
 
   const podeComprar = movimentos.some((comando) => comando.tipo === 'comprarDoMonte')
+  const jogadas = jogadasDe(movimentos)
 
-  const descartaveis = new Set(
-    movimentos.flatMap((comando) => (comando.tipo === 'descartar' ? [comando.carta] : [])),
+  // Uma seleção só vale enquanto alguma jogada ainda a contiver. Assim a troca
+  // de fase ou de vez a invalida sozinha, sem efeito colateral.
+  const validas = jogadas.filter((jogada) => contem(jogada.cartas, selecionadas))
+  const selecao = validas.length > 0 ? selecionadas : []
+
+  /**
+   * S49 — uma carta é selecionável quando participa de ao menos um comando
+   * **compatível com a seleção atual**. Ao selecionar, as que deixam de poder
+   * acompanhar ficam inertes.
+   *
+   * O efeito colateral é bom: o jogador descobre as sequências possíveis pela
+   * própria mesa, sem o jogo explicar nada. E a tela continua sem saber o que é
+   * uma sequência — ela só cruza conjuntos (T6).
+   */
+  const selecionaveis = new Set(
+    jogadas
+      .filter((jogada) => contem(jogada.cartas, selecao))
+      .flatMap((jogada) => [...jogada.cartas]),
   )
 
-  // Uma seleção só vale enquanto aquela carta continuar descartável. Assim a
-  // troca de fase ou de vez invalida a seleção sozinha, sem efeito colateral.
-  const selecaoValida = selecionada !== null && descartaveis.has(selecionada)
+  // S48 — confirma quem casar **exatamente** com a seleção. Nenhum dos botões é
+  // decidido pela interface: os dois saem deste mesmo filtro.
+  const confirmaveis =
+    selecao.length > 0 ? validas.filter((jogada) => jogada.cartas.size === selecao.length) : []
 
-  function descartar() {
-    if (selecionada === null) {
-      return
-    }
+  function alternar(id: string) {
+    setSelecionadas((antes) =>
+      antes.includes(id) ? antes.filter((outro) => outro !== id) : [...antes, id],
+    )
+  }
 
-    aoJogar({ tipo: 'descartar', carta: selecionada })
-    setSelecionada(null)
+  function confirmar(jogada: Jogada) {
+    aoJogar(jogada.comando)
+    setSelecionadas([])
   }
 
   return (
@@ -106,39 +154,56 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
       </section>
 
       <section aria-label="Meus jogos">
-        <p>{visao.meusJogos.length === 0 ? 'Nenhum jogo na mesa' : ''}</p>
+        {visao.meusJogos.length === 0 ? (
+          <p>Nenhum jogo na mesa</p>
+        ) : (
+          <ul>
+            {visao.meusJogos.map((jogo) => (
+              <li key={jogo.id}>
+                {jogo.posicoes.map((posicao) => nomeDa(posicao.carta)).join(', ')}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section aria-label="Minha mão">
         <ul>
           {visao.mao.map((carta) => (
             <li key={carta.id}>
-              {descartaveis.has(carta.id) ? (
+              {selecionaveis.has(carta.id) ? (
                 <button
                   type="button"
-                  aria-pressed={selecionada === carta.id}
+                  aria-pressed={selecao.includes(carta.id)}
                   onClick={() => {
-                    setSelecionada(carta.id)
+                    alternar(carta.id)
                   }}
                 >
                   {nomeDa(carta)}
                 </button>
               ) : (
-                // T9 — na fase de compra a mão fica visível e inerte. A R3.2 é
-                // ausência de afetação, não mensagem de erro.
+                // T9 — na fase de compra a mão fica visível e inerte, e a S49
+                // estende isso: carta que não acompanha a seleção também é
+                // inerte. A R3.2 é ausência de afetação, não mensagem de erro.
                 nomeDa(carta)
               )}
             </li>
           ))}
         </ul>
 
-        {/* S27 — dois passos. A RF2.3 não tem desfazer, e um descarte errado num
+        {/* S27 — dois passos. A RF2.3 não tem desfazer, e uma jogada errada num
             toque acidental é irreversível. */}
-        {selecaoValida && (
-          <button type="button" onClick={descartar}>
-            Descartar a carta selecionada
+        {confirmaveis.map((jogada) => (
+          <button
+            key={jogada.rotulo}
+            type="button"
+            onClick={() => {
+              confirmar(jogada)
+            }}
+          >
+            {jogada.rotulo}
           </button>
-        )}
+        ))}
       </section>
     </>
   )

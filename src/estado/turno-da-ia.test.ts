@@ -25,12 +25,17 @@ function aplicado(partida: Partida, comando: Comando): Partida {
   return resultado.partida
 }
 
+/** As cartas de uma lista de jogos, achatando as posições (M2). */
+function cartasDosJogos(jogador: Partida['jogadores'][number]): readonly Carta[] {
+  return jogador.jogos.flatMap((jogo) => jogo.posicoes.map((posicao) => posicao.carta))
+}
+
 function todasAsCartas(partida: Partida): readonly Carta[] {
   return [
     ...partida.jogadores[0].mao,
     ...partida.jogadores[1].mao,
-    ...partida.jogadores[0].jogos,
-    ...partida.jogadores[1].jogos,
+    ...cartasDosJogos(partida.jogadores[0]),
+    ...cartasDosJogos(partida.jogadores[1]),
     ...partida.monte,
     ...partida.lixo,
     ...partida.mortos[0].cartas,

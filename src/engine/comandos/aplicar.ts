@@ -1,4 +1,5 @@
 import type { Carta } from '../dominio/carta.ts'
+import { criarJogo } from '../dominio/jogo.ts'
 import type { Jogador, JogadorId, Partida } from '../dominio/partida.ts'
 import type { Comando, Resultado } from './comando.ts'
 
@@ -16,6 +17,58 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
       return comprarDoMonte(partida)
     case 'descartar':
       return descartar(partida, comando.carta)
+    case 'baixar':
+      return baixar(partida, comando.cartas)
+  }
+}
+
+/**
+ * R6.1 — baixar é colocar um jogo novo na mesa, válido no momento em que é
+ * baixado (R5).
+ *
+ * S44 — e só isso: a fase continua `Acao` e a vez não passa. É a R3.3 — "quantas
+ * ações quiser, em qualquer ordem" —, e a diferença que a H2 não tinha como
+ * mostrar, porque tinha um comando só na fase de ação.
+ */
+function baixar(partida: Partida, cartaIds: readonly string[]): Resultado {
+  if (partida.fase !== 'Acao') {
+    return { tipo: 'recusa', motivo: 'R3.2: não se baixa antes de comprar' }
+  }
+
+  const quem = partida.jogadorDaVez
+  const mao = partida.jogadores[quem].mao
+  const pedidos = new Set(cartaIds)
+
+  if (pedidos.size !== cartaIds.length) {
+    return { tipo: 'recusa', motivo: 'R6.1: a mesma carta foi pedida duas vezes' }
+  }
+
+  const escolhidas = mao.filter((daMao) => pedidos.has(daMao.id))
+
+  if (escolhidas.length !== pedidos.size) {
+    return { tipo: 'recusa', motivo: 'R6.1: alguma carta não está na mão de quem joga' }
+  }
+
+  const resultado = criarJogo(quem, escolhidas)
+
+  if (resultado.tipo !== 'valido') {
+    return { tipo: 'recusa', motivo: `R5: jogo inválido — ${resultado.violados.join(', ')}` }
+  }
+
+  const jogador = partida.jogadores[quem]
+  const atualizado: Jogador = {
+    ...jogador,
+    mao: mao.filter((daMao) => !pedidos.has(daMao.id)),
+    jogos: [...jogador.jogos, resultado.jogo],
+  }
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores:
+        quem === 0 ? [atualizado, partida.jogadores[1]] : [partida.jogadores[0], atualizado],
+    },
   }
 }
 

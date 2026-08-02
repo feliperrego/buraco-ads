@@ -16,16 +16,24 @@ import type { Partida } from './partida.ts'
 const SEMENTE_QUALQUER = 7
 
 /**
- * M9 conta mãos + jogos + monte + lixo + mortos. Os jogos entram por fidelidade
- * ao invariante, ainda que na H1 sejam vazios por construção do tipo (`Jogo` é
- * `never` até a H4).
+ * M9 conta mãos + jogos + monte + lixo + mortos.
+ *
+ * Na H1 os jogos entravam por fidelidade ao invariante, e eram vazios por
+ * construção do tipo — `Jogo` era `never`. A H4 lhes deu forma, e a soma passou
+ * a atravessar as posições: uma carta baixada continua existindo, só mudou de
+ * lugar.
  */
+/** As cartas de uma lista de jogos, achatando as posições (M2). */
+function cartasDosJogos(jogador: Partida['jogadores'][number]): readonly Carta[] {
+  return jogador.jogos.flatMap((jogo) => jogo.posicoes.map((posicao) => posicao.carta))
+}
+
 function todasAsCartas(partida: Partida): readonly Carta[] {
   return [
     ...partida.jogadores[0].mao,
     ...partida.jogadores[1].mao,
-    ...partida.jogadores[0].jogos,
-    ...partida.jogadores[1].jogos,
+    ...cartasDosJogos(partida.jogadores[0]),
+    ...cartasDosJogos(partida.jogadores[1]),
     ...partida.monte,
     ...partida.lixo,
     ...partida.mortos[0].cartas,

@@ -1,5 +1,6 @@
 import type { Carta } from '../dominio/carta.ts'
-import type { FaseDoTurno, Jogo, JogadorId, Partida } from '../dominio/partida.ts'
+import type { Jogo } from '../dominio/jogo.ts'
+import type { FaseDoTurno, JogadorId, Partida } from '../dominio/partida.ts'
 
 /**
  * M11 — projeção de `Partida`. A IA recebe isto e **nunca** a `Partida`, e a

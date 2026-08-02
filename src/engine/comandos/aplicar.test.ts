@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { Partida } from '../dominio/partida.ts'
+import { cartas, construirPartida } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
 import type { Comando } from './comando.ts'
 
@@ -16,12 +17,17 @@ import type { Comando } from './comando.ts'
 
 const SEMENTE = 7
 
+/** As cartas de uma lista de jogos, achatando as posições (M2). */
+function cartasDosJogos(jogador: Partida['jogadores'][number]): readonly Carta[] {
+  return jogador.jogos.flatMap((jogo) => jogo.posicoes.map((posicao) => posicao.carta))
+}
+
 function todasAsCartas(partida: Partida): readonly Carta[] {
   return [
     ...partida.jogadores[0].mao,
     ...partida.jogadores[1].mao,
-    ...partida.jogadores[0].jogos,
-    ...partida.jogadores[1].jogos,
+    ...cartasDosJogos(partida.jogadores[0]),
+    ...cartasDosJogos(partida.jogadores[1]),
     ...partida.monte,
     ...partida.lixo,
     ...partida.mortos[0].cartas,
@@ -192,5 +198,118 @@ describe('M9 — conservação após o descarte', () => {
 
     expect(ids).toHaveLength(104)
     expect(new Set(ids).size).toBe(104)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0004 §6.2.
+ *
+ * A partir daqui o cenário vem do construtor validado de `engine/testing/`
+ * (C4), e não de `iniciarPartida`: uma mão com sequência dentro é estado
+ * específico, e alcançá-lo por sorteio faria o teste falhar por motivos que não
+ * têm nada a ver com baixar.
+ */
+
+const SEQUENCIA = '5♥ 6♥ 7♥'
+const RESTO = '9♠ J♦ 4♣ K♠ 2♦ 8♣ 10♠ Q♦ 3♣'
+
+function comSequenciaNaMao(): Partida {
+  return construirPartida({
+    maos: [cartas(`${SEQUENCIA} ${RESTO}`), cartas('A♠ 4♦ 7♣ 9♥ J♠ 2♣ 6♦ 10♣ Q♠ K♦ 3♥')],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+}
+
+function idsDe(notacao: string): readonly string[] {
+  return cartas(notacao).map((carta) => carta.id)
+}
+
+describe('R6.1 e R3.4 — baixar um jogo novo na mesa', () => {
+  it('CA-R6.1-1 — as cartas saem da mão e o jogo aparece em meusJogos', () => {
+    const antes = comSequenciaNaMao()
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+
+    expect(antes.jogadores[0].mao).toHaveLength(12)
+    expect(depois.jogadores[0].mao).toHaveLength(9)
+
+    for (const id of idsDe(SEQUENCIA)) {
+      expect(depois.jogadores[0].mao.map((carta) => carta.id)).not.toContain(id)
+    }
+
+    const jogos = depois.jogadores[0].jogos
+
+    expect(jogos).toHaveLength(1)
+    expect(jogos[0]?.dono).toBe(0)
+    expect(jogos[0]?.naipe).toBe('COPAS')
+    expect(jogos[0]?.posicoes.map((posicao) => posicao.carta.valor)).toEqual(['5', '6', '7'])
+  })
+
+  it('CA-R6.1-2 — a fase continua Acao e a vez não passa', () => {
+    const antes = comSequenciaNaMao()
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+
+    // S44/R3.3 — "quantas ações quiser, em qualquer ordem". Só o descarte
+    // encerra o turno, e é a diferença que a H2 não tinha como mostrar.
+    expect(depois.fase).toBe('Acao')
+    expect(depois.jogadorDaVez).toBe(antes.jogadorDaVez)
+  })
+
+  it('CA-R6.1-3 — baixar cartas que não estão na mão é recusado', () => {
+    // A carta existe no baralho e a sequência é válida; o que falha é a posse.
+    // A RF2.1 garante que a interface nunca envia isto (S22).
+    const resultado = aplicar(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe('5♦ 6♦ 7♦') })
+
+    expect(resultado.tipo).toBe('recusa')
+  })
+
+  it('CA-R6.1-3 — baixar uma sequência inválida é recusado', () => {
+    const resultado = aplicar(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe('5♥ 7♥ 9♠') })
+
+    expect(resultado.tipo).toBe('recusa')
+  })
+
+  it('CA-R3.4-1 — sem nenhum jogo na mesa, o primeiro pode ser baixado sem mínimo', () => {
+    const antes = comSequenciaNaMao()
+
+    // R3.4 — não existe pontuação mínima para a primeira descida. O critério
+    // parece vazio e não é: é a ausência de uma regra que quase todo baralho tem.
+    expect(antes.jogadores[0].jogos).toHaveLength(0)
+
+    const depois = aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+
+    expect(depois.jogadores[0].jogos).toHaveLength(1)
+  })
+
+  it('CA-R6.1-3 — baixar na fase de compra é recusado (R3.2)', () => {
+    const naCompra = construirPartida({
+      maos: [cartas(`${SEQUENCIA} ${RESTO}`), cartas('A♠ 4♦ 7♣ 9♥ J♠ 2♣ 6♦ 10♣ Q♠ K♦ 3♥')],
+      jogadorDaVez: 0,
+      fase: 'Compra',
+    })
+
+    expect(aplicar(naCompra, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) }).tipo).toBe('recusa')
+  })
+})
+
+describe('M9 — conservação após baixar', () => {
+  it('CA-M9-7 — após baixar, as 104 cartas se conservam', () => {
+    const depois = aplicado(comSequenciaNaMao(), { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+    const ids = todasAsCartas(depois).map((carta) => carta.id)
+
+    // As cartas mudaram de lugar, não de existência: saíram da mão e entraram
+    // nas posições de um jogo. É a primeira transição do projeto em que a M9
+    // atravessa uma estrutura aninhada.
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+
+  it('CA-M9-7 — baixar não muta a partida de entrada', () => {
+    const antes = comSequenciaNaMao()
+    const copia = JSON.parse(JSON.stringify(antes)) as Partida
+
+    aplicado(antes, { tipo: 'baixar', cartas: idsDe(SEQUENCIA) })
+
+    expect(antes).toEqual(copia)
   })
 })

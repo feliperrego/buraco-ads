@@ -2,21 +2,17 @@ import { embaralhar } from '../aleatorio/embaralhar.ts'
 import { mulberry32 } from '../aleatorio/mulberry32.ts'
 import { baralhoCanonico } from './carta.ts'
 import type { Carta } from './carta.ts'
+// A H1 tinha `type Jogo = never` aqui, e a nota daquela linha prometia que a
+// forma real — com os invariantes do domain.md §4 — a substituiria na H4. É esta
+// importação. O ciclo entre os dois módulos é só de tipos, portanto apagado na
+// compilação: `jogo.ts` importa `JogadorId` daqui pelo mesmo caminho.
+import type { Jogo } from './jogo.ts'
 
 /** S11 — o humano é sempre `0`. */
 export type JogadorId = 0 | 1
 
 /** R3.1, colapsado em duas fases pelo domain.md §2. */
 export type FaseDoTurno = 'Compra' | 'Acao'
-
-/**
- * A H1 não cria jogos: as duas listas nascem vazias e ficam vazias (S1).
- *
- * `never` não é esperteza — é o tipo que torna essa afirmação verificável pelo
- * compilador, já que `readonly never[]` só aceita `[]`. A forma real, com os sete
- * invariantes do domain.md §4, nasce na H4 e substitui esta linha.
- */
-export type Jogo = never
 
 export type Jogador = {
   readonly id: JogadorId
