@@ -181,9 +181,16 @@ Só é possível quando as três condições valem ao mesmo tempo:
 > O que muda é o que os critérios de aceite podem afirmar — ver a nota em
 > [acceptance-tests.md](acceptance-tests.md) §4.3.
 >
-> A leitura posicional continua tendo caso alcançável, e ele é o que a `CA-S94-1` trava: uma
-> canastra de oito cartas do `7` ao Ás alto termina na casa 13 sem começar na 0, e é `LIMPA` —
-> não `DE_500`. Se um dia a R8.6 for lida por **tamanho**, é esse caso que reprova.
+> **Consequência medida, e ela é mais forte do que parece.** Com `2…K-A` fora de alcance,
+> treze posições implicam `A…K` e catorze implicam `A…K-A`. Ler a R8.6 **por posição** e lê-la
+> **por tamanho** passam a ser a mesma coisa: uma mutação proposital que trocou a janela pelo
+> tamanho não reprovou **nenhum** teste da suíte.
+>
+> A implementação continua lendo por posição, e o motivo agora é declarado: ela diz o que a
+> regra diz, e continua correta se a decisão da S94 for revista algum dia. Mas **nenhum teste
+> defende essa escolha**, porque não há estado que as separe — quem "simplificar" para tamanho
+> não será reprovado. Quem quiser mudar isso precisa antes tornar `2…K-A` representável, que é
+> a Alternativa B da spec 0008 §11.
 
 > Sem P17 explícito, a pontuação passa a depender da ordem dos `if` na implementação — um
 > bug silencioso que nenhum teste pegaria por acaso. É exatamente o tipo de ambiguidade

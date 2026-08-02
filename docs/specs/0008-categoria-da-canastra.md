@@ -365,6 +365,18 @@ corrigir na H6 — uma escolha de implementação que só fica consequente numa 
 > termina na casa 13 sem começar na 0, e é `LIMPA`. Virou a `CA-S94-1`, e é ela que reprova se
 > alguém reimplementar a regra por tamanho.
 >
+> **A mutação que não mordeu.** O passo 6 rodou seis mutações propositais e cinco reprovaram.
+> A que passou foi trocar a janela pelo **tamanho** — e ela passou porque, depois da S94, as
+> duas leituras são equivalentes: `2…K-A` não existe, então treze posições implicam `A…K` e
+> catorze implicam `A…K-A`. A `CA-S94-1` **não** fecha esse buraco, ao contrário do que a
+> primeira redação desta seção afirmou; ela prova outra coisa, que é uma canastra terminada no
+> Ás alto sem começar na casa 0.
+>
+> A S87 continua de pé, e o argumento dela muda de forma: a janela não é escolhida por ser mais
+> **correta** — é escolhida por dizer o que a regra diz, e por continuar correta se a S94 for
+> revista. O custo de saber disso é conhecer o buraco: nenhum teste defende a escolha, e uma
+> "simplificação" para tamanho passaria. Está registrado na nota da R8.6.
+>
 > **O padrão da S63 se repetiu, e é a terceira vez.** Uma escolha registrada só em ordem de
 > array — como o `id` derivado da H4 e a preferência de ponta aqui — atravessa fatias sem
 > incomodar e vira decisão quando alguma fatia a torna consequente. Vale procurar por elas em

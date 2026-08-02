@@ -197,9 +197,12 @@ motivos que não têm nada a ver com a batida.
 > crescimento. O raciocínio completo está na nota da R8.6 em [rules.md](rules.md).
 >
 > O par continua provando que a categoria é **posicional**; mudou o que ele consegue demonstrar.
-> Quem passou a carregar a discriminação por posição é a `CA-S94-1`, e ela é o critério que
-> reprova se alguém reimplementar a R8.6 por tamanho — treze cartas deixariam de ser a única
-> forma de chegar a `DE_500`.
+> A `CA-S94-1` acrescenta o caso alcançável de canastra que termina no Ás alto sem começar na
+> casa 0.
+>
+> **O que nenhum destes critérios prova**, e foi medido por mutação: depois da S94, ler a R8.6
+> por posição e lê-la por tamanho são equivalentes, porque `2…K-A` não existe. Trocar a janela
+> pelo tamanho não reprova nada. A nota da R8.6 em [rules.md](rules.md) registra por quê.
 
 ### 4.4 Regularizar o curinga — R6.5, R6.6, R8.5
 
