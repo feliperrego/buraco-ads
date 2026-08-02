@@ -135,7 +135,7 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 |---|---|---|
 | **0** ✅ | 0.1–0.8 | O lint recusa um import proibido, a suíte vazia roda e uma rota digitada direto na URL publicada devolve a aplicação |
 | **I** ✅ | H1–H3 | Dois jogadores compram e descartam; a IA joga sozinha |
-| **II** | H4–H7 | Dá para baixar sequências, com e sem curinga, e pegar o lixo |
+| **II** ✅ | H4–H7 | Dá para baixar sequências, com e sem curinga, e pegar o lixo |
 | **III** | H8–H12 | Uma rodada completa termina em batida e pontuação apurada |
 | **IV** | H13–H14 | Uma partida completa chega a 3000, inclusive com monte esgotado |
 | **V** | H15 | O oponente joga por heurística, não por sorteio |
@@ -159,7 +159,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
 | Guarda do `baixar` **e do `aumentar`** que esvazia a mão | **Ao implementar a H10** — remover junto com a batida. É **uma** guarda só desde a H6, em `adicionar`, e as duas jogadas passam por ela | S45, S58, S70 |
-| Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | **Ao escrever a H8** — na H5 eles verificam a posição; `LIMPA`/`SUJA` só existe com a R8 | S61 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
@@ -188,6 +187,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Custo de enumerar todos os `baixar` | H4, 2026-08-02 | **Medido: 121 comandos, dos quais 99 `baixar`, em 0,12 ms.** Nenhuma otimização é necessária, e a T6 se sustenta |
 | Custo de enumerar `baixar` **com curinga** | H5, 2026-08-02 | **Medido: 280 comandos, dos quais 258 `baixar` (218 com curinga), em 0,31 ms.** Continua sem precisar otimizar, e bem abaixo do limiar de ~2000 que reabriria a consulta `validar` |
 | Custo de enumerar `aumentar`, **com jogos na mesa** | H6, 2026-08-02 | **Medido: 218 comandos, dos quais 85 `aumentar`, em 1,08 ms**, com a mão de 22 cartas da `CA-S46-1` e quatro jogos na mesa. A estimativa da spec 0006 §4.3 era de "menos de 200 por jogo"; o real ficou em **~21 por jogo**, uma ordem de grandeza abaixo |
+| Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | H8, 2026-08-02 | **Restaurada.** Os dois voltaram a afirmar `LIMPA` e `SUJA`, e a asserção de posição da H5 ficou junto — ela é o que explica **por que** a categoria é essa (S90) |
 | Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro

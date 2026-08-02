@@ -133,18 +133,21 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H7** estão fechadas e implementadas.
+**H8** estão fechadas e implementadas.
 
-**O Marco 0, o Marco I e o Marco II estão fechados.** Existe um jogo em que dá para baixar
-sequências, com e sem curinga, aumentá-las depois, e escolher entre comprar do monte e pegar o
-lixo inteiro. Os **sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4
-alcançava cinco, a H5 trouxe `I4` e `I7`, e a H6 os aplicou ao crescimento sem escrever nenhum
-deles de novo. A **fase de `Compra` também está fechada**: a H7 pôs o segundo e último comando
-dela, e dos seis do `domain.md` §6 só falta o `regularizarCuringa`, que é a H9.
+**O Marco 0, o Marco I e o Marco II estão fechados, e o Marco III começou.** Existe um jogo em
+que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
+monte e pegar o lixo inteiro, e **ver a categoria de cada canastra dos dois lados da mesa**. Os
+**sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4 alcançava cinco, a H5
+trouxe `I4` e `I7`, e a H6 os aplicou ao crescimento sem escrever nenhum deles de novo. A **fase
+de `Compra` também está fechada**: dos seis comandos do `domain.md` §6 só falta o
+`regularizarCuringa`, que é a H9.
 
-**O próximo é o Marco III**, e ele começa pela **H8** (categoria da canastra), que não tem spec.
+**A próxima é a H9** — regularizar o curinga (R6.5, R6.6, R8.5) —, e ela não tem spec. É a
+fatia que o `roadmap.md` §3 marcou como **teste da qualidade do nosso próprio modelo**: se o M2
+acertou, ela é quase trivial; se errou, é impossível.
 
-Sete coisas que valem saber antes de mexer no que estas quatro fatias deixaram:
+Oito coisas que valem saber antes de mexer no que estas cinco fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -171,6 +174,11 @@ Sete coisas que valem saber antes de mexer no que estas quatro fatias deixaram:
   mesa. **Fatia que acrescente comando ou multiplique jogos remede** — não herda este "não
   precisa otimizar". E o pior caso **não** é a mão maior: é um naipe quase cheio com um buraco
   só, porque janela cheia não admite curinga.
+- A **S94** decidiu qual ponta o Ás ocupa quando as duas cabem: a **baixa**, porque `A…K` vale
+  500 contra os 200 de `2…K-A` e as duas leituras alcançam 1000 depois. A consequência é que
+  **`2…K-A` não é representável**, e por isso ler a R8.6 por posição ou por tamanho passou a ser
+  a mesma coisa — medido por mutação, e **nenhum teste separa as duas**. A implementação lê por
+  posição porque diz o que a regra diz, não porque algum teste a defenda.
 - O **construtor validado da C4** vive em `src/engine/testing/construtor.ts` e é a forma de
   montar estado específico nos testes. `ui/`, `ia/` e `estado/` não podem importá-lo, e o
   `verificar-fronteiras.py` prova isso a cada execução. Use **`outrasCartas`** para a mão do
@@ -229,8 +237,8 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido em seis fatias — H2, H3, H4, H5, H6 e H7: zero retrabalho.** Nenhum commit do loop
-precisou ser refeito. (A redação anterior contava commits; o número não é verificável por script
+**Medido em sete fatias — H2 a H8: zero retrabalho.** Nenhum commit do loop precisou ser
+refeito. (A redação anterior contava commits; o número não é verificável por script
 e envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
 ambos valem vigiar:
 
@@ -303,3 +311,25 @@ nenhuma reprovou.** Isso é dado, não silêncio:
   teste presumia que "não é `descartar` nem `comprarDoMonte`" implicava ter `cartas` — e o
   `pegarLixo` caiu ali. Virou `switch` exaustivo, que é a forma que **não compila** quando um
   comando novo aparece. Vale preferir isso a ternário em qualquer lugar que enumere `Comando`.
+
+**A H8 trouxe os dois achados mais úteis do projeto até aqui, e nenhum veio de teste falhando:**
+
+- **A spec releu a RF3.5 inteira e achou defeito de quatro fatias atrás.** O painel de jogos do
+  adversário renderizava um `<p>` **vazio** quando ele tinha jogos, desde a H4. Não é hipótese:
+  em **40 de 40** partidas simuladas entre IAs a mesa termina com jogo baixado, e a maior chegou
+  a 16 — estava errado em toda partida já jogada. Escapou porque a `CA-S1-2` da H1 verificou o
+  painel **vazio**, correto na época, e nenhuma spec depois falou dele. É o inverso do achado da
+  H4 e da H5: rodar o app **não** acha isto, porque quem roda olha o que acabou de escrever.
+  **Quem acha é a spec que relê o requisito inteiro, não só a parte nova dele.**
+- **Uma mutação não mordeu, e foi mais informativa que as cinco que morderam.** Trocar a leitura
+  da R8.6 pela janela por leitura por **tamanho** não reprovou nada — porque depois da S94 as
+  duas são equivalentes. Eu havia escrito, antes de medir, que a `CA-S94-1` pegaria esse caso;
+  não pega. A afirmação foi corrigida no `rules.md` e na spec. A regra 5 do acordo existe para
+  isto: **a mutação que passa é a que mostra o que a suíte não está protegendo**, e vale mais
+  quando contradiz o que você acabou de escrever.
+
+> **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
+> escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando
+> alguma fatia a torna consequente: o `id` derivado na H4→H6, a ponta do Ás na H4→H8. O
+> candidato seguinte é a **ordem em que `movimentosValidos` devolve os comandos** — ninguém a
+> decidiu, e a interface já a usa para ordenar botões.
