@@ -126,30 +126,40 @@ git log --oneline | head -20
 ```
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H4** estão fechadas e implementadas.
+**H5** estão fechadas e implementadas.
 
-O **Marco 0 e o Marco I estão fechados**, e a **H4 também**: existe um jogo em que dá para
-baixar sequências. O humano compra, baixa quantos jogos quiser, descarta, e a IA joga sozinha.
+O **Marco 0 e o Marco I estão fechados**, e a **H4 e a H5 também**: existe um jogo em que dá
+para baixar sequências, com e sem curinga. O humano compra, baixa quantos jogos quiser,
+descarta, e a IA joga sozinha. Os **sete invariantes de `Jogo`** do `domain.md` §4 estão
+fechados — a H4 alcançava cinco, a H5 trouxe `I4` e `I7`.
 
-> **Correção de redação.** A versão anterior desta seção dizia "os 20 critérios da §6" da spec
-> 0004. São **24** — 8 herdados do `acceptance-tests.md`, 12 novos, 1 de desempenho e 3 de
-> interface. O número saiu de contagem à mão, que é exatamente o que a regra 4 do global proíbe.
+**O Marco II segue aberto:** faltam a **H6** (aumentar) e a **H7** (pegar o lixo). Nenhuma tem
+spec.
 
-**O trabalho em curso é a H5** (curinga), que ainda **não tem spec**. Ela alarga `Posicao` com a
-variante `Curinga` e acrescenta os invariantes **I4** e **I7** — os dois que a H4 deixou de
-fora de propósito, e é por isso que `criarJogo` hoje valida cinco, não sete.
+Cinco coisas que valem saber antes de mexer no que estas duas fatias deixaram:
 
-Três coisas da H4 que valem saber antes de mexer no que ela deixou:
-
-- A **S45** é a única decisão do projeto que **restringe o jogo além das regras**: `baixar` que
-  esvaziaria a mão não é oferecido, porque a batida é a H10. É temporária e o gatilho continua
-  aberto. Ela vive **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é
-  seguro apenas enquanto todo chamador escolher da lista.
+- A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
+  determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
+  escolher é do jogador. Por isso `baixar` carrega o papel de cada carta e `criarJogo` **confere
+  em vez de inferir** (S52). Qualquer comando novo que mexa em posições herda essa obrigação.
+- A **S55** é a única decisão do projeto **deduzida e não pesquisada**: `I5` lê o valor
+  *representado*, o que permite as duas cópias do `2♥` no mesmo jogo, uma natural e uma curinga.
+  A `CA-S55-1` é o único lugar onde essa dedução está presa em teste.
+- A **S45** é a única decisão que **restringe o jogo além das regras**: `baixar` que esvaziaria
+  a mão não é oferecido, porque a batida é a H10. É temporária e o gatilho continua aberto. Ela
+  vive **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas
+  enquanto todo chamador escolher da lista.
 - A **S41** é a decisão mais fácil de quebrar sem perceber: a ordem é uma **linha de 14 casas**,
-  não um anel. Duas mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
-- O **construtor validado da C4** nasceu em `src/engine/testing/construtor.ts` e é a forma de
+  não um anel. Mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
+- O **construtor validado da C4** vive em `src/engine/testing/construtor.ts` e é a forma de
   montar estado específico nos testes. `ui/`, `ia/` e `estado/` não podem importá-lo, e o
-  `verificar-fronteiras.py` prova isso a cada execução.
+  `verificar-fronteiras.py` prova isso a cada execução. Use **`outrasCartas`** para a mão do
+  adversário: escrevê-la à mão colidiu com fixture três vezes na H5.
+
+> **Duas correções de contagem, e as duas do mesmo tipo.** Esta seção já disse "os 20 critérios"
+> da spec 0004 quando são **24**, e o rascunho da spec 0005 disse "onze propostas" quando eram
+> **12**. As duas saíram de contagem à mão. Hoje os números daqui vêm de script: a 0004 tem 24
+> critérios e a 0005 tem 19, e é assim que devem nascer.
 
 **As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
 hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),
@@ -199,8 +209,10 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido na H2, na H3 e na H4:** sete commits de loop, **zero retrabalho**. Dois modos de falha
-apareceram, e ambos valem vigiar:
+**Medido em quatro fatias — H2, H3, H4 e H5: zero retrabalho.** Nenhum commit do loop precisou
+ser refeito. (A redação anterior contava commits; o número não é verificável por script e
+envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
+ambos valem vigiar:
 
 - **Critério negativo passa de graça.** "Não deve existir X" é trivialmente verdade num
   componente vazio. Aconteceu duas vezes — `CA-S1-1` e `CA-S27-1`. Todo critério negativo
@@ -218,3 +230,16 @@ apareceram, e ambos valem vigiar:
 - **O `tsc` pegou o que o Vitest não pega.** Trocar `Jogo = never` por um tipo real quebrou
   dois auxiliares de conservação que espalhavam `jogos` como se fossem cartas. A suíte ficou
   **verde**; só `npm run tipos` viu. Vale lembrar disto ao rodar só `vitest` durante o loop.
+
+**A H5 acrescentou uma terceira rede, e ela é a única que nenhuma ferramenta substitui:**
+
+- **A verificação no navegador achou o que teste nenhum pegaria.** Duas vezes seguidas, o que
+  faltava era a metade **observável** da U5: na H4, o jogo baixado não aparecia na mesa; na H5,
+  o jogo com curinga aparecia **idêntico** ao mesmo conjunto de cartas sem curinga — o jogador
+  escolhia entre duas leituras e não via qual saiu. Nos dois casos a suíte estava verde e os
+  critérios, cumpridos. Rodar o app faz parte do passo 6, não é opcional.
+- **O passo 3 foi pulado de novo, na H5.** Os 26 critérios de domínio passaram na primeira
+  execução, porque o código veio antes. O conserto foram quatro mutações propositais — tirar
+  `I4`, tirar `I7`, tirar a guarda da S54, desligar a S55 —, que reprovaram dez testes. Funciona,
+  mas é conserto: **duas fatias seguidas** caíram nisso, e a tentação é sempre a mesma — com o
+  critério pronto, escrever o código parece o passo óbvio.

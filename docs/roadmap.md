@@ -160,7 +160,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 |---|---|---|
 | Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45, S58 |
 | Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | **Ao escrever a H8** — na H5 eles verificam a posição; `LIMPA`/`SUJA` só existe com a R8 | S61 |
-| Custo de enumerar `baixar` **com curinga** | **Ao terminar a H5** — virou a `CA-S59-1`; os 99 da H4 são da enumeração sem curinga | S59 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
@@ -186,6 +185,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Critério de ponta a ponta | Spec da H3, 2026-08-01 | Virou a **`CA-S37-1`**, primeiro teste do projeto a exercitar as quatro camadas numa asserção só |
 | `strictTypeChecked` do typescript-eslint | Fim do Marco I, 2026-08-01 | **Mantido.** Reprovou seis vezes na H2 e na H3, e **nenhuma foi ruído**: `no-unnecessary-condition` num `switch` de uma alternativa, `no-base-to-string` num objeto em template, `restrict-template-expressions`, `react-refresh` em dois arquivos e dois `no-unused-vars`. O atrito medido é baixo e a regra está pagando |
 | Custo de enumerar todos os `baixar` | H4, 2026-08-02 | **Medido: 121 comandos, dos quais 99 `baixar`, em 0,12 ms.** Nenhuma otimização é necessária, e a T6 se sustenta |
+| Custo de enumerar `baixar` **com curinga** | H5, 2026-08-02 | **Medido: 280 comandos, dos quais 258 `baixar` (218 com curinga), em 0,31 ms.** Continua sem precisar otimizar, e bem abaixo do limiar de ~2000 que reabriria a consulta `validar` |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro
 > ordens de grandeza. A mão do pior caso tem 22 cartas, com um naipe ocupando as catorze casas
@@ -197,6 +197,17 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 > pressupunha.** Sequência não é subconjunto arbitrário, é trecho contíguo de uma linha — e
 > quem enumera a estrutura certa não precisa otimizar. O limiar de 50 ms da `CA-S46-1` sobrou
 > por um fator de 400, então ele fica no lugar como rede, não como meta.
+>
+> **Correção da H5:** aquela mão de 22 cartas contém `2♥` e `2♦`, e com o curinga da H5 eles
+> passaram a gerar comandos. A `CA-S46-1` mede hoje **111 `baixar`, não 99**. O 99 continua
+> correto como o que a H4 media, e é registrado aqui porque um número de documento vivo que
+> deixa de reproduzir é pior que número nenhum.
+>
+> **E a H5 mostrou que o pior caso não é esta mão.** O que explode a enumeração não é um naipe
+> cheio — janela cheia não tem lacuna, logo não admite curinga. É um naipe **quase cheio, com
+> um buraco só**: aí quase toda janela tem exatamente uma lacuna, e cada lacuna rende um
+> comando por naipe de `2` disponível. Foi assim que se chegou aos 280. O formato foi achado
+> por sondagem entre cinco mãos, e é o maior entre elas — não um máximo provado.
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
 > próprio modelo**. A R6.5 é a regra mais difícil do Buraco Aberto. Se o `domain.md` M2 acertou,
