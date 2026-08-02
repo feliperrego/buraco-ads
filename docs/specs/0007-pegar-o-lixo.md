@@ -1,11 +1,11 @@
 # Spec 0007 — Pegar o lixo
 
-> Status: **rascunho** — 10 propostas aguardando confirmação
+> Status: **confirmado** — 10 decisões, nenhuma pendência
 > História: **H7** — "Pego o lixo inteiro em vez de comprar do monte"
 > Fecha: R4.1, R4.2, R4.4, R4.5, RF3.1
 > Última atualização: 2026-08-02
 
-Pendências a partir de **`S75`**, continuando a série global.
+Decisões a partir de **`S75`**, continuando a série global.
 
 ---
 
@@ -31,7 +31,7 @@ painel num botão, que faria a lista sumir e quebraria uma regra já cumprida. �
 | Categoria da canastra (R8) | H8 |
 | Pegar morto e bater (R9, R10) | H10 |
 
-- `[P]` **S75** — A R4.6–R4.8 continuam fora, e a H7 **estreita** o buraco que
+- `[D]` **S75** — A R4.6–R4.8 continuam fora, e a H7 **estreita** o buraco que
   elas deixam em vez de abri-lo. Vale nomear o estado exato, porque ele é fácil de confundir
   com um defeito novo:
 
@@ -56,7 +56,7 @@ painel num botão, que faria a lista sumir e quebraria uma regra já cumprida. �
 
 ### 2.1 A forma, e o que a ausência de campos decide
 
-- `[P]` **S76** — O comando não tem carga:
+- `[D]` **S76** — O comando não tem carga:
 
 ```ts
 { tipo: 'pegarLixo' }
@@ -88,7 +88,7 @@ acrescenta doze, trinta ou sessenta cartas de uma vez, e a ordem delas é observ
 | **B** | `[...mao, ...lixo.reverse()]` — ordem de descarte | Reproduz a ordem cronológica em que as cartas caíram | Inverte, e a S23 disse que a engine não reordena |
 | **C** | `[...lixo, ...mao]` — as novas na frente | Destaca o que acabou de chegar | Move a mão inteira, e a posição das cartas antigas muda sem motivo |
 
-- `[P]` **S77** — **Alternativa A.** A pilha entra no fim da mão, na ordem
+- `[D]` **S77** — **Alternativa A.** A pilha entra no fim da mão, na ordem
   em que está no lixo.
 
 > Não é decisão de regra: a M1 diz que as regras comparam só naipe e valor, e a S25 identifica
@@ -105,7 +105,7 @@ A R4.1 diz que o jogador escolhe **uma** das duas opções, exclusivamente. Não
 escrever: as duas partem da fase `Compra` e as duas levam a `Acao`, e a `Acao` não tem aresta
 de volta para nenhuma delas.
 
-- `[P]` **S78** — A exclusividade da R4.1 é a **aresta ausente**, como a R3.2
+- `[D]` **S78** — A exclusividade da R4.1 é a **aresta ausente**, como a R3.2
   na H2, e é verificada pelo mesmo formato de par: primeiro que `pegarLixo` aparece na
   `Compra`, depois que ele **não** aparece na `Acao` nem depois de já ter comprado.
 
@@ -116,7 +116,7 @@ de volta para nenhuma delas.
 
 ### 2.4 O lixo vazio
 
-- `[P]` **S79** — A R4.5 é `visao.lixo.length > 0`, espelho exato do
+- `[D]` **S79** — A R4.5 é `visao.lixo.length > 0`, espelho exato do
   `visao.cartasNoMonte > 0` que a H2 escreveu. A ausência do comando **é** a regra, e não uma
   recusa com mensagem (RF2.1).
 
@@ -147,7 +147,7 @@ janelas que uma de 14: as casas são catorze, e uma janela cheia não admite cur
 propriedade que derrubou o `2^22` na H4, vista do outro lado — lá ela explicou por que a
 enumeração era pequena, aqui ela explica por que **para de crescer**.
 
-- `[P]` **S80** — A H7 mede pela quarta vez, com a **mão saturada**: a mão
+- `[D]` **S80** — A H7 mede pela quarta vez, com a **mão saturada**: a mão
   que ocupa todas as casas de todos os naipes que o baralho permite, obtida por um `pegarLixo`
   grande. O teto de 50 ms continua, e o limiar de ~2000 comandos também — mas desta vez a
   expectativa é chegar **perto**, e o critério registra o número contra os 280 da H5.
@@ -168,7 +168,7 @@ O 22 está certo como mão máxima e **errado como consequência de pegar o lixo
 distribuição mais onze de um morto (R9.1), e não tem relação com o lixo. Um lixo grande passa
 disso com folga.
 
-- `[P]` **S81** — A frase é corrigida na `screens.md`, com nota de que o
+- `[D]` **S81** — A frase é corrigida na `screens.md`, com nota de que o
   número original vinha do morto e que o teto real é o do §3.1 acima. O documento de origem é
   corrigido, não só esta spec.
 
@@ -187,7 +187,7 @@ A partir da H7 ela pega o lixo em cerca de **metade** das vezes em que ele estiv
 porque na `Compra` a lista terá dois comandos e a escolha é uniforme. A mão dela vai inchar, e
 os turnos seguintes vão enumerar sobre uma mão grande.
 
-- `[P]` **S82** — Isso **não** é tratado como defeito e **não** vira
+- `[D]` **S82** — Isso **não** é tratado como defeito e **não** vira
   heurística aqui. É a linha de base da E7 se tornando mais interessante: uma IA que acumula
   lixo e não desce nada é exatamente o adversário fraco contra o qual a H15 precisa medir
   ganho. O que a H7 acrescenta é um critério de **custo**, não de qualidade: o turno da IA com
@@ -207,7 +207,7 @@ A S48 casa botão com **seleção de cartas da mão**, e `pegarLixo` não tem se
 direto, como `comprarDoMonte`. A [screens.md](../screens.md) §4 já previu isso — *"toca monte
 ou lixo (comando direto)"*.
 
-- `[P]` **S83** — O painel do lixo ganha um botão quando `pegarLixo` está na
+- `[D]` **S83** — O painel do lixo ganha um botão quando `pegarLixo` está na
   lista, **ao lado da listagem, nunca no lugar dela**. As cartas continuam todas renderizadas,
   com ou sem botão (R4.3, RF3.1).
 
@@ -223,7 +223,7 @@ aqui ela **já existe** e a fatia pode destruí-la:
 > A terceira linha é o erro provável, porque o painel do monte já está escrito assim e copiá-lo
 > é o caminho de menor esforço. A `CA-S83-3` existe para pegar exatamente isso.
 
-- `[P]` **S84** — O rótulo diz o tamanho: *"Pegar o lixo — 12 cartas"*. É a
+- `[D]` **S84** — O rótulo diz o tamanho: *"Pegar o lixo — 12 cartas"*. É a
   informação que decide a jogada, e ela já está na tela; repeti-la no botão é o que permite
   decidir sem contar.
 
@@ -269,11 +269,11 @@ H14, e `CA-R4.3-1` e `CA-R4.3-2`, que já estão verdes desde a H2. Os desta fat
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-Dez propostas. Responda no formato *"todas ok exceto S77 e S82"*.
+Dez, confirmadas em bloco em 2026-08-02.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S75** | Escopo | R4.6–R4.8 ficam na H14; a H7 **estreita** o travamento e o gatilho é registrado |
 | **S76** | API | `{ tipo: 'pegarLixo' }` sem carga — R4.2 e R4.4 são **ausências de campo** |
@@ -286,22 +286,20 @@ Dez propostas. Responda no formato *"todas ok exceto S77 e S82"*.
 | **S83** | Interface | Botão **ao lado** da listagem, nunca no lugar dela |
 | **S84** | Interface | O rótulo diz o tamanho: *"Pegar o lixo — 12 cartas"* |
 
-### Onde eu erraria, se errasse
+### O ponto cego que eu sinalizei, e o que a confirmação decidiu
 
-**Calibragem:** 74 decisões na série, 5 quedas, **todas** no `rules.md` — e a H6 fechou 13 de
-13. Esta spec é de novo quase toda software, mas ela tem um ponto cego que as anteriores não
-tinham, e é o que eu pediria para você olhar primeiro:
+**Calibragem: 10 de 10 aceitas.** A série vai a **84 decisões com 5 quedas**, todas ainda no
+`rules.md`, e são duas fatias seguidas sem queda — 13 de 13 na H6, 10 de 10 aqui.
 
-- **Não é uma proposta minha, é uma ausência no `rules.md`.** A R4.4 diz que não há condição
-  ligada à **carta do topo**. Ela não diz nada sobre outras condições que algumas mesas usam:
-  não pegar o lixo no **primeiro turno** da rodada, ou só pegar depois de ter **jogo na mesa**.
-  Se qualquer uma dessas vale na sua mesa, ela não está no documento normativo, e esta fatia
-  vai construir o comportamento errado com teste verde documentando o erro. É o modo de falha
-  que a RD9 nomeia.
-- **S77** decide o que o jogador vê quando trinta cartas chegam na mão de uma vez. Se na sua
-  mesa a pilha recolhida se organiza de outro jeito, é aqui que se diz.
+O que eu havia levantado **não era uma proposta**, e é o registro mais importante desta seção:
 
-Das de software, a **S80** é a que pode virar trabalho de verdade: é a primeira medição do
-projeto em que eu **não** posso prometer o resultado antes de rodar. Se ela passar de 2000, a
-consulta `validar` da `screens.md` §3.1 reabre — e isso é decisão de arquitetura, não ajuste,
-porque a T6 é a decisão mais importante daquele documento.
+- **A ausência no `rules.md`.** A R4.4 nega a condição ligada à **carta do topo**, e nada diz
+  sobre as outras que algumas mesas usam — não pegar o lixo no primeiro turno, ou só pegar
+  depois de ter jogo na mesa. A confirmação em bloco resolve isso pela negativa: **não existe
+  nenhuma condição para pegar o lixo**, e é a R4.4 lida na sua extensão máxima. Se um dia
+  aparecer uma, ela é regra nova no `rules.md`, e o gatilho é a `CA-R4.4-1` reprovando.
+- **S77** — a ordem em que trinta cartas chegam na mão. **Confirmada** na Alternativa A.
+
+Das de software, a **S80** é a única cujo resultado eu não podia prometer antes de rodar. O
+número medido vai para o [roadmap.md](../roadmap.md) §3, junto com os das outras três medições,
+e é lá que se lê se a conta estrutural do §3.1 se sustentou.
