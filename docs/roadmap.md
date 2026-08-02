@@ -158,7 +158,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Custo de enumerar todos os `baixar` | **Ao terminar H4** — virou a `CA-S46-1`; falta o número medido com 22 cartas | T7, S46 |
 | Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
@@ -184,6 +183,18 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 |---|---|---|
 | Critério de ponta a ponta | Spec da H3, 2026-08-01 | Virou a **`CA-S37-1`**, primeiro teste do projeto a exercitar as quatro camadas numa asserção só |
 | `strictTypeChecked` do typescript-eslint | Fim do Marco I, 2026-08-01 | **Mantido.** Reprovou seis vezes na H2 e na H3, e **nenhuma foi ruído**: `no-unnecessary-condition` num `switch` de uma alternativa, `no-base-to-string` num objeto em template, `restrict-template-expressions`, `react-refresh` em dois arquivos e dois `no-unused-vars`. O atrito medido é baixo e a regra está pagando |
+| Custo de enumerar todos os `baixar` | H4, 2026-08-02 | **Medido: 121 comandos, dos quais 99 `baixar`, em 0,12 ms.** Nenhuma otimização é necessária, e a T6 se sustenta |
+
+> O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro
+> ordens de grandeza. A mão do pior caso tem 22 cartas, com um naipe ocupando as catorze casas
+> e outro ocupando oito. Por subconjuntos seriam `2^22` — mais de quatro milhões. Por corridas
+> de casas (S46), uma corrida de `n` casas rende `(n-1)(n-2)/2` trechos de tamanho ≥ 3: 78 do
+> primeiro naipe, 21 do segundo, 99 ao todo.
+>
+> **A conta que assustou a Onda 2 estava certa; o que estava errado era a estrutura que ela
+> pressupunha.** Sequência não é subconjunto arbitrário, é trecho contíguo de uma linha — e
+> quem enumera a estrutura certa não precisa otimizar. O limiar de 50 ms da `CA-S46-1` sobrou
+> por um fator de 400, então ele fica no lugar como rede, não como meta.
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
 > próprio modelo**. A R6.5 é a regra mais difícil do Buraco Aberto. Se o `domain.md` M2 acertou,
