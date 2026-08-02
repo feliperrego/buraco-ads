@@ -287,11 +287,17 @@ function regularizacoes(mao: readonly Carta[], meusJogos: readonly Jogo[]): read
       ),
     )
 
-    for (const novoInicio of [0, CASA_DO_DOIS]) {
+    // A única escolha do jogador na ponta de baixo é **levar o Ás junto ou não**.
+    // A casa 1 nunca entra aqui: é para lá que o curinga vai, e a casa 0 é a
+    // única acima dela. Escrever isto como um intervalo `[novoInicio, …]` era
+    // dizer a mesma coisa duas vezes — e uma mutação proposital mostrou que
+    // trocar o `novoInicio` não mudava nada, porque o filtro já resolvia.
+    for (const comAs of [false, true]) {
       for (let novoFim = fim; novoFim < CASAS; novoFim++) {
-        const casasNovas = casasEntre(novoInicio, novoFim).filter(
-          (casa) => casa !== CASA_DO_DOIS && !ocupadas.has(casa),
-        )
+        const casasNovas = [
+          ...(comAs ? [0] : []),
+          ...casasEntre(CASA_DO_DOIS + 1, novoFim).filter((casa) => !ocupadas.has(casa)),
+        ]
 
         const resolvida = resolverCasas(casasNovas, mapa)
 
