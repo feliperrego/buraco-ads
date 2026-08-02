@@ -414,9 +414,7 @@ function comJogosNaMesa(
   meus: readonly (readonly Posicao[])[],
   doAdversario: readonly (readonly Posicao[])[] = [],
 ): Partida {
-  const naMesa = [...meus, ...doAdversario].flatMap((jogo) =>
-    jogo.map((posicao) => posicao.carta),
-  )
+  const naMesa = [...meus, ...doAdversario].flatMap((jogo) => jogo.map((posicao) => posicao.carta))
 
   return construirPartida({
     maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
@@ -501,10 +499,7 @@ describe('R6.3 — sete cartas não fecham o jogo, catorze fecham', () => {
   })
 
   it('CA-R6.3-2 — um jogo de catorze posições recusa a décima quinta (I1)', () => {
-    const antes = comJogosNaMesa(
-      [carta('COPAS', '5', 2), ...cartas('K♦ 9♣')],
-      [posicoes(QUATORZE)],
-    )
+    const antes = comJogosNaMesa([carta('COPAS', '5', 2), ...cartas('K♦ 9♣')], [posicoes(QUATORZE)])
 
     const resultado = aplicar(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-5-2' }]))
 

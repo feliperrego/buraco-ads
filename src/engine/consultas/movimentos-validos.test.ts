@@ -355,9 +355,7 @@ function emAcaoComJogos(
   meus: readonly (readonly Posicao[])[],
   doAdversario: readonly (readonly Posicao[])[] = [],
 ): Partida {
-  const naMesa = [...meus, ...doAdversario].flatMap((jogo) =>
-    jogo.map((posicao) => posicao.carta),
-  )
+  const naMesa = [...meus, ...doAdversario].flatMap((jogo) => jogo.map((posicao) => posicao.carta))
 
   return construirPartida({
     maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
@@ -381,7 +379,9 @@ function cartasDoAumentar(comando: Comando | undefined): readonly string[] {
 }
 
 /** O papel de curinga declarado num comando, se houver. */
-function curingaDo(comando: Comando): { readonly carta: string; readonly representa: string } | null {
+function curingaDo(
+  comando: Comando,
+): { readonly carta: string; readonly representa: string } | null {
   if (comando.tipo !== 'aumentar' && comando.tipo !== 'baixar') {
     return null
   }
@@ -418,10 +418,10 @@ describe('R6.2 — a posse é estrutural', () => {
 
 describe('R6.3 — o jogo de catorze não cresce', () => {
   it('CA-R6.3-2 — nenhum aumentar é oferecido para o jogo de catorze posições', () => {
-    const partida = emAcaoComJogos([carta('COPAS', '5', 2), ...cartas('6♦ K♠')], [
-      posicoes(QUATORZE),
-      posicoes('3♦ 4♦ 5♦'),
-    ])
+    const partida = emAcaoComJogos(
+      [carta('COPAS', '5', 2), ...cartas('6♦ K♠')],
+      [posicoes(QUATORZE), posicoes('3♦ 4♦ 5♦')],
+    )
     const deCatorze = partida.jogadores[0].jogos[0]?.id
     const aumentares = aumentaresDe(partida)
 

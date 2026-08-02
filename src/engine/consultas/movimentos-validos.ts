@@ -212,10 +212,7 @@ function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly
           continue
         }
 
-        const casasNovas = [
-          ...casasEntre(novoInicio, inicio - 1),
-          ...casasEntre(fim + 1, novoFim),
-        ]
+        const casasNovas = [...casasEntre(novoInicio, inicio - 1), ...casasEntre(fim + 1, novoFim)]
 
         for (const cartas of leiturasDe(casasNovas, mapa, mao, admiteCuringa)) {
           adicionar(comandos, mao, { tipo: 'aumentar', jogo: jogo.id, cartas })

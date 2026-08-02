@@ -441,8 +441,8 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
     // seriam "Aumentar" e "Aumentar", e o jogador escolheria no escuro — a mesma
     // falha que a S60 corrigiu na H5 para as duas leituras do mesmo conjunto.
     expect(confirmacoes).toHaveLength(2)
-    expect(confirmacoes.some((texto) => /de a a 3 de copas/i.test(texto ?? ''))).toBe(true)
-    expect(confirmacoes.some((texto) => /de 5 a 7 de copas/i.test(texto ?? ''))).toBe(true)
+    expect(confirmacoes.some((texto) => /de a a 3 de copas/i.test(texto))).toBe(true)
+    expect(confirmacoes.some((texto) => /de 5 a 7 de copas/i.test(texto))).toBe(true)
   })
 
   it('CA-S74-2 — o botão do jogo alto envia o comando daquele jogo', () => {

@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { valorDa } from '../../engine/index.ts'
-import type { Carta, CartaBaixada, Comando, Jogo, Posicao, VisaoDoJogador } from '../../engine/index.ts'
+import type {
+  Carta,
+  CartaBaixada,
+  Comando,
+  Jogo,
+  Posicao,
+  VisaoDoJogador,
+} from '../../engine/index.ts'
 
 /**
  * Tela de partida (screens.md §1, layout da Opção B em T2). Sem estilo — o
@@ -102,7 +109,8 @@ function rotuloDoAumentar(
   meusJogos: readonly Jogo[],
 ): string {
   const jogo = meusJogos.find((umJogo) => umJogo.id === alvo)
-  const pontas = jogo === undefined ? [] : [jogo.posicoes[0], jogo.posicoes[jogo.posicoes.length - 1]]
+  const pontas =
+    jogo === undefined ? [] : [jogo.posicoes[0], jogo.posicoes[jogo.posicoes.length - 1]]
   const [primeira, ultima] = pontas
 
   const base =
