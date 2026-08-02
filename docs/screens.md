@@ -101,9 +101,9 @@ O ponto crítico é o que acontece em `Selecionando`:
 
 ### 3.1 Um problema que T6 cria
 
-Enumerar **todos** os comandos `baixar` válidos pode dar muitas combinações: com 22 cartas na
-mão depois de pegar o lixo, cada naipe contribui com todas as sub-sequências de 3 ou mais
-cartas, multiplicadas pelas posições possíveis do curinga.
+Enumerar **todos** os comandos `baixar` válidos pode dar muitas combinações: com a mão inchada
+depois de pegar o lixo, cada naipe contribui com todas as sub-sequências de 3 ou mais cartas,
+multiplicadas pelas posições possíveis do curinga.
 
 - `[D]` Começamos com **enumeração completa** e **medimos**. Se o custo for alto,
   acrescentamos uma consulta `validar(comando)` usada só pela interface — mas a interface
@@ -111,6 +111,16 @@ cartas, multiplicadas pelas posições possíveis do curinga.
 
 > A ordem importa: medir antes de otimizar. E o limite é claro — qualquer solução que faça a
 > interface decidir o que é válido está fora, por mais rápida que seja.
+
+> **Corrigido em 2026-08-02, ao escrever a [spec 0007](specs/0007-pegar-o-lixo.md) (S81).**
+> Este parágrafo dizia *"com 22 cartas na mão depois de pegar o lixo"*. O 22 está certo como
+> mão máxima **da distribuição mais um morto** (R9.1) e não tem relação com o lixo: pegá-lo
+> passa disso com folga, e a H7 mediu uma mão de **71** cartas.
+>
+> O número importava aqui mais que em qualquer outro lugar, porque é neste parágrafo que se
+> decide **se** a consulta `validar` é necessária. As quatro medições estão no
+> [roadmap.md](roadmap.md) §3, e a última — 1738 comandos, o pior caso construível — é a que
+> mantém a decisão de pé.
 
 ---
 

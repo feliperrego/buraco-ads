@@ -152,6 +152,16 @@ enumeração era pequena, aqui ela explica por que **para de crescer**.
   grande. O teto de 50 ms continua, e o limiar de ~2000 comandos também — mas desta vez a
   expectativa é chegar **perto**, e o critério registra o número contra os 280 da H5.
 
+> **A medição mostrou que este fixture está errado, e a `CA-S80-1` foi corrigida no passo 6.**
+> A mão saturada de **71** cartas rende **287** comandos — menos que os 280 da H5 com 22
+> cartas. Saturar a mão **desliga** o multiplicador da S56, porque janela cheia não admite
+> curinga: é a lição da H5 vista pelo avesso.
+>
+> O pior caso é um naipe quase cheio com **um buraco só**, nos quatro naipes ao mesmo tempo —
+> 52 cartas e seis jogos na mesa, **1738** comandos. A `CA-S80-1` passou a medir os dois, e o
+> primeiro serve de contraste: ele é a prova de que a intuição "mão maior, enumeração maior"
+> é falsa. O número está no [roadmap.md](../roadmap.md) §3.
+
 > A conta acima diz que não vamos passar de 2000. A invariante 4 do acordo diz que isso não
 > basta: **verifique, não presuma.** E há um caminho pelo qual a conta erra — se a soma de
 > `descartar` (uma mão grande), `baixar` (perto do teto) e `aumentar` (vários jogos na mesa)

@@ -171,6 +171,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
 | `eventos[]` no retorno de `aplicar` | **Ao escrever a H12** — decidir entre acrescentá-los ou derivar a apuração do estado | M8, S21 |
+| Partida travada com monte **e** lixo vazios | **Ao implementar a H14** — `movimentosValidos` devolve `[]` e a mesa fica inerte sem explicar nada. É a R4.8, e o estado existe desde a H2; a H7 o estreitou, porque com o monte vazio e lixo cheio a partida agora continua | S75, R4.8 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
   arquitetura, atualização do documento de origem caso contrário. Nunca uma mudança silenciosa.
@@ -187,6 +188,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Custo de enumerar todos os `baixar` | H4, 2026-08-02 | **Medido: 121 comandos, dos quais 99 `baixar`, em 0,12 ms.** Nenhuma otimização é necessária, e a T6 se sustenta |
 | Custo de enumerar `baixar` **com curinga** | H5, 2026-08-02 | **Medido: 280 comandos, dos quais 258 `baixar` (218 com curinga), em 0,31 ms.** Continua sem precisar otimizar, e bem abaixo do limiar de ~2000 que reabriria a consulta `validar` |
 | Custo de enumerar `aumentar`, **com jogos na mesa** | H6, 2026-08-02 | **Medido: 218 comandos, dos quais 85 `aumentar`, em 1,08 ms**, com a mão de 22 cartas da `CA-S46-1` e quatro jogos na mesa. A estimativa da spec 0006 §4.3 era de "menos de 200 por jogo"; o real ficou em **~21 por jogo**, uma ordem de grandeza abaixo |
+| Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro
 > ordens de grandeza. A mão do pior caso tem 22 cartas, com um naipe ocupando as catorze casas
@@ -217,6 +219,27 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 > que toda janela que contém a atual seria resolvível, quando a maioria delas pede **duas**
 > casas vazias e é cortada de imediato pela I4. A estimativa errou para cima, que é o lado
 > seguro — mas errou, e é por isso que a `CA-S73-1` existe.
+
+> **A H7 mediu a quarta vez, e é a única em que a resposta não era previsível.** Três coisas
+> valem guardar dela:
+>
+> **A mão maior não é o pior caso, e a spec pediu o fixture errado.** A S80 mandou medir a
+> "mão saturada", e a mão de **71** cartas obtida por um `pegarLixo` de 60 rende só **287**
+> comandos — menos que os 280 da H5 com 22 cartas. O motivo é o mesmo que a H5 já tinha
+> ensinado, aqui aparecendo pelo avesso: janela **cheia** não admite curinga, então saturar a
+> mão **desliga** o multiplicador da S56. O pior caso é um naipe quase cheio com **um buraco
+> só**, nos quatro naipes ao mesmo tempo — 52 cartas, não 71.
+>
+> **O baralho é o teto, não o algoritmo.** O máximo construído foi 1738, com seis jogos na
+> mesa. O sétimo não cabe, e quem prova isso não é um argumento: é o construtor da C4, que o
+> recusa pela **R2.3** — os dois mortos exigem 22 cartas. A conta estrutural da spec 0007 §3.1
+> se sustentou.
+>
+> **A margem encolheu, e isso é o que muda.** Nas três medições anteriores o limiar de ~2000
+> estava a um fator de 7 ou mais. Agora está a 13%. O `baixar` já bateu no próprio teto (932
+> de ~1250), então o que ainda pode crescer é o `aumentar` — e ele cresce com o número de
+> jogos na mesa. **A próxima fatia que acrescentar comando ou aumentar o número de jogos
+> precisa remedir**, e não herdar este "não precisa otimizar".
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
 > próprio modelo**. A R6.5 é a regra mais difícil do Buraco Aberto. Se o `domain.md` M2 acertou,

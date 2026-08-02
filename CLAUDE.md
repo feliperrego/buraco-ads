@@ -133,18 +133,18 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H6** estão fechadas e implementadas.
+**H7** estão fechadas e implementadas.
 
-O **Marco 0 e o Marco I estão fechados**, e a **H4, a H5 e a H6 também**: existe um jogo em que
-dá para baixar sequências, com e sem curinga, e para aumentá-las depois. O humano compra, baixa
-quantos jogos quiser, aumenta quantas vezes quiser, descarta, e a IA joga sozinha — ela também
-aumenta, porque sorteia dentro da mesma lista. Os **sete invariantes de `Jogo`** do `domain.md`
-§4 estão fechados — a H4 alcançava cinco, a H5 trouxe `I4` e `I7`, e a H6 os aplicou ao
-crescimento sem escrever nenhum deles de novo.
+**O Marco 0, o Marco I e o Marco II estão fechados.** Existe um jogo em que dá para baixar
+sequências, com e sem curinga, aumentá-las depois, e escolher entre comprar do monte e pegar o
+lixo inteiro. Os **sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4
+alcançava cinco, a H5 trouxe `I4` e `I7`, e a H6 os aplicou ao crescimento sem escrever nenhum
+deles de novo. A **fase de `Compra` também está fechada**: a H7 pôs o segundo e último comando
+dela, e dos seis do `domain.md` §6 só falta o `regularizarCuringa`, que é a H9.
 
-**O Marco II segue aberto:** falta a **H7** (pegar o lixo), e ela não tem spec.
+**O próximo é o Marco III**, e ele começa pela **H8** (categoria da canastra), que não tem spec.
 
-Seis coisas que valem saber antes de mexer no que estas três fatias deixaram:
+Sete coisas que valem saber antes de mexer no que estas quatro fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -164,6 +164,13 @@ Seis coisas que valem saber antes de mexer no que estas três fatias deixaram:
   todo chamador escolher da lista.
 - A **S41** é a decisão mais fácil de quebrar sem perceber: a ordem é uma **linha de 14 casas**,
   não um anel. Mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
+- **A margem da T7 encolheu na H7, e é o número que mais envelhece mal.** As três primeiras
+  medições ficaram a um fator de 7 ou mais do limiar de ~2000 comandos que reabriria a consulta
+  `validar` da `screens.md` §3.1. A quarta ficou a **13%**: 1738. O `baixar` já bate no próprio
+  teto (932 de ~1250), então o que ainda cresce é o `aumentar`, junto com o número de jogos na
+  mesa. **Fatia que acrescente comando ou multiplique jogos remede** — não herda este "não
+  precisa otimizar". E o pior caso **não** é a mão maior: é um naipe quase cheio com um buraco
+  só, porque janela cheia não admite curinga.
 - O **construtor validado da C4** vive em `src/engine/testing/construtor.ts` e é a forma de
   montar estado específico nos testes. `ui/`, `ia/` e `estado/` não podem importá-lo, e o
   `verificar-fronteiras.py` prova isso a cada execução. Use **`outrasCartas`** para a mão do
@@ -222,7 +229,7 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido em cinco fatias — H2, H3, H4, H5 e H6: zero retrabalho.** Nenhum commit do loop
+**Medido em seis fatias — H2, H3, H4, H5, H6 e H7: zero retrabalho.** Nenhum commit do loop
 precisou ser refeito. (A redação anterior contava commits; o número não é verificável por script
 e envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
 ambos valem vigiar:
@@ -278,3 +285,21 @@ nenhuma reprovou.** Isso é dado, não silêncio:
   do Ás trocadas, janela só para a direita. As seis reprovaram, entre um e cinco testes cada.
   A mais estreita foi a do `id`: **um** teste, e é a `CA-S63-1`. Se ela cair num refactor, a
   identidade do `Jogo` fica sem rede — vale lembrar disso na H9.
+
+**A H7 devolveu a verificação no navegador ao seu papel, e trouxe um modo de falha novo:**
+
+- **O app achou o que a suíte deixou passar, pela terceira vez em quatro fatias.** O botão dizia
+  *"Pegar o lixo — 1 cartas"*. A `CA-S84-1` conferia que o rótulo trazia **o número**, não que
+  ele fosse português — e um critério que verifica o dado sem verificar o texto é exatamente o
+  tipo que passa com a tela errada. O conserto virou `quantasCartas`, e o par positivo/negativo
+  (`'1 carta'` presente, `'1 cartas'` ausente) está preso em teste.
+- **Comando novo quebra teste antigo por acoplamento a "só existe uma opção".** Três testes da
+  H2 e da H3 reprovaram assim que a IA passou a poder pegar o lixo: eles afirmavam
+  `['comprarDoMonte', 'descartar']` quando o critério deles fala de **contagem** e de devolução
+  da vez. Não era regressão — era assertiva mais específica que o critério. O conserto foi
+  alinhar a asserção ao critério, e o sinal para reconhecer o caso é este: **o teste que quebra
+  não é sobre a fatia nova**.
+- **O `tsc` pegou de novo o que o Vitest não pega.** Uma cadeia de ternários sobre `Comando` num
+  teste presumia que "não é `descartar` nem `comprarDoMonte`" implicava ter `cartas` — e o
+  `pegarLixo` caiu ali. Virou `switch` exaustivo, que é a forma que **não compila** quando um
+  comando novo aparece. Vale preferir isso a ternário em qualquer lugar que enumere `Comando`.
