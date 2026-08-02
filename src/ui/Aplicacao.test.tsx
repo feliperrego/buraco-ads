@@ -81,7 +81,15 @@ describe('S37 — a partida continua depois do turno da IA', () => {
 
       expect(screen.getByRole('region', { name: /vez e fase/i }).textContent).toMatch(/sua vez/i)
       expect(await screen.findByRole('button', { name: /comprar do monte/i })).toBeDefined()
-      expect(screen.getByRole('region', { name: /^lixo$/i }).querySelectorAll('li')).toHaveLength(2)
+
+      // "Lixo maior" contra o começo da rodada, que é **vazio** (R2.4). O número
+      // exato passou a depender da compra que a IA sorteou na H7: comprando do
+      // monte o lixo fica com duas, pegando o lixo ele fica com uma — a dela.
+      // As duas provam a mesma coisa, que é o que este critério existe para
+      // provar: as quatro camadas fecharam o ciclo e a mesa voltou ao humano.
+      expect(
+        screen.getByRole('region', { name: /^lixo$/i }).querySelectorAll('li').length,
+      ).toBeGreaterThan(0)
     } finally {
       vi.useRealTimers()
       vi.restoreAllMocks()

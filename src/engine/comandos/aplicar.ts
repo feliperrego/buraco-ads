@@ -16,6 +16,8 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
   switch (comando.tipo) {
     case 'comprarDoMonte':
       return comprarDoMonte(partida)
+    case 'pegarLixo':
+      return pegarLixo(partida)
     case 'descartar':
       return descartar(partida, comando.carta)
     case 'baixar':
@@ -186,6 +188,46 @@ function comMao(
   mao: readonly Carta[],
 ): readonly [Jogador, Jogador] {
   return comJogador(partida, quem, { ...partida.jogadores[quem], mao })
+}
+
+/**
+ * R4.1, R4.2 — pegar o lixo é levar **todas** as cartas dele para a mão, como
+ * alternativa exclusiva a comprar do monte.
+ *
+ * S78 — a exclusividade da R4.1 não é escrita: as duas opções partem da `Compra`
+ * e as duas levam a `Acao`, e a `Acao` não tem aresta de volta para nenhuma
+ * delas. Quem já comprou cai na guarda de fase abaixo, sem que exista qualquer
+ * campo "já comprou" para manter em dia.
+ *
+ * S77 — a pilha entra no **fim** da mão, na ordem em que está no lixo. É a única
+ * das três alternativas em que a engine não toca na ordem, e prolonga a S23 sem
+ * abrir exceção. Não é decisão de regra — a M1 compara só naipe e valor —, é
+ * decisão de observabilidade: o jogador vê a mão nesta ordem.
+ */
+function pegarLixo(partida: Partida): Resultado {
+  if (partida.fase !== 'Compra') {
+    return { tipo: 'recusa', motivo: 'R4.1: pegar o lixo só acontece na fase de compra' }
+  }
+
+  if (partida.lixo.length === 0) {
+    // R4.5 — na interface isto é a ausência do comando na lista (RF2.1); aqui é
+    // a recusa que protege a engine de um chamador com bug (S22).
+    return { tipo: 'recusa', motivo: 'R4.5: lixo vazio, a única opção é comprar do monte' }
+  }
+
+  const quem = partida.jogadorDaVez
+
+  return {
+    tipo: 'sucesso',
+    partida: {
+      ...partida,
+      jogadores: comMao(partida, quem, [...partida.jogadores[quem].mao, ...partida.lixo]),
+      // R4.2 — "todas as cartas dele. Nunca uma parte." O lixo esvazia inteiro,
+      // e o comando não tem campo que permitisse outra coisa (S76).
+      lixo: [],
+      fase: 'Acao',
+    },
+  }
 }
 
 function comprarDoMonte(partida: Partida): Resultado {

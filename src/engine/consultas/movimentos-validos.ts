@@ -25,7 +25,23 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
   if (visao.fase === 'Compra') {
     // R3.2 — descartar não aparece aqui. A ausência da aresta é a regra
     // (domain.md §1.3), não uma validação.
-    return visao.cartasNoMonte > 0 ? [{ tipo: 'comprarDoMonte' }] : []
+    //
+    // R4.1 — as duas opções de compra são exclusivas entre si, e a
+    // exclusividade também é ausência de aresta (S78): as duas levam a `Acao`,
+    // e de lá não se volta. Nada aqui precisa saber que o jogador "já comprou".
+    const compras: Comando[] = []
+
+    if (visao.cartasNoMonte > 0) {
+      compras.push({ tipo: 'comprarDoMonte' })
+    }
+
+    // S79/R4.5 — espelho exato da linha acima. Com o lixo vazio, a única opção é
+    // o monte, e isso é a **ausência** do comando, não uma recusa com mensagem.
+    if (visao.lixo.length > 0) {
+      compras.push({ tipo: 'pegarLixo' })
+    }
+
+    return compras
   }
 
   // R7.1, R7.2 — qualquer carta da mão pode ser descartada, inclusive a que

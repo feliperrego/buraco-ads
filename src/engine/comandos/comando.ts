@@ -29,6 +29,17 @@ export type CartaBaixada = {
  */
 export type Comando =
   | { readonly tipo: 'comprarDoMonte' }
+  /**
+   * S76 — o comando **não tem carga**, e as duas regras que ele fecha são
+   * exatamente isso: ausências de campo.
+   *
+   * Um `quantas: number` permitiria levar parte do lixo, e a R4.2 diz "todas as
+   * cartas dele, nunca uma parte". Um `justificando: string` permitiria exigir
+   * que a carta do topo fosse usada — condição do Buraco **Fechado**, e a nossa
+   * variante é a Aberta (R4.4, ADR-0001). Quem chegar aqui vindo do Fechado vai
+   * procurar essa condição; ela não foi esquecida, ela não existe.
+   */
+  | { readonly tipo: 'pegarLixo' }
   | { readonly tipo: 'descartar'; readonly carta: string }
   | { readonly tipo: 'baixar'; readonly cartas: readonly CartaBaixada[] }
   /**

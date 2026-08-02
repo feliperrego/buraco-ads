@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TelaPartida from './TelaPartida.tsx'
 import type { Carta, Comando, VisaoDoJogador } from '../../engine/index.ts'
@@ -517,5 +517,119 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
     fireEvent.click(screen.getByRole('button', { name: /de 4 a 7 de copas/i }))
 
     expect(aoJogar).toHaveBeenCalledWith(segundo)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0007 §6.3.
+ *
+ * S83 — o risco desta fatia é o **oposto** do da H4 e da H5. Lá faltava a metade
+ * observável; aqui ela já existe desde a H1 — a R4.3 exige o lixo inteiro
+ * visível — e a implementação de menor esforço a destrói: copiar o painel do
+ * monte, que mostra só a contagem porque o monte é oculto (RF3.3).
+ */
+describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
+  const LIXO = [carta('COPAS', 'K'), carta('OUROS', '7', 2), carta('PAUS', 'A')]
+  const PEGAR: Comando = { tipo: 'pegarLixo' }
+
+  it('CA-S83-1 — com pegarLixo na lista, o painel do lixo tem um botão que o envia', () => {
+    const aoJogar = vi.fn()
+
+    render(
+      <TelaPartida
+        visao={visaoInicial({ lixo: LIXO })}
+        movimentos={[{ tipo: 'comprarDoMonte' }, PEGAR]}
+        aoJogar={aoJogar}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /lixo/i })
+    const botao = within(painel).getByRole('button', { name: /pegar o lixo/i })
+
+    fireEvent.click(botao)
+
+    expect(aoJogar).toHaveBeenCalledWith(PEGAR)
+  })
+
+  it('CA-S84-1 — o rótulo diz quantas cartas vêm junto', () => {
+    render(
+      <TelaPartida visao={visaoInicial({ lixo: LIXO })} movimentos={[PEGAR]} aoJogar={vi.fn()} />,
+    )
+
+    const painel = screen.getByRole('region', { name: /lixo/i })
+
+    // É a informação que decide a jogada, e repeti-la no botão é o que permite
+    // decidir sem contar as cartas na lista ao lado.
+    expect(within(painel).getByRole('button', { name: /pegar o lixo/i }).textContent).toContain(
+      '3 cartas',
+    )
+  })
+
+  it('CA-S84-1 — com uma carta só no lixo, o rótulo diz "1 carta"', () => {
+    // O defeito que a suíte deixou passar e o navegador achou: o rótulo dizia
+    // *"Pegar o lixo — 1 cartas"*. A asserção acima conferia que o número
+    // aparecia, não que o texto fosse português. É a terceira fatia seguida em
+    // que rodar o app encontra o que teste nenhum pegaria.
+    render(
+      <TelaPartida
+        visao={visaoInicial({ lixo: [carta('COPAS', 'K')] })}
+        movimentos={[PEGAR]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /lixo/i })
+    const rotulo = within(painel).getByRole('button', { name: /pegar o lixo/i }).textContent
+
+    expect(rotulo).toContain('1 carta')
+    expect(rotulo).not.toContain('1 cartas')
+  })
+
+  it('CA-S83-2 — sem pegarLixo na lista, o painel do lixo não tem botão', () => {
+    // O par negativo. A âncora positiva é a CA-S83-1 acima: sem ela, um painel
+    // que nunca renderiza botão passaria aqui de graça — o modo de falha que já
+    // aconteceu duas vezes neste projeto (CA-S1-1 e CA-S27-1).
+    render(<TelaPartida visao={visaoInicial({ lixo: LIXO })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /lixo/i })
+
+    expect(within(painel).queryAllByRole('button')).toHaveLength(0)
+  })
+
+  it('CA-S83-3 — com o botão presente, as cartas continuam todas listadas (R4.3)', () => {
+    render(
+      <TelaPartida visao={visaoInicial({ lixo: LIXO })} movimentos={[PEGAR]} aoJogar={vi.fn()} />,
+    )
+
+    const painel = screen.getByRole('region', { name: /lixo/i })
+
+    // O erro provável é o painel virar `Pegar o lixo — 3 cartas` e nada mais,
+    // que é exatamente o painel do monte. O monte pode: ele é oculto (RF3.3).
+    // O lixo não pode: a R4.3 é a característica central do Buraco Aberto.
+    expect(painel.textContent).toMatch(/k de copas/i)
+    expect(painel.textContent).toMatch(/7 de ouros/i)
+    expect(painel.textContent).toMatch(/a de paus/i)
+  })
+
+  it('CA-S84-1 — depois do aumento do lixo na mão, o painel indica vazio', () => {
+    // A metade observável: o estado seguinte ao clique. A tela é controlada por
+    // propriedade, então o que se verifica é que ela **sabe** desenhar o depois.
+    render(
+      <TelaPartida
+        visao={visaoInicial({
+          lixo: [],
+          mao: [...ONZE_VALORES.map((valor) => carta('COPAS', valor)), ...LIXO],
+        })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('region', { name: /lixo/i }).textContent).toMatch(/vazio/i)
+
+    const mao = screen.getByRole('region', { name: /minha mão/i })
+
+    expect(mao.textContent).toMatch(/k de copas/i)
+    expect(mao.textContent).toMatch(/a de paus/i)
   })
 })

@@ -32,6 +32,18 @@ function nomeDa(carta: Carta): string {
 }
 
 /**
+ * "1 carta" e "2 cartas".
+ *
+ * Existe porque a verificação no navegador da H7 mostrou *"Pegar o lixo — 1
+ * cartas"*, e a suíte estava verde: os testes conferiam que o rótulo trazia o
+ * número, não que ele fosse português. É a terceira vez que rodar o app acha o
+ * que teste nenhum pegaria.
+ */
+function quantasCartas(quantas: number): string {
+  return `${String(quantas)} ${quantas === 1 ? 'carta' : 'cartas'}`
+}
+
+/**
  * O nome de uma posição na mesa, com o papel visível.
  *
  * Sem isto, o jogo baixado com curinga é indistinguível do mesmo conjunto de
@@ -134,6 +146,9 @@ function jogadasDe(
   return movimentos.flatMap((comando): Jogada[] => {
     switch (comando.tipo) {
       case 'comprarDoMonte':
+      case 'pegarLixo':
+        // Comandos **diretos**: não passam pela seleção de cartas da S48, porque
+        // não têm cartas a selecionar. Cada um tem seu botão no painel próprio.
         return []
       case 'descartar':
         return [
@@ -177,6 +192,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
 
   const podeComprar = movimentos.some((comando) => comando.tipo === 'comprarDoMonte')
+  const podePegarLixo = movimentos.some((comando) => comando.tipo === 'pegarLixo')
   const jogadas = jogadasDe(movimentos, visao.mao, visao.meusJogos)
 
   // Uma seleção só vale enquanto alguma jogada ainda a contiver. Assim a troca
@@ -248,14 +264,30 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
               aoJogar({ tipo: 'comprarDoMonte' })
             }}
           >
-            Comprar do monte — {visao.cartasNoMonte} cartas
+            Comprar do monte — {quantasCartas(visao.cartasNoMonte)}
           </button>
         ) : (
-          <p>{visao.cartasNoMonte} cartas</p>
+          <p>{quantasCartas(visao.cartasNoMonte)}</p>
         )}
       </section>
 
       <section aria-label="Lixo">
+        {/* S83/S84 — o botão vem **ao lado** da listagem, nunca no lugar dela.
+            Copiar o painel do monte seria o caminho de menor esforço e o erro:
+            lá a contagem basta porque o monte é oculto (RF3.3), aqui ela
+            violaria a R4.3. O rótulo diz o tamanho porque é o que decide a
+            jogada — 3 cartas e 30 cartas são decisões diferentes. */}
+        {podePegarLixo ? (
+          <button
+            type="button"
+            onClick={() => {
+              aoJogar({ tipo: 'pegarLixo' })
+            }}
+          >
+            Pegar o lixo — {quantasCartas(visao.lixo.length)}
+          </button>
+        ) : null}
+
         {/* R4.3 — o lixo inteiro é público, e é a característica central do
             Buraco Aberto. Mostrar só a contagem violaria a regra. */}
         {visao.lixo.length === 0 ? (

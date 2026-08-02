@@ -85,18 +85,29 @@ describe('S33 — o turno da IA, um comando por vez', () => {
 
     const { comandos } = turnoDaIa(aposHumano, criarAleatorio(1))
 
-    expect(comandos.map((comando) => comando.tipo)).toEqual(['comprarDoMonte', 'descartar'])
+    // A H7 acrescentou a segunda opção de compra (R4.1), e a IA sorteia entre
+    // as duas. O que a S33 decide é a **forma** do turno — uma compra, depois um
+    // descarte —, não qual das duas compras sai. Até aqui as duas coisas eram
+    // indistinguíveis porque só existia uma compra.
+    expect(comandos).toHaveLength(2)
+    expect(['comprarDoMonte', 'pegarLixo']).toContain(comandos[0]?.tipo)
+    expect(comandos[1]?.tipo).toBe('descartar')
   })
 
   it('CA-RF5.1-3 — depois do turno da IA a vez volta ao humano, na fase de compra', () => {
     const aposHumano = turnoDoHumano(iniciarPartida(SEMENTE_HUMANO_COMECA))
-    const { partida } = turnoDaIa(aposHumano, criarAleatorio(1))
+    const { partida, comandos } = turnoDaIa(aposHumano, criarAleatorio(1))
 
     expect(partida.jogadorDaVez).toBe(0)
     expect(partida.fase).toBe('Compra')
-    // A IA comprou uma e descartou uma: a mão dela volta ao tamanho de antes.
+    // A IA levou uma carta e descartou uma: a mão dela volta ao tamanho de
+    // antes. Vale para as duas compras, porque o lixo aqui tem uma carta só.
     expect(partida.jogadores[IA].mao).toHaveLength(11)
-    expect(partida.lixo).toHaveLength(2)
+
+    // O tamanho do lixo, esse **depende** de qual compra saiu, e as duas são
+    // legais: comprando do monte ele cresce para dois, pegando o lixo ele
+    // esvazia e recebe só o descarte dela.
+    expect(partida.lixo).toHaveLength(comandos[0]?.tipo === 'pegarLixo' ? 1 : 2)
   })
 })
 

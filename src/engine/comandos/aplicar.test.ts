@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
-import type { Partida } from '../dominio/partida.ts'
+import type { FaseDoTurno, Partida } from '../dominio/partida.ts'
 import type { Jogo, Posicao } from '../dominio/jogo.ts'
 import { carta, cartas, construirPartida, outrasCartas, posicoes } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
@@ -562,6 +562,113 @@ describe('M9 — conservação após aumentar', () => {
     const copia = JSON.parse(JSON.stringify(antes)) as Partida
 
     aplicado(antes, aumentar(jogoNaMesa(antes, 0).id, [{ carta: 'COPAS-8-1' }]))
+
+    expect(antes).toEqual(copia)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0007 §6.1 — o comando `pegarLixo`.
+ *
+ * S76 — o comando não tem carga, e é assim que a R4.2 ("todas, nunca uma parte")
+ * e a R4.4 ("não há condição") deixam de poder ser esquecidas: elas são a
+ * ausência de dois campos, não duas validações.
+ */
+
+const LIXO = 'K♠ 7♦ 3♣'
+const MAO_H7 = '5♥ 6♥ 9♠ J♦ 4♣ Q♦ 8♣ 10♠ A♣ 2♦ 6♠'
+
+/** Uma partida na fase de compra, com lixo. */
+function comLixo(notacaoDaMao: string, notacaoDoLixo: string, fase: FaseDoTurno = 'Compra') {
+  const mao = cartas(notacaoDaMao)
+  const lixo = cartas(notacaoDoLixo)
+
+  return construirPartida({
+    maos: [mao, outrasCartas([...mao, ...lixo], 11)],
+    lixo,
+    jogadorDaVez: 0,
+    fase,
+  })
+}
+
+describe('R4.1 e R4.2 — pegar o lixo inteiro', () => {
+  it('CA-R4.2-1 — todas as cartas do lixo vão para a mão, e o lixo fica vazio', () => {
+    const antes = comLixo(MAO_H7, 'K♠ 7♦ 3♣ 9♥ Q♣')
+    const depois = aplicado(antes, { tipo: 'pegarLixo' })
+
+    expect(antes.jogadores[0].mao).toHaveLength(11)
+    expect(antes.lixo).toHaveLength(5)
+
+    // R4.2 — "todas as cartas dele. Nunca uma parte." Onze mais cinco.
+    expect(depois.jogadores[0].mao).toHaveLength(16)
+    expect(depois.lixo).toHaveLength(0)
+  })
+
+  it('CA-R3.1-3 — após pegarLixo, a fase é Acao e a vez não passa', () => {
+    const antes = comLixo(MAO_H7, LIXO)
+    const depois = aplicado(antes, { tipo: 'pegarLixo' })
+
+    expect(depois.fase).toBe('Acao')
+    expect(depois.jogadorDaVez).toBe(antes.jogadorDaVez)
+  })
+
+  it('CA-S77-1 — as cartas entram no fim da mão, na ordem do lixo', () => {
+    const antes = comLixo(MAO_H7, LIXO)
+    const depois = aplicado(antes, { tipo: 'pegarLixo' })
+
+    // S77, Alternativa A — a pilha entra como está, topo primeiro. É a única
+    // opção em que a engine literalmente não toca na ordem, prolongando a S23
+    // sem exceção. A escolha é observável: a mão é renderizada nesta ordem.
+    expect(depois.jogadores[0].mao.slice(0, 11)).toEqual(antes.jogadores[0].mao)
+    expect(depois.jogadores[0].mao.slice(11).map((umaCarta) => umaCarta.id)).toEqual([
+      'ESPADAS-K-1',
+      'OUROS-7-1',
+      'PAUS-3-1',
+    ])
+  })
+
+  it('CA-R4.1-5 — depois de comprar do monte, pegar o lixo é recusado', () => {
+    // A exclusividade da R4.1, e ela é a **aresta ausente** (S78): não existe
+    // checagem de "já comprou". A fase saiu de `Compra` e a `Acao` não tem
+    // aresta de volta para nenhuma das duas opções de compra.
+    const comprou = aplicado(comLixo(MAO_H7, LIXO), { tipo: 'comprarDoMonte' })
+
+    expect(comprou.fase).toBe('Acao')
+    expect(aplicar(comprou, { tipo: 'pegarLixo' }).tipo).toBe('recusa')
+  })
+
+  it('CA-R4.5-1 — pegar o lixo vazio é recusado', () => {
+    expect(aplicar(comLixo(MAO_H7, ''), { tipo: 'pegarLixo' }).tipo).toBe('recusa')
+  })
+
+  it('CA-R7.2-2 — uma carta que veio do lixo pode ser descartada no mesmo turno', () => {
+    const pegou = aplicado(comLixo(MAO_H7, LIXO), { tipo: 'pegarLixo' })
+
+    // A R7.2 nomeia este caso: "inclusive uma que tenha acabado de comprar **ou
+    // de pegar do lixo** no mesmo turno". Uma implementação "esperta" que
+    // protegesse a carta recém-adquirida quebraria a regra.
+    const depois = aplicado(pegou, { tipo: 'descartar', carta: 'ESPADAS-K-1' })
+
+    expect(depois.lixo).toHaveLength(1)
+    expect(depois.lixo[0]?.id).toBe('ESPADAS-K-1')
+    expect(depois.jogadores[0].mao).toHaveLength(13)
+  })
+})
+
+describe('M9 — conservação após pegar o lixo', () => {
+  it('CA-M9-10 — após pegarLixo, as 104 cartas se conservam sem id repetido', () => {
+    const depois = aplicado(comLixo(MAO_H7, LIXO), { tipo: 'pegarLixo' })
+    const ids = todasAsCartas(depois).map((umaCarta) => umaCarta.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+
+  it('CA-M9-10 — pegarLixo não muta a partida de entrada', () => {
+    const antes = comLixo(MAO_H7, LIXO)
+    const copia = JSON.parse(JSON.stringify(antes)) as Partida
+
+    aplicado(antes, { tipo: 'pegarLixo' })
 
     expect(antes).toEqual(copia)
   })

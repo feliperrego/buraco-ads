@@ -6,6 +6,8 @@ import type { Posicao } from '../dominio/jogo.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { JogadorId, Partida } from '../dominio/partida.ts'
 import {
+  NAIPES,
+  VALORES,
   carta,
   cartas,
   construirPartida,
@@ -365,6 +367,11 @@ function emAcaoComJogos(
   })
 }
 
+/** Um jogo de posições naturais, para montar mesas nos testes de custo. */
+function naturaisDe(naipe: Naipe, valores: readonly Valor[], copia: 1 | 2 = 1): readonly Posicao[] {
+  return valores.map((valor) => ({ tipo: 'Natural', carta: carta(naipe, valor, copia) }))
+}
+
 function aumentaresDe(partida: Partida): readonly Comando[] {
   return movimentosValidos(visaoDaVez(partida)).filter((comando) => comando.tipo === 'aumentar')
 }
@@ -434,6 +441,27 @@ describe('R6.3 — o jogo de catorze não cresce', () => {
   })
 })
 
+/**
+ * Toda carta que um comando cita, seja qual for o comando.
+ *
+ * O `switch` é exaustivo de propósito: um comando novo não compila até alguém
+ * dizer quais cartas ele cita. A primeira versão disto era uma cadeia de
+ * ternários, e a H7 a quebrou — `pegarLixo` caiu no ramo final, que presumia um
+ * campo `cartas`. Foi o `tsc` que viu, não o Vitest.
+ */
+function cartasCitadasPor(comando: Comando): readonly string[] {
+  switch (comando.tipo) {
+    case 'comprarDoMonte':
+    case 'pegarLixo':
+      return []
+    case 'descartar':
+      return [comando.carta]
+    case 'baixar':
+    case 'aumentar':
+      return comando.cartas.map((baixada) => baixada.carta)
+  }
+}
+
 describe('R6.4 — nenhum comando move carta que já está na mesa', () => {
   it('CA-R6.4-2 — todo comando oferecido cita apenas cartas da mão', () => {
     const partida = emAcaoComJogos(cartas('4♥ 8♥ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥')])
@@ -446,14 +474,7 @@ describe('R6.4 — nenhum comando move carta que já está na mesa', () => {
     expect(aumentaresDe(partida).length).toBeGreaterThan(0)
 
     for (const comando of movimentos) {
-      const citadas =
-        comando.tipo === 'descartar'
-          ? [comando.carta]
-          : comando.tipo === 'comprarDoMonte'
-            ? []
-            : comando.cartas.map((baixada) => baixada.carta)
-
-      for (const id of citadas) {
+      for (const id of cartasCitadasPor(comando)) {
         expect(naMao).toContain(id)
       }
     }
@@ -547,13 +568,6 @@ describe('S73 — o custo da enumeração com jogos na mesa, medido', () => {
     // motivo novo. Até aqui a enumeração dependia só da mão; agora depende
     // também do **estado da mesa**, e um jogador com vários jogos enumera várias
     // vezes mais janelas.
-    const naturaisDe = (
-      naipe: Naipe,
-      valores: readonly Valor[],
-      copia: 1 | 2,
-    ): readonly Posicao[] =>
-      valores.map((valor) => ({ tipo: 'Natural', carta: carta(naipe, valor, copia) }))
-
     const mao = [
       ...naipeInteiro('COPAS'),
       carta('COPAS', 'A', 2),
@@ -588,5 +602,216 @@ describe('S73 — o custo da enumeração com jogos na mesa, medido', () => {
     expect(decorrido).toBeLessThan(50)
     expect(aumentares.length).toBeGreaterThan(0)
     expect(movimentos.length).toBeLessThan(2000)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0007 §6.1 e §6.2 — a enumeração de `pegarLixo`.
+ *
+ * S79 — a R4.5 é `visao.lixo.length > 0`, espelho exato do `cartasNoMonte > 0`
+ * que a H2 escreveu. A **ausência** do comando é a regra (RF2.1), não uma recusa
+ * com mensagem.
+ */
+
+function naCompraCom(
+  notacaoDaMao: string,
+  notacaoDoLixo: string,
+  fase: 'Compra' | 'Acao' = 'Compra',
+): Partida {
+  const mao = cartas(notacaoDaMao)
+  const lixo = cartas(notacaoDoLixo)
+
+  return construirPartida({
+    maos: [mao, outrasCartas([...mao, ...lixo], 11)],
+    lixo,
+    jogadorDaVez: 0,
+    fase,
+  })
+}
+
+function tiposDe(partida: Partida): readonly string[] {
+  return movimentosValidos(visaoDaVez(partida)).map((comando) => comando.tipo)
+}
+
+describe('R4.1 — as duas opções de compra', () => {
+  it('CA-R4.1-3 — na Compra com lixo não vazio, as duas opções estão disponíveis', () => {
+    const tipos = tiposDe(naCompraCom('5♥ 6♥ 9♠ J♦', 'K♠ 7♦ 3♣'))
+
+    expect(tipos).toContain('comprarDoMonte')
+    expect(tipos).toContain('pegarLixo')
+  })
+
+  it('CA-R4.1-4 — na fase Acao, pegarLixo não está disponível', () => {
+    // O par que trava a interpretação, na mesma forma da CA-R4.1-2: sem este
+    // caso, uma enumeração que devolvesse sempre a lista completa passaria no
+    // critério positivo acima e estaria errada.
+    expect(tiposDe(naCompraCom('5♥ 6♥ 9♠ J♦', 'K♠ 7♦ 3♣', 'Acao'))).not.toContain('pegarLixo')
+  })
+
+  it('CA-R4.2-2 — há exatamente um pegarLixo, sem variante que leve parte', () => {
+    const pegares = movimentosValidos(visaoDaVez(naCompraCom('5♥ 6♥ 9♠ J♦', 'K♠ 7♦ 3♣'))).filter(
+      (comando) => comando.tipo === 'pegarLixo',
+    )
+
+    // R4.2 — "todas as cartas dele. Nunca uma parte." Um lixo de três cartas
+    // renderia três comandos se o tamanho fosse escolha; ele não é (S76).
+    expect(pegares).toHaveLength(1)
+    expect(pegares[0]).toEqual({ tipo: 'pegarLixo' })
+  })
+
+  it('CA-R4.4-1 — o topo do lixo não precisa servir para nada', () => {
+    // R4.4 — a condição de usar a carta do topo é do Buraco **Fechado**. A mão
+    // aqui é toda de copas e o lixo não tem uma única copa: nenhuma das três
+    // cartas completa coisa alguma, e o comando é oferecido do mesmo jeito.
+    const tipos = tiposDe(naCompraCom('5♥ 6♥ 7♥ 8♥', 'K♠ 7♦ 3♣'))
+
+    expect(tipos).toContain('pegarLixo')
+  })
+
+  it('CA-R4.5-1 — com o lixo vazio, só resta comprar do monte', () => {
+    const tipos = tiposDe(naCompraCom('5♥ 6♥ 9♠ J♦', ''))
+
+    expect(tipos).toContain('comprarDoMonte')
+    expect(tipos).not.toContain('pegarLixo')
+  })
+})
+
+/**
+ * A mão máxima **de verdade**, e ela não é a de 22 cartas.
+ *
+ * Até a H6 o teto plausível era onze da distribuição mais onze de um morto
+ * (R9.1). Um `pegarLixo` grande passa disso com folga: com os dois jogadores
+ * comprando sempre do monte, o lixo cresce uma carta por turno, e um lixo de
+ * cinquenta e poucas cartas é alcançável antes do monte esgotar.
+ *
+ * O estado abaixo é construído para ser **alcançável**: 11 + 11 nas mãos, o
+ * resto no lixo, e o que sobra fecha exatamente os dois mortos — o que deixa o
+ * monte em zero, que é a linha "monte vazio, lixo cheio" da spec 0007 §1.
+ */
+function comLixoEnorme(): Partida {
+  const minhaMao = cartas('5♥ 6♥ 7♥ 9♠ J♦ 4♣ Q♦ 8♣ 10♠ A♣ 3♠')
+  const doAdversario = outrasCartas(minhaMao, 11)
+  const lixo = outrasCartas([...minhaMao, ...doAdversario], 60)
+
+  return construirPartida({
+    maos: [minhaMao, doAdversario],
+    lixo,
+    jogadorDaVez: 0,
+    fase: 'Compra',
+  })
+}
+
+describe('S75 — monte vazio e lixo cheio, a partida continua', () => {
+  it('CA-S75-1 — com o monte esgotado, pegarLixo é a única jogada de compra', () => {
+    const partida = comLixoEnorme()
+    const movimentos = movimentosValidos(visaoDaVez(partida))
+
+    // Até a H6 este estado travava a partida: `comprarDoMonte` some com o monte
+    // vazio, e não havia outra coisa. A R4.8 — encerrar a rodada quando **também**
+    // não há morto — continua sendo da H14.
+    expect(partida.monte).toHaveLength(0)
+    expect(partida.lixo).toHaveLength(60)
+    expect(movimentos.map((comando) => comando.tipo)).toEqual(['pegarLixo'])
+  })
+})
+
+/**
+ * O pior caso **não** é a mão maior, e a H5 já tinha ensinado isso.
+ *
+ * A S80 pediu a "mão saturada", e medi-la mostrou que a spec escolheu o fixture
+ * errado: uma mão de 71 cartas tem os naipes quase completos, e **janela cheia
+ * não admite curinga** — o multiplicador da S56 desaparece. O que explode a
+ * enumeração é um naipe quase cheio com **um buraco só**, exatamente como na H5,
+ * agora nos quatro naipes ao mesmo tempo.
+ *
+ * O formato abaixo saiu de sondagem entre treze posições de buraco (a pior é o
+ * `8`, no meio da linha) e cinco quantidades de jogos na mesa. Diferente da H5,
+ * aqui há um **máximo provado** para uma das parcelas: o sétimo jogo não cabe no
+ * baralho, e quem prova isso é o construtor da C4, que o recusa pela R2.3 — os
+ * dois mortos exigem 22 cartas.
+ */
+function maoDeQuatroNaipesSemO8(): readonly Carta[] {
+  const mao: Carta[] = []
+
+  for (const naipe of NAIPES) {
+    for (const valor of VALORES) {
+      if (valor !== '8') {
+        mao.push(carta(naipe, valor))
+      }
+    }
+  }
+
+  // As segundas cópias dos `2`, para que os quatro curingas da S56 estejam
+  // disponíveis mesmo com os primeiros ocupando a casa 1 de cada naipe.
+  for (const naipe of NAIPES) {
+    mao.push(carta(naipe, '2', 2))
+  }
+
+  return mao
+}
+
+describe('S80 — o custo da enumeração com a mão inchada pelo lixo, medido', () => {
+  it('CA-S80-1 — depois de um pegarLixo de 60 cartas, a mão de 71 responde rápido', () => {
+    const pegou = aplicar(comLixoEnorme(), { tipo: 'pegarLixo' })
+
+    if (pegou.tipo !== 'sucesso') {
+      throw new Error(`cenário impossível: pegarLixo recusado — ${pegou.motivo}`)
+    }
+
+    const visao = visaoDaVez(pegou.partida)
+
+    expect(visao.mao).toHaveLength(71)
+
+    const inicio = performance.now()
+    const movimentos = movimentosValidos(visao)
+    const decorrido = performance.now() - inicio
+
+    const baixares = movimentos.filter((comando) => comando.tipo === 'baixar')
+
+    // O contraste que desmonta a intuição: a **maior** mão do baralho não é o
+    // pior caso. Com os naipes quase completos, quase nenhuma janela tem lacuna,
+    // e o multiplicador de curinga da S56 some.
+    console.log(
+      `CA-S80-1: mão de 71 (pegarLixo de 60) — ${String(movimentos.length)} comandos, ` +
+        `${String(baixares.length)} baixar, em ${decorrido.toFixed(2)} ms`,
+    )
+
+    expect(decorrido).toBeLessThan(50)
+    expect(movimentos.length).toBeLessThan(2000)
+  })
+
+  it('CA-S80-1 — o pior caso construível fica abaixo do limiar de 2000', () => {
+    const mao = maoDeQuatroNaipesSemO8()
+    const meus = [
+      naturaisDe('COPAS', ['5', '6', '7'], 2),
+      naturaisDe('OUROS', ['5', '6', '7'], 2),
+      naturaisDe('ESPADAS', ['5', '6', '7'], 2),
+      naturaisDe('PAUS', ['5', '6', '7'], 2),
+      naturaisDe('COPAS', ['10', 'J', 'Q'], 2),
+      naturaisDe('OUROS', ['10', 'J', 'Q'], 2),
+    ]
+
+    const partida = emAcaoComJogos(mao, meus)
+    const visao = visaoDaVez(partida)
+
+    const inicio = performance.now()
+    const movimentos = movimentosValidos(visao)
+    const decorrido = performance.now() - inicio
+
+    const conta = (tipo: Comando['tipo']) =>
+      movimentos.filter((comando) => comando.tipo === tipo).length
+
+    console.log(
+      `CA-S80-1: pior caso — ${String(movimentos.length)} comandos ` +
+        `(${String(conta('baixar'))} baixar, ${String(conta('aumentar'))} aumentar, ` +
+        `${String(conta('descartar'))} descartar) com mão de ${String(mao.length)} ` +
+        `e ${String(meus.length)} jogos, em ${decorrido.toFixed(2)} ms`,
+    )
+
+    // O limiar que reabriria a consulta `validar` da screens.md §3.1. É a
+    // primeira medição do projeto que chega perto, e ela passa — mas por uma
+    // margem que a próxima fatia com comando novo precisa reconferir.
+    expect(movimentos.length).toBeLessThan(2000)
+    expect(decorrido).toBeLessThan(50)
   })
 })

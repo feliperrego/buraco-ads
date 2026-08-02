@@ -140,3 +140,68 @@ describe('S31 — a assinatura aguenta o caso da H14', () => {
     expect(escolha).not.toBeNull()
   })
 })
+
+/**
+ * Critério de aceite da spec 0007 §6.2 — o custo da IA depois da H7.
+ *
+ * S82 — a partir da H7 a IA sorteia entre **duas** compras (R4.1), então ela
+ * pega o lixo em cerca de metade das vezes em que ele estiver disponível, e a
+ * mão dela incha. Isso **não** é defeito: uma IA que acumula lixo e não desce
+ * nada é exatamente o adversário fraco contra o qual a heurística da H15 precisa
+ * medir ganho (E7). O que a H7 acrescenta é um critério de **custo**.
+ *
+ * O estado é montado jogando de verdade, e não com o construtor da C4 — que a
+ * regra de dependência proíbe `ia/` de importar, e com razão. O efeito colateral
+ * é bom: este cenário é **alcançável** por construção, que é o outro lado do
+ * argumento da C5.
+ */
+function aplicado(partida: Partida, comando: Comando): Partida {
+  const resultado = aplicar(partida, comando)
+
+  if (resultado.tipo !== 'sucesso') {
+    throw new Error(`cenário impossível: ${comando.tipo} recusado — ${resultado.motivo}`)
+  }
+
+  return resultado.partida
+}
+
+/** Deixa os dois jogadores comprando e descartando até o lixo crescer, e então o pega. */
+function comMaoInchada(voltas: number): Partida {
+  let partida = iniciarPartida(SEMENTE)
+
+  for (let volta = 0; volta < voltas; volta += 1) {
+    partida = aplicado(partida, { tipo: 'comprarDoMonte' })
+
+    const primeira = partida.jogadores[partida.jogadorDaVez].mao[0]
+
+    if (primeira === undefined) {
+      throw new Error('cenário impossível: mão vazia')
+    }
+
+    partida = aplicado(partida, { tipo: 'descartar', carta: primeira.id })
+  }
+
+  return aplicado(partida, { tipo: 'pegarLixo' })
+}
+
+describe('S82 — o custo da IA com a mão inchada pelo lixo', () => {
+  it('CA-S82-1 — com a mão inchada por um pegarLixo, decidir responde dentro do teto', () => {
+    const partida = comMaoInchada(40)
+    const visao = visaoDaVez(partida)
+
+    // A âncora: sem ela, um cenário que não inchasse a mão tornaria a medição
+    // abaixo indistinguível da CA-RF5.1-1, que já roda com 12 cartas.
+    expect(visao.mao.length).toBeGreaterThan(40)
+
+    const inicio = performance.now()
+    const escolha = decidir(visao, criarAleatorio(SEMENTE))
+    const decorrido = performance.now() - inicio
+
+    console.log(
+      `CA-S82-1: decidir com mão de ${String(visao.mao.length)} em ${decorrido.toFixed(2)} ms`,
+    )
+
+    expect(decorrido).toBeLessThan(50)
+    expect(movimentosValidos(visao)).toContainEqual(escolha)
+  })
+})
