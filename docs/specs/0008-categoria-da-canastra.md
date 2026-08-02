@@ -1,6 +1,6 @@
 # Spec 0008 — A categoria da canastra
 
-> Status: **confirmado com uma pendência** — 9 decisões, e a `S94` aberta (§11)
+> Status: **confirmado** — 10 decisões, nenhuma pendência
 > História: **H8** — "Vejo minhas canastras e a categoria de cada uma"
 > Fecha: R8.1, R8.2, R8.3, R8.4, R8.6, RF3.5
 > Última atualização: 2026-08-02
@@ -315,8 +315,8 @@ anterior tocou.
 
 ## 11. A pendência que a implementação abriu
 
-> Status: **`S94` aguardando confirmação.** Os critérios `CA-R8.6-1` e `CA-R8.6-2` estão
-> `skip` na suíte até ela ser respondida.
+> Status: **`S94` confirmada.** Os critérios `CA-R8.6-1` e `CA-R8.6-2` foram reescritos no
+> `acceptance-tests.md`, e a R8.6 do `rules.md` ganhou nota.
 
 O passo 4 encontrou o que o passo 1 não previu: **`2…K-A` é inalcançável**, e por isso aqueles
 dois critérios não são satisfazíveis.
@@ -347,7 +347,7 @@ corrigir na H6 — uma escolha de implementação que só fica consequente numa 
 | **B** | O jogador escolhe a ponta, como escolhe o papel do curinga (S51) | Torna a R8.6 alcançável; coerente com "um conjunto de cartas não determina um jogo" | `Posicao` ganha campo, `baixar` e `aumentar` carregam, a enumeração dobra — para oferecer uma jogada **estritamente pior** |
 | **C** | Adaptar os dois critérios em silêncio | — | Teste verde documentando decisão que ninguém tomou. É o modo de falha que a RD9 nomeia, e por isso os dois estão `skip` e não reescritos |
 
-- `[P]` **S94** — **Alternativa A**, com duas correções de documento: nota na
+- `[D]` **S94** — **Alternativa A**, com duas correções de documento: nota na
   **R8.6** do `rules.md` dizendo que `2…K-A` descreve um arranjo que a engine não produz porque
   `A…K` domina, e reescrita de `CA-R8.6-1` e `CA-R8.6-2` no `acceptance-tests.md` para afirmar
   o que é verificável — as mesmas treze cartas produzem `A…K`, e a categoria é `DE_500`.
@@ -358,5 +358,15 @@ corrigir na H6 — uma escolha de implementação que só fica consequente numa 
 > pontos e em potencial de crescimento. A S47 já decidiu não oferecer opções sem escolha real,
 > e oferecer uma opção estritamente pior é a mesma coisa com um custo maior.
 >
-> **Esta é decisão de domínio, não de software.** Se na sua mesa alguém já preferiu o Ás em
-> cima por algum motivo que eu não vejo, a A cai e a B passa a valer o custo.
+> **Era decisão de domínio, não de software**, e foi confirmada na A.
+>
+> O que ela deixa para trás vale registrar: a R8.6 **não** virou letra morta. A leitura
+> posicional continua com um caso alcançável — uma canastra de oito cartas do `7` ao Ás alto
+> termina na casa 13 sem começar na 0, e é `LIMPA`. Virou a `CA-S94-1`, e é ela que reprova se
+> alguém reimplementar a regra por tamanho.
+>
+> **O padrão da S63 se repetiu, e é a terceira vez.** Uma escolha registrada só em ordem de
+> array — como o `id` derivado da H4 e a preferência de ponta aqui — atravessa fatias sem
+> incomodar e vira decisão quando alguma fatia a torna consequente. Vale procurar por elas em
+> vez de esperar: o candidato seguinte é a ordem em que `movimentosValidos` devolve os
+> comandos, que hoje ninguém decidiu e a interface já usa para ordenar botões.

@@ -75,6 +75,17 @@ export function casasDe(valor: Valor): readonly number[] {
  * Com no máximo dois Ases do mesmo naipe são no máximo duas combinações, e é por
  * isso que "tentar" é barato. A alternativa — pedir ao jogador que diga qual
  * ponta — seria interface decidindo regra (T6).
+ *
+ * **S94 — a ordem desta lista é uma decisão, não um acidente.** `criarJogo` fica
+ * com a **primeira** combinação que fecha trecho contíguo, então a ponta baixa
+ * ganha quando as duas cabem. Isso só acontece num caso — a corrida `2..K` mais
+ * **um** Ás —, e ali a ponta baixa **domina**: `A…K` vale 500 contra os 200 de
+ * `2…K-A`, e as duas leituras alcançam 1000 depois. Nenhum jogador escolheria a
+ * outra, e por isso não se oferece a escolha (a S47 já decidiu não oferecer
+ * opção sem escolha real).
+ *
+ * A consequência é que `2…K-A` **não é representável**, e a R8.6 tem nota sobre
+ * isso. Trocar esta ordem muda a categoria de uma canastra — a `CA-R8.6-1` mede.
  */
 function combinacoesDeAses(quantos: number): readonly (readonly number[])[] {
   switch (quantos) {

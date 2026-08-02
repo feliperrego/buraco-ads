@@ -170,6 +170,10 @@ motivos que não têm nada a ver com a batida.
 > **A asserção de `LIMPA` e `SUJA` volta na H8**, e é ali que estes dois critérios ficam
 > cumpridos por inteiro. Sem esta nota, a H8 os reencontraria parecendo prontos.
 
+> **Cumprido em 2026-08-02 (spec 0008, S90).** A H8 restaurou as duas asserções de categoria, e
+> a adaptação da H5 terminou. A asserção de posição ficou junto, porque ela é o que explica
+> **por que** a categoria é essa — o par continua usando a mesma carta com resultados opostos.
+
 ### 4.3 Precedência das categorias — R8.3, R8.4
 
 | # | Dado | Então |
@@ -181,9 +185,21 @@ motivos que não têm nada a ver com a batida.
 | **CA-R8.3-5** | 7 cartas, sem curinga | `LIMPA` |
 | **CA-R8.3-6** | 7 cartas, com curinga | `SUJA` |
 | **CA-R8.3-7** | 6 cartas | não é canastra — nenhuma categoria |
-| **CA-R8.6-1** | `2…K-A` (13), sem curinga | `LIMPA` (200), **não** `DE_500` |
-| **CA-R8.6-2** | `2…K-A` (13), com curinga | `SUJA` (100) |
+| **CA-R8.6-1** | as treze cartas `2…K` mais um Ás | a engine produz `A…K`, e a categoria é `DE_500` |
+| **CA-R8.6-2** | o mesmo conjunto, com curinga | `DE_500` (R8.4) |
 | **CA-R8.6-3** | `A…K` (13) mais o segundo Ás | passa de `DE_500` a `DE_1000` |
+| **CA-S94-1** | canastra de 8 cartas, do `7` ao Ás alto | `LIMPA` — termina na casa 13 sem começar na 0 |
+
+> **Reescritos na H8, em 2026-08-02 (spec 0008, S94).** `CA-R8.6-1` e `CA-R8.6-2` diziam
+> `LIMPA` (200) e `SUJA` (100) para `2…K-A`, e **não eram satisfazíveis**: aquele arranjo não é
+> representável. A R5.2 permite o Ás nas duas pontas, e com a corrida `2..K` mais um Ás as duas
+> cabem — a engine resolve pela baixa, porque `A…K` domina em pontos e em potencial de
+> crescimento. O raciocínio completo está na nota da R8.6 em [rules.md](rules.md).
+>
+> O par continua provando que a categoria é **posicional**; mudou o que ele consegue demonstrar.
+> Quem passou a carregar a discriminação por posição é a `CA-S94-1`, e ela é o critério que
+> reprova se alguém reimplementar a R8.6 por tamanho — treze cartas deixariam de ser a única
+> forma de chegar a `DE_500`.
 
 ### 4.4 Regularizar o curinga — R6.5, R6.6, R8.5
 

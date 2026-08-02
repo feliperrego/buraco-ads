@@ -434,37 +434,20 @@ describe('R8.3 — a precedência das quatro categorias', () => {
 
 describe('R8.6 — DE_500 e DE_1000 dependem da posição, não do tamanho', () => {
   /**
-   * **Bloqueados na decisão `S94`, que não foi tomada.** Não é falha de
-   * implementação: `2…K-A` é **inalcançável**.
+   * **S94 — `2…K-A` não é representável, e isso agora é decidido.**
    *
-   * `criarJogo` tenta as duas pontas do Ás (S42) e aceita a primeira que fecha
-   * trecho contíguo — e a ponta baixa vem primeiro na lista. As mesmas treze
-   * cartas descritas como `2…K-A` saem como `A…K`, e a categoria é `DE_500`.
-   * Nenhum caminho produz o outro arranjo: `aumentar` revalida pelo mesmo
-   * `criarJogo`, e o curinga fazendo papel de Ás cai na mesma resolução.
+   * `criarJogo` fica com a primeira combinação de pontas que fecha trecho
+   * contíguo (S42), e a ponta baixa vem primeiro. As mesmas treze cartas
+   * descritas como `2…K-A` saem como `A…K`. Nenhum caminho produz o outro
+   * arranjo: o `aumentar` revalida pelo mesmo `criarJogo` (S64), e o curinga
+   * fazendo papel de Ás cai na mesma resolução.
    *
-   * A escolha da engine é a **certa** — `A…K` vale 500 contra 200 e as duas
-   * leituras chegam a 1000 depois, então a ponta baixa domina em todo momento.
-   * O que não existe é a **decisão**: "a primeira da lista ganha" é ordem de
-   * array, o mesmo formato do `id` derivado que a S63 corrigiu na H6.
-   *
-   * Ficam `skip` em vez de adaptados porque adaptá-los seria teste verde
-   * documentando uma decisão que ninguém tomou — o modo de falha da RD9. A
-   * spec 0008 §11 tem a proposta e as alternativas.
+   * A ponta baixa **domina** — 500 contra 200, e as duas leituras alcançam 1000
+   * depois —, então não se oferece a escolha. Estes dois critérios afirmam o que
+   * é verificável, e a `CA-S94-1` mantém a leitura posicional da R8.6 viva com
+   * um caso alcançável.
    */
-  it.skip('CA-R8.6-1 — 2 até o Ás alto, sem curinga, é LIMPA e não DE_500', () => {
-    expect(categoria(DOIS_ATE_AS)).toBe('LIMPA')
-    expect(janelaDe(valido(DOIS_ATE_AS))).toEqual({ inicio: 1, fim: 13 })
-  })
-
-  it.skip('CA-R8.6-2 — 2 até o Ás alto, com curinga, é SUJA', () => {
-    expect(categoria(DOIS_ATE_AS_COM_CURINGA)).toBe('SUJA')
-  })
-
-  it('CA-R8.6-1 — o arranjo que a engine devolve hoje, medido e não decidido', () => {
-    // Este **não** substitui os dois acima: ele registra o comportamento medido
-    // para que a S94 seja decidida sobre um fato, e para que a mudança apareça
-    // como falha se alguém mexer na resolução do Ás antes da decisão.
+  it('CA-R8.6-1 — as treze cartas de 2 ao Ás alto produzem A…K, e valem DE_500', () => {
     expect(valido(DOIS_ATE_AS).posicoes.map((posicao) => posicao.carta.valor)).toEqual([
       'A',
       '2',
@@ -480,7 +463,23 @@ describe('R8.6 — DE_500 e DE_1000 dependem da posição, não do tamanho', () 
       'Q',
       'K',
     ])
+    expect(janelaDe(valido(DOIS_ATE_AS))).toEqual({ inicio: 0, fim: 12 })
     expect(categoria(DOIS_ATE_AS)).toBe('DE_500')
+  })
+
+  it('CA-R8.6-2 — o mesmo conjunto com curinga continua DE_500 (R8.4)', () => {
+    expect(categoria(DOIS_ATE_AS_COM_CURINGA)).toBe('DE_500')
+  })
+
+  it('CA-S94-1 — uma canastra terminada no Ás alto que não começa na casa 0 é LIMPA', () => {
+    // O caso **alcançável** que impede a R8.6 de virar letra morta. Oito cartas
+    // do 7 ao Ás: a ponta baixa não cabe — o Ás na casa 0 deixaria as casas de 1
+    // a 5 vazias —, então ele é forçado ao alto e a janela é [6, 13]. Sete ou
+    // mais, logo é canastra; não começa na casa 0, logo não é especial.
+    const jogo = valido('7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥')
+
+    expect(janelaDe(jogo)).toEqual({ inicio: 6, fim: 13 })
+    expect(categoriaDe(jogo)).toBe('LIMPA')
   })
 
   it('CA-R8.6-3 — A até K mais o segundo Ás passa de DE_500 a DE_1000', () => {

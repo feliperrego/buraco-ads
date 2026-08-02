@@ -170,6 +170,21 @@ Só é possível quando as três condições valem ao mesmo tempo:
 > 200. Não é arbitrário: `A…K` deixa a ponta alta livre para crescer até `DE_1000`, enquanto
 > `2…K-A` já está fechada nas duas pontas.
 
+> **Nota de implementação, 2026-08-02 (spec 0008, S94).** O exemplo `2…K-A` desta regra
+> descreve um arranjo que a engine **não produz**. A ordem dos valores permite o Ás nas duas
+> pontas (R5.2), e quando as duas cabem — o que só acontece com a corrida `2..K` mais **um**
+> Ás — a engine resolve pela ponta **baixa**, entregando `A…K`. A escolha não é arbitrária:
+> `A…K` vale 500 contra 200 e as duas leituras alcançam `DE_1000` depois, então a ponta baixa
+> domina em todo momento e nenhum jogador escolheria a outra.
+>
+> A regra **não muda**: as categorias continuam definidas por posição, e é isso que ela decide.
+> O que muda é o que os critérios de aceite podem afirmar — ver a nota em
+> [acceptance-tests.md](acceptance-tests.md) §4.3.
+>
+> A leitura posicional continua tendo caso alcançável, e ele é o que a `CA-S94-1` trava: uma
+> canastra de oito cartas do `7` ao Ás alto termina na casa 13 sem começar na 0, e é `LIMPA` —
+> não `DE_500`. Se um dia a R8.6 for lida por **tamanho**, é esse caso que reprova.
+
 > Sem P17 explícito, a pontuação passa a depender da ordem dos `if` na implementação — um
 > bug silencioso que nenhum teste pegaria por acaso. É exatamente o tipo de ambiguidade
 > que uma especificação existe para eliminar.
