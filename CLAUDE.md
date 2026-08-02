@@ -121,9 +121,16 @@ Commits pequenos, um por unidade de trabalho, mensagem descritiva em português.
 Para descobrir o que já foi feito, em vez de confiar nesta seção:
 
 ```bash
-git log --oneline | grep -i tarefa    # tarefas do Marco 0 concluídas
+git log --oneline | grep -i tarefa       # tarefas do Marco 0 concluídas
 git log --oneline | head -20
+git log origin/main..HEAD --oneline      # o que existe aqui e ainda não está no ar
 ```
+
+O terceiro é o menos óbvio e o que mais engana. A seção *"O projeto está publicado"* diz que um
+push em `main` publica, e isso é verdade — mas **commitado não é publicado**. Se aquele comando
+listar alguma coisa, a aplicação em `buraco-ads.vercel.app` está atrás do código desta máquina,
+e qualquer conclusão sobre "o que está no ar" tirada do código local está errada. Aconteceu ao
+fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
 **H5** estão fechadas e implementadas.
