@@ -1,11 +1,11 @@
 # Spec 0006 — Aumentar um jogo na mesa
 
-> Status: **rascunho** — 13 propostas aguardando confirmação
+> Status: **confirmado** — 13 decisões, nenhuma pendência
 > História: **H6** — "Acrescento cartas a um jogo que já está na mesa, quantas vezes quiser no turno"
 > Fecha: R3.3, R6.2, R6.3, R6.4
 > Última atualização: 2026-08-02
 
-Pendências a partir de **`S62`**, continuando a série global.
+Decisões a partir de **`S62`**, continuando a série global.
 
 ---
 
@@ -26,7 +26,7 @@ vezes o jogador quiser dentro do turno (R3.3). É o quarto dos seis comandos do
 | Categoria da canastra — `LIMPA`, `SUJA`, `DE_500`, `DE_1000` (R8) | H8 |
 | Bater e pegar morto (R9, R10) | H10 |
 
-- `[P]` **S62** — A H6 continua **sem calcular categoria**, como a S50 fixou
+- `[D]` **S62** — A H6 continua **sem calcular categoria**, como a S50 fixou
   para a H5. Isso tem uma consequência que vale nomear, porque a R6.3 usa a palavra:
   *"é permitido aumentar um jogo que já é canastra, até o limite de 14 cartas"*. A H6 verifica
   a R6.3 pelo **tamanho** — um jogo de 7 posições aceita mais, e o de 14 não aceita nenhuma —,
@@ -69,7 +69,7 @@ usa para apontar.
 | **B** | O `id` segue o conteúdo | Nada muda | O jogo alvo do comando **some** quando o comando é aplicado. Duas jogadas no mesmo turno (R3.3) passam a falar de "jogos" diferentes que são o mesmo jogo, e a chave de renderização troca junto |
 | **C** | Contador em `Partida`, distribuído no `baixar` | Identidade sem depender de carta | Estado novo na raiz do agregado, e o `id` deixa de ser reproduzível a partir do conteúdo nos testes |
 
-- `[P]` **S63** — **Alternativa A.** O `id` é atribuído uma vez, no momento
+- `[D]` **S63** — **Alternativa A.** O `id` é atribuído uma vez, no momento
   em que o jogo é baixado, e `aumentar` o **preserva**. Continua derivado da primeira posição
   daquele instante — o que muda é que ele para de ser recalculado.
 
@@ -88,7 +88,7 @@ usa para apontar.
 representável. Aumentar produz um `Jogo`. Ou passa pela mesma porta, ou existe uma segunda
 porta com sete invariantes copiados.
 
-- `[P]` **S64** — `aumentarJogo(jogo, novasPosicoes)` vive em `jogo.ts` e é
+- `[D]` **S64** — `aumentarJogo(jogo, novasPosicoes)` vive em `jogo.ts` e é
   implementada **sobre `criarJogo`**, com o conjunto inteiro:
 
 ```ts
@@ -122,7 +122,7 @@ nenhuma delas precisa de código nesta fatia:
 
 ### 3.1 A forma do comando
 
-- `[P]` **S65** — O comando aponta o jogo pelo `id` e reusa `CartaBaixada`:
+- `[D]` **S65** — O comando aponta o jogo pelo `id` e reusa `CartaBaixada`:
 
 ```ts
 { tipo: 'aumentar'; jogo: string; cartas: readonly CartaBaixada[] }
@@ -136,7 +136,7 @@ papel daquele valor. As cartas vêm **sempre da mão** — nunca da mesa, nunca 
 
 ### 3.2 A posse é estrutural (R6.2)
 
-- `[P]` **S66** — `aplicar` procura o jogo alvo **somente entre os jogos de
+- `[D]` **S66** — `aplicar` procura o jogo alvo **somente entre os jogos de
   quem está jogando**. Um `id` de jogo do adversário não é recusado por uma checagem de posse:
   ele simplesmente **não é encontrado**, e cai na mesma recusa de `id` inexistente.
 
@@ -148,7 +148,7 @@ papel daquele valor. As cartas vêm **sempre da mão** — nunca da mesa, nunca 
 
 A R6.4 proíbe reorganizar cartas já baixadas. Não há código a escrever: o comando só acrescenta.
 
-- `[P]` **S67** — A R6.4 é verificada por **critério positivo antes do
+- `[D]` **S67** — A R6.4 é verificada por **critério positivo antes do
   negativo**: primeiro que as posições anteriores continuam todas lá, na mesma ordem relativa e
   com o mesmo papel; só então que nenhum comando de `movimentosValidos` cita carta que já esteja
   na mesa.
@@ -172,7 +172,7 @@ Pela R6.5 isso é **regularizar**, e nem assim seria legal: o curinga é `2♠`,
 a canastra é permanentemente suja. Mas o caso vizinho — `[2♥→7♥]` com o `7♥` na mão — **será**
 legal na H9, e hoje não é.
 
-- `[P]` **S68** — Acrescentar a carta natural do valor que o curinga
+- `[D]` **S68** — Acrescentar a carta natural do valor que o curinga
   representa é **recusado** na H6, pela I5 (valor repetido), sem tratamento especial. O critério
   registra que a recusa é da fatia, não da regra, e cita a H9.
 
@@ -182,14 +182,14 @@ legal na H9, e hoje não é.
 
 ### 3.5 O curinga no aumentar
 
-- `[P]` **S69** — Se o jogo já tem curinga, todas as posições novas são
+- `[D]` **S69** — Se o jogo já tem curinga, todas as posições novas são
   **naturais** — a I4 recusa o resto, e a enumeração nem oferece. Se não tem, vale um curinga,
   e a S56 é herdada sem alteração: **um comando por naipe de `2` disponível**, canônica de menor
   `id` dentro do naipe.
 
 ### 3.6 A guarda da S45 se estende
 
-- `[P]` **S70** — O `aumentar` que esvaziaria a mão **não é oferecido**, pela
+- `[D]` **S70** — O `aumentar` que esvaziaria a mão **não é oferecido**, pela
   mesma razão da S45: a R7.1 exige o descarte, e a batida é a H10. Sai junto com ela — o gatilho
   do [roadmap.md](../roadmap.md) §3 passa a citar as duas.
 
@@ -213,7 +213,7 @@ posições ordenadas, **não** as casas: `criarJogo` as calcula e as descarta.
 | **A** | Derivar a janela das pontas, a cada consulta | Nenhum campo novo; coerente com a R8.5 — "função derivada, nunca campo armazenado" | Uma função a mais para testar |
 | **B** | Armazenar `casaInicial` em `Jogo` | Consulta direta | Campo derivado armazenado, que é exatamente o que a R8.5 proíbe para categoria. Dois lugares para a mesma verdade |
 
-- `[P]` **S71** — **Alternativa A.** `janelaDe(jogo)` deriva das pontas, com
+- `[D]` **S71** — **Alternativa A.** `janelaDe(jogo)` deriva das pontas, com
   a regra do Ás explícita: **Ás na primeira posição está na casa 0; Ás na última, na casa 13.**
 
 > A regra do Ás não é arbitrária, e é a única sutileza aqui. Como o jogo tem ao menos três
@@ -223,7 +223,7 @@ posições ordenadas, **não** as casas: `criarJogo` as calcula e as descarta.
 
 ### 4.2 Janelas que contêm a janela atual
 
-- `[P]` **S72** — A enumeração percorre as janelas `[i', f']` que
+- `[D]` **S72** — A enumeração percorre as janelas `[i', f']` que
   **contêm** `[inicio, fim]` e diferem dela, com `0 ≤ i' ≤ inicio` e `fim ≤ f' ≤ 13`. As casas
   novas são preenchidas pela mão, com no máximo uma vazia — e essa vazia só existe se o jogo
   ainda não tiver curinga (S69).
@@ -246,7 +246,7 @@ número da H4 não cobria o curinga.
 Agora ela depende também do **estado da mesa** — um jogador com seis jogos baixados enumera seis
 vezes mais janelas de aumento.
 
-- `[P]` **S73** — A H6 mede outra vez, com a mesma mão de 22 cartas da
+- `[D]` **S73** — A H6 mede outra vez, com a mesma mão de 22 cartas da
   `CA-S46-1` **e jogos na mesa**, mantendo o teto de 50 ms e o limiar de ~2000 comandos que
   reabriria a consulta `validar` da [screens.md](../screens.md) §3.1.
 
@@ -265,13 +265,24 @@ entra nesse mesmo mecanismo — as cartas vêm da mão, então a seleção funci
 O que muda é que **duas jogadas diferentes podem ter o mesmo conjunto de cartas** por um motivo
 novo. Com dois jogos de copas na mesa, `A♥ 2♥ 3♥` e `5♥ 6♥ 7♥`, o `4♥` na mão aumenta os dois:
 
-- `[P]` **S74** — O rótulo nomeia o jogo alvo pelas **pontas**:
+- `[D]` **S74** — O rótulo nomeia o jogo alvo pelas **pontas**:
   *"Aumentar o jogo de A a 3 de copas"*. A tela lê as pontas de `visao.meusJogos` e monta o
   rótulo; ela continua sem saber o que é uma sequência (T6).
 
 A alternativa era o jogador **clicar no jogo** para escolher o alvo, e ela cai por custo: seria
 um segundo estado de seleção em `ui/`, com as combinações "carta selecionada sem jogo" e "jogo
 selecionado sem carta" para tratar. O rótulo resolve com o mecanismo que já existe.
+
+> **A S60 continua valendo por cima da S74, e é o que fecha um buraco que ela sozinha deixa.**
+> Com o jogo `5♥ 6♥ 7♥` e um `2♠` na mão, dois comandos têm o **mesmo** conjunto de cartas e o
+> **mesmo** jogo alvo: `[2♠→4]` estende à esquerda e `[2♠→8]` à direita. As pontas não os
+> distinguem — o papel do curinga distingue. O rótulo do `aumentar` é portanto composto: pontas
+> do jogo pela S74, mais o papel do curinga pela S60, exatamente como o `baixar` já faz.
+
+Uma consequência de implementação, e ela é da S74: até aqui a chave de renderização de cada
+botão era o próprio rótulo, e isso bastava porque o `baixar` não tinha alvo. Com dois jogos de
+copas **de mesmas pontas** na mesa — possível com o baralho duplo —, dois rótulos coincidem.
+A chave passa a incluir o `id` do jogo alvo, que é justamente a identidade que a S63 criou.
 
 > A H5 deixou a lição de que a metade observável é a que escapa: o teste ficou verde duas vezes
 > enquanto a tela mostrava a coisa errada. Aqui o risco tem nome — o jogo aumentado precisa
@@ -304,7 +315,7 @@ Nenhum critério anterior trata de R6.2, R6.3, R6.4 ou R3.3 — o `acceptance-te
 | **CA-S64-1** | jogo `5♥ 6♥ 7♥` e `9♥` na mão | **recusa** — I3, a casa do `8` ficaria vazia |
 | **CA-S68-1** | jogo `5♥ 6♥ [2♠→7♥]` e `7♥` na mão | **recusa** por I5 — repor a carta do curinga é R6.5, e chega na **H9** |
 | **CA-S69-1** | jogo que **já tem** curinga e mão com um `2` | nenhum `aumentar` oferecido usa o `2` como curinga |
-| **CA-S69-2** | jogo `5♥ 6♥ 7♥` sem curinga, mão com `2♠` e `2♦` | há **dois** comandos que estendem com curinga, um por naipe (S56) |
+| **CA-S69-2** | jogo `5♥ 6♥ 7♥` sem curinga, mão com `2♠` e `2♦` | para **cada** valor representado, há **dois** comandos que estendem com curinga — um por naipe (S56) |
 | **CA-S70-1** | mão em que o `aumentar` usaria **todas** as cartas | o comando **não** aparece em `movimentosValidos` |
 | **CA-M9-9** | após `aumentar` | a conservação das 104 se mantém, sem `id` repetido |
 
@@ -326,11 +337,11 @@ Nenhum critério anterior trata de R6.2, R6.3, R6.4 ou R3.3 — o `acceptance-te
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-Treze propostas. Responda no formato *"todas ok exceto S65 e S72"*.
+Treze, confirmadas em bloco em 2026-08-02.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S62** | Escopo | A R6.3 é verificada por **tamanho**; "canastra" não existe no código até a H8 |
 | **S63** | Domínio | O `id` do `Jogo` é **identidade estável** — nasce no `baixar`, preservado pelo `aumentar` |
@@ -346,19 +357,23 @@ Treze propostas. Responda no formato *"todas ok exceto S65 e S72"*.
 | **S73** | Desempenho | Medir a terceira vez, agora **com jogos na mesa** |
 | **S74** | Interface | Rótulo nomeia o jogo alvo pelas **pontas**; sem seleção de jogo por clique |
 
-### Onde eu erraria, se errasse
+### As duas que eu havia sinalizado, e o que a confirmação diz
 
-**Calibragem:** 61 decisões na série, 5 quedas, todas no `rules.md`. Esta spec é quase toda
-software, o que historicamente é a faixa em que acerto — mas duas fogem disso e valem seu olho:
+**Calibragem: 13 de 13 aceitas.** A série global vai a **74 decisões com 5 quedas**, todas
+ainda no `rules.md`. As duas de domínio que eu havia marcado como as de maior risco passaram
+intactas:
 
-- **S62** depende da minha leitura de que a R6.3 não acrescenta limite nenhum à R5.3, e existe
-  só para negar que a canastra feche aos sete. Se na sua mesa "aumentar canastra" tiver alguma
-  restrição que eu não vi — quem pode aumentar, ou quando —, ela cai aqui.
-- **S72** oferece a extensão das duas pontas como jogada única. Se na sua mesa acrescentar
-  cartas dos dois lados no mesmo gesto for estranho, o certo é o comando de um lado só e a R3.3
-  cuidando do resto.
+- **S62** — a R6.3 não acrescenta limite nenhum à R5.3. **Confirmada**: "canastra" não precisa
+  existir no código até a H8, e um critério que prove o crescimento de 7 para 8 fecha a regra.
+- **S72** — estender as duas pontas num comando só. **Confirmada**, e com ela a S48 continua
+  casando botão com seleção exata sem caso especial.
 
-A **S63** é a mais consequente das de software, e é a que eu recomendaria olhar com mais
-atenção mesmo sendo software: ela decide que jogo na mesa tem **identidade**, e essa decisão
-volta na H9, quando regularizar o curinga muda o conteúdo do jogo sem que ele deixe de ser o
-mesmo jogo.
+A **S63** é a mais consequente do lote e a que volta primeiro: ela decide que jogo na mesa tem
+**identidade**, e a H9 depende disso — regularizar o curinga muda o conteúdo do jogo sem que
+ele deixe de ser o mesmo jogo. Foi a primeira vez neste projeto que uma escolha registrada
+apenas em comentário de implementação precisou virar decisão de spec, e o gatilho foi a fatia
+que a tornou visível, não uma revisão.
+
+> **Nota de processo.** As contagens desta spec — 22 critérios novos, 13 decisões — saíram de
+> script, não de leitura. É a correção que a spec 0005 pediu para esta, depois de dois erros
+> de contagem à mão em documentos anteriores.
