@@ -60,6 +60,7 @@ testada, os testes passam a ser a especificação viva.
 | [0003-turno-da-ia.md](specs/0003-turno-da-ia.md) | H3 — turno da IA | **Implementada** — 10 critérios verdes |
 | [0004-baixar-sequencias.md](specs/0004-baixar-sequencias.md) | H4 — baixar sequências | **Implementada** — 24 critérios verdes |
 | [0005-curinga.md](specs/0005-curinga.md) | H5 — o 2 como curinga | **Implementada** — 19 critérios verdes |
+| [0006-aumentar.md](specs/0006-aumentar.md) | H6 — aumentar um jogo na mesa | **Implementada** — 22 critérios verdes |
 
 ## Verificação
 

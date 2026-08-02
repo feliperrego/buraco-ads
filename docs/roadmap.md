@@ -158,7 +158,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Guarda do `baixar` que esvazia a mão | **Ao implementar a H10** — remover junto com a batida | S45, S58 |
+| Guarda do `baixar` **e do `aumentar`** que esvazia a mão | **Ao implementar a H10** — remover junto com a batida. É **uma** guarda só desde a H6, em `adicionar`, e as duas jogadas passam por ela | S45, S58, S70 |
 | Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | **Ao escrever a H8** — na H5 eles verificam a posição; `LIMPA`/`SUJA` só existe com a R8 | S61 |
 | Se o modelo de posições (M2) está certo | **Ao terminar H9** — se regularizar o curinga foi difícil, o modelo está errado | M2, H9 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
@@ -186,6 +186,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | `strictTypeChecked` do typescript-eslint | Fim do Marco I, 2026-08-01 | **Mantido.** Reprovou seis vezes na H2 e na H3, e **nenhuma foi ruído**: `no-unnecessary-condition` num `switch` de uma alternativa, `no-base-to-string` num objeto em template, `restrict-template-expressions`, `react-refresh` em dois arquivos e dois `no-unused-vars`. O atrito medido é baixo e a regra está pagando |
 | Custo de enumerar todos os `baixar` | H4, 2026-08-02 | **Medido: 121 comandos, dos quais 99 `baixar`, em 0,12 ms.** Nenhuma otimização é necessária, e a T6 se sustenta |
 | Custo de enumerar `baixar` **com curinga** | H5, 2026-08-02 | **Medido: 280 comandos, dos quais 258 `baixar` (218 com curinga), em 0,31 ms.** Continua sem precisar otimizar, e bem abaixo do limiar de ~2000 que reabriria a consulta `validar` |
+| Custo de enumerar `aumentar`, **com jogos na mesa** | H6, 2026-08-02 | **Medido: 218 comandos, dos quais 85 `aumentar`, em 1,08 ms**, com a mão de 22 cartas da `CA-S46-1` e quatro jogos na mesa. A estimativa da spec 0006 §4.3 era de "menos de 200 por jogo"; o real ficou em **~21 por jogo**, uma ordem de grandeza abaixo |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro
 > ordens de grandeza. A mão do pior caso tem 22 cartas, com um naipe ocupando as catorze casas
@@ -208,6 +209,14 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 > um buraco só**: aí quase toda janela tem exatamente uma lacuna, e cada lacuna rende um
 > comando por naipe de `2` disponível. Foi assim que se chegou aos 280. O formato foi achado
 > por sondagem entre cinco mãos, e é o maior entre elas — não um máximo provado.
+
+> **A H6 mediu pela terceira vez, e o motivo era novo.** Até ali a enumeração dependia só da
+> mão; com o `aumentar`, ela passou a depender também do **estado da mesa**. O número — 85
+> `aumentar` para quatro jogos — ficou uma ordem de grandeza abaixo da estimativa de
+> guardanapo da spec, e a razão é a mesma que derrubou o `2^22`: a conta pessimista supunha
+> que toda janela que contém a atual seria resolvível, quando a maioria delas pede **duas**
+> casas vazias e é cortada de imediato pela I4. A estimativa errou para cima, que é o lado
+> seguro — mas errou, e é por isso que a `CA-S73-1` existe.
 
 > O gatilho da H9 é o mais interessante da tabela, porque é um **teste da qualidade do nosso
 > próprio modelo**. A R6.5 é a regra mais difícil do Buraco Aberto. Se o `domain.md` M2 acertou,

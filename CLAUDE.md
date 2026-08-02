@@ -133,17 +133,18 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H5** estão fechadas e implementadas.
+**H6** estão fechadas e implementadas.
 
-O **Marco 0 e o Marco I estão fechados**, e a **H4 e a H5 também**: existe um jogo em que dá
-para baixar sequências, com e sem curinga. O humano compra, baixa quantos jogos quiser,
-descarta, e a IA joga sozinha. Os **sete invariantes de `Jogo`** do `domain.md` §4 estão
-fechados — a H4 alcançava cinco, a H5 trouxe `I4` e `I7`.
+O **Marco 0 e o Marco I estão fechados**, e a **H4, a H5 e a H6 também**: existe um jogo em que
+dá para baixar sequências, com e sem curinga, e para aumentá-las depois. O humano compra, baixa
+quantos jogos quiser, aumenta quantas vezes quiser, descarta, e a IA joga sozinha — ela também
+aumenta, porque sorteia dentro da mesma lista. Os **sete invariantes de `Jogo`** do `domain.md`
+§4 estão fechados — a H4 alcançava cinco, a H5 trouxe `I4` e `I7`, e a H6 os aplicou ao
+crescimento sem escrever nenhum deles de novo.
 
-**O Marco II segue aberto:** faltam a **H6** (aumentar) e a **H7** (pegar o lixo). Nenhuma tem
-spec.
+**O Marco II segue aberto:** falta a **H7** (pegar o lixo), e ela não tem spec.
 
-Cinco coisas que valem saber antes de mexer no que estas duas fatias deixaram:
+Seis coisas que valem saber antes de mexer no que estas três fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -152,10 +153,15 @@ Cinco coisas que valem saber antes de mexer no que estas duas fatias deixaram:
 - A **S55** é a única decisão do projeto **deduzida e não pesquisada**: `I5` lê o valor
   *representado*, o que permite as duas cópias do `2♥` no mesmo jogo, uma natural e uma curinga.
   A `CA-S55-1` é o único lugar onde essa dedução está presa em teste.
-- A **S45** é a única decisão que **restringe o jogo além das regras**: `baixar` que esvaziaria
-  a mão não é oferecido, porque a batida é a H10. É temporária e o gatilho continua aberto. Ela
-  vive **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas
-  enquanto todo chamador escolher da lista.
+- A **S63** decidiu que jogo na mesa tem **identidade**: o `id` nasce no `baixar` e o `aumentar`
+  o preserva. Era escolha de implementação registrada em comentário, e a H6 foi a fatia que a
+  quebrou — crescer pela esquerda troca a primeira posição. Ela volta na **H9**, quando
+  regularizar o curinga mudar o conteúdo do jogo sem que ele deixe de ser o mesmo jogo.
+- A **S45** é a única decisão que **restringe o jogo além das regras**: a jogada que esvaziaria
+  a mão não é oferecida, porque a batida é a H10. A **S70** a estendeu ao `aumentar`, e desde a
+  H6 é **uma guarda só**, em `adicionar`. É temporária e o gatilho continua aberto. Ela vive
+  **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas enquanto
+  todo chamador escolher da lista.
 - A **S41** é a decisão mais fácil de quebrar sem perceber: a ordem é uma **linha de 14 casas**,
   não um anel. Mutações propositais confirmaram que o par `CA-R5.3-2` / `CA-R5.3-4` morde.
 - O **construtor validado da C4** vive em `src/engine/testing/construtor.ts` e é a forma de
@@ -216,17 +222,24 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido em quatro fatias — H2, H3, H4 e H5: zero retrabalho.** Nenhum commit do loop precisou
-ser refeito. (A redação anterior contava commits; o número não é verificável por script e
-envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
+**Medido em cinco fatias — H2, H3, H4, H5 e H6: zero retrabalho.** Nenhum commit do loop
+precisou ser refeito. (A redação anterior contava commits; o número não é verificável por script
+e envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
 ambos valem vigiar:
 
 - **Critério negativo passa de graça.** "Não deve existir X" é trivialmente verdade num
   componente vazio. Aconteceu duas vezes — `CA-S1-1` e `CA-S27-1`. Todo critério negativo
   precisa de uma afirmação positiva antes, provando que há o que negar.
 - **A tentação de pular o passo 3.** Com os critérios prontos, escrever o código direto parece
-  óbvio, e foi o que aconteceu na H3. O conserto é cotar a função e ver o vermelho — mesma
-  garantia, mas é conserto, não disciplina.
+  óbvio, e foi o que aconteceu na H3 e de novo na H5. O conserto é cotar a função e ver o
+  vermelho — mesma garantia, mas é conserto, não disciplina.
+
+> **A H6 quebrou a série, e o método vale registrar.** O passo 3 rodou de verdade: os esqueletos
+> entraram primeiro — `janelaDe` e `aumentarJogo` lançando, `aplicar` recusando —, e os 35 testes
+> novos deram **31 vermelhos** antes da primeira linha de implementação. Os quatro que passaram
+> de graça foram todos negativos, e cada um tinha sua âncora positiva no vermelho. Esse é o sinal
+> de que o par positivo/negativo está fazendo o trabalho: se um negativo passa sozinho e a âncora
+> dele também passa, é o critério que não morde.
 
 **A H4 acrescentou duas redes que pegaram erro de verdade**, e nenhuma delas é revisão humana:
 
@@ -250,3 +263,18 @@ ambos valem vigiar:
   `I4`, tirar `I7`, tirar a guarda da S54, desligar a S55 —, que reprovaram dez testes. Funciona,
   mas é conserto: **duas fatias seguidas** caíram nisso, e a tentação é sempre a mesma — com o
   critério pronto, escrever o código parece o passo óbvio.
+
+**A H6 não acrescentou rede nova, e o que ela mediu foi as três existentes num caso em que
+nenhuma reprovou.** Isso é dado, não silêncio:
+
+- **A verificação no navegador passou de primeira**, pela primeira vez em três fatias. Vale
+  registrar como ela foi feita, porque é reproduzível: `Math.random` foi fixado em `3 / 2**32`
+  para dar a semente 3 (a mesma da `CA-S37-1`), que é a que entrega ao humano uma mão que baixa
+  e depois aumenta. A tela mostrou `2 de espadas valendo 2, 3 de paus, 4 de paus` virar
+  `… , 5 de paus`, com o botão rotulado *"Aumentar o jogo de 2 a 4 de paus"* — que é a S74
+  lendo a ponta **curinga** pelo valor representado, o caso que o rótulo mais fácil erraria.
+- **Seis mutações propositais**, uma por decisão de comportamento — `id` seguindo o conteúdo,
+  posse por checagem de dono, curinga num jogo que já tem, guarda da mão vazia desligada, pontas
+  do Ás trocadas, janela só para a direita. As seis reprovaram, entre um e cinco testes cada.
+  A mais estreita foi a do `id`: **um** teste, e é a `CA-S63-1`. Se ela cair num refactor, a
+  identidade do `Jogo` fica sem rede — vale lembrar disso na H9.
