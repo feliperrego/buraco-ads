@@ -112,6 +112,35 @@ function ListaDeJogos({ jogos }: { readonly jogos: readonly Jogo[] }) {
   )
 }
 
+/**
+ * S117 — o painel que já existia passa a dizer também que a rodada acabou.
+ *
+ * `switch`, e não ternário (S112): com três fases, `fase === 'Compra' ? … : …`
+ * mostraria *"fase de ação"* numa rodada encerrada, e compilaria. Este é o lugar
+ * onde a H11 mediu esse erro acontecendo — os dois primeiros testes da S117
+ * reprovaram com exatamente aquele texto.
+ *
+ * S113 — quem bateu é lido pela **mão vazia**, nunca por `jogadorDaVez`: a
+ * batida por descarte final acontece depois de a vez já ter passado, e ler por
+ * ela daria sempre a resposta trocada.
+ */
+function estadoDaRodada(visao: VisaoDoJogador): string {
+  switch (visao.fase) {
+    case 'RodadaEncerrada':
+      return visao.mao.length === 0
+        ? 'Você bateu — rodada encerrada'
+        : 'O adversário bateu — rodada encerrada'
+    case 'Compra':
+      return `${nomeDaVez(visao)} — fase de compra`
+    case 'Acao':
+      return `${nomeDaVez(visao)} — fase de ação`
+  }
+}
+
+function nomeDaVez(visao: VisaoDoJogador): string {
+  return visao.jogadorDaVez === visao.eu ? 'Sua vez' : 'Vez do adversário'
+}
+
 function nomeDaPosicao(posicao: Posicao): string {
   return posicao.tipo === 'Natural'
     ? nomeDa(posicao.carta)
@@ -343,10 +372,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
       </section>
 
       <section aria-label="Vez e fase">
-        <p>
-          {visao.jogadorDaVez === visao.eu ? 'Sua vez' : 'Vez do adversário'} — fase de{' '}
-          {visao.fase === 'Compra' ? 'compra' : 'ação'}
-        </p>
+        <p>{estadoDaRodada(visao)}</p>
       </section>
 
       <section aria-label="Mão do adversário">

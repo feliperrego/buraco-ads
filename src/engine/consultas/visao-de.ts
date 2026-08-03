@@ -1,6 +1,6 @@
 import type { Carta } from '../dominio/carta.ts'
 import type { Jogo } from '../dominio/jogo.ts'
-import type { FaseDoTurno, JogadorId, Partida } from '../dominio/partida.ts'
+import type { FaseDaRodada, JogadorId, Partida } from '../dominio/partida.ts'
 
 /**
  * M11 — projeção de `Partida`. A IA recebe isto e **nunca** a `Partida`, e a
@@ -23,10 +23,17 @@ export type VisaoDoJogador = {
   readonly cartasNaMaoDoAdversario: number
   /** Não reclamados (RF3.4). */
   readonly mortosRestantes: number
+  /**
+   * S115 — quantos mortos **eu** peguei, que é a primeira condição da R10.1.
+   *
+   * Só o meu. O do adversário não é exigido por nenhuma regra desta fatia, e a
+   * RF5.2 é mais barata de manter quando o campo não existe.
+   */
+  readonly meusMortos: number
   /** Índice = `JogadorId` (RF4.1). */
   readonly placar: readonly [number, number]
   readonly jogadorDaVez: JogadorId
-  readonly fase: FaseDoTurno
+  readonly fase: FaseDaRodada
   readonly numeroDaRodada: number
 }
 
@@ -46,6 +53,7 @@ export function visaoDe(partida: Partida, jogador: JogadorId): VisaoDoJogador {
     cartasNoMonte: partida.monte.length,
     cartasNaMaoDoAdversario: adversario.mao.length,
     mortosRestantes: partida.mortos.filter((morto) => morto.reclamadoPor === null).length,
+    meusMortos: partida.mortos.filter((morto) => morto.reclamadoPor === jogador).length,
     placar: partida.placar,
     jogadorDaVez: partida.jogadorDaVez,
     fase: partida.fase,

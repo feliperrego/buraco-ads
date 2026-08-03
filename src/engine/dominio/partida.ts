@@ -11,8 +11,19 @@ import type { Jogo } from './jogo.ts'
 /** S11 — o humano é sempre `0`. */
 export type JogadorId = 0 | 1
 
-/** R3.1, colapsado em duas fases pelo domain.md §2. */
-export type FaseDoTurno = 'Compra' | 'Acao'
+/**
+ * R3.1, colapsado em duas fases pelo domain.md §2, mais o estado terminal.
+ *
+ * S112 — `RodadaEncerrada` existia no diagrama do `domain.md` §1.3 desde a Onda 1
+ * e não existia aqui: a H11 é a primeira fatia que o alcança. O tipo mudou de
+ * nome junto (era `FaseDoTurno`) porque um valor chamado `RodadaEncerrada` num
+ * tipo chamado "fase do turno" é uma mentira que alguém acredita.
+ *
+ * O terceiro valor obriga **todo lugar que enumera `fase` a virar `switch`
+ * exaustivo**. Não é estilo: um `if (fase === 'Compra') … else` compila com três
+ * valores e cai no ramo errado, que é o achado da H7 aplicado antes do erro.
+ */
+export type FaseDaRodada = 'Compra' | 'Acao' | 'RodadaEncerrada'
 
 /**
  * S105 — **não** existe campo `mortosPegos`.
@@ -55,7 +66,7 @@ export type Partida = {
   readonly lixo: readonly Carta[]
   readonly mortos: readonly [Morto, Morto]
   readonly jogadorDaVez: JogadorId
-  readonly fase: FaseDoTurno
+  readonly fase: FaseDaRodada
   readonly placar: readonly [number, number]
   readonly numeroDaRodada: number
 }

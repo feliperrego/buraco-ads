@@ -2,7 +2,7 @@ import { NAIPES, VALORES, baralhoCanonico } from '../dominio/carta.ts'
 import type { Carta, Naipe, Valor } from '../dominio/carta.ts'
 import { criarJogo } from '../dominio/jogo.ts'
 import type { Jogo, Posicao } from '../dominio/jogo.ts'
-import type { FaseDoTurno, Jogador, JogadorId, Partida } from '../dominio/partida.ts'
+import type { FaseDaRodada, Jogador, JogadorId, Partida } from '../dominio/partida.ts'
 
 /**
  * C4 — o construtor **validado** de estado, e a Alternativa C do
@@ -110,7 +110,7 @@ export type DescricaoDaPartida = {
   readonly jogos?: readonly [readonly (readonly Posicao[])[], readonly (readonly Posicao[])[]]
   readonly lixo?: readonly Carta[]
   readonly jogadorDaVez?: JogadorId
-  readonly fase?: FaseDoTurno
+  readonly fase?: FaseDaRodada
   readonly semente?: number
 }
 

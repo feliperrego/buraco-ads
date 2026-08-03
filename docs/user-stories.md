@@ -105,7 +105,7 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 | **H8** | Vejo minhas canastras e a categoria de cada uma | R8.1, R8.2, R8.3, R8.4, R8.6, RF3.5 |
 | **H9** | Estendo a sequência até o curinga ocupar sua casa e a canastra fica limpa | R6.5, R6.6, R8.5 |
 | **H10** | Fico sem cartas na mão e recebo um morto automaticamente | R2.3, R9.1–R9.4, M3 |
-| **H11** | Fico sem cartas com uma canastra limpa e bato, encerrando a rodada | R7.3, R9.5, R9.6, R10.1–R10.4, M4 |
+| **H11** | Fico sem cartas com uma canastra limpa e bato, encerrando a rodada | R7.3, R9.5, R9.6, R10.1, R10.1.2, R10.1.3, R10.2, R10.3, R10.4, M4 |
 | **H12** | Vejo a apuração detalhada da rodada, item por item | R11.1–R11.6, RF4.2, M5 |
 
 > H9 é a regra mais difícil do jogo e a que mais depende do modelo estar certo. Se M2
@@ -122,6 +122,11 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 > H14 é puro caso de borda e vale um marco próprio junto de H13 porque é a história com mais
 > chance de nunca acontecer numa partida real de teste. Precisa de teste com semente
 > específica, não de sorte.
+
+> **A R10.1.1 é da H14, e a H11 não a implementa (S110).** A H11 citava `R10.1–R10.4` como
+> intervalo, o que a incluía sem querer: a exceção suspende a exigência do morto quando um
+> morto **virou monte**, e a conversão é a R4.6, que é desta história. A citação da H11 foi
+> aberta item a item para dizer o que ela fecha de fato.
 
 ### Marco V — Oponente de verdade
 

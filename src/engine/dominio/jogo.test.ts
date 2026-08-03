@@ -3,6 +3,7 @@ import { carta, cartas, posicoes } from '../testing/construtor.ts'
 import {
   aumentarJogo,
   categoriaDe,
+  contaComoLimpa,
   criarJogo,
   ehCanastra,
   janelaDe,
@@ -646,5 +647,38 @@ describe('R6.5 e R6.6 — o curinga ocupa sua casa e deixa de ser curinga', () =
     const resultado = regularizado('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♥>7', '7♥ 8♥ 9♥')
 
     expect(resultado.tipo === 'invalido' ? resultado.violados : []).toContain('I5')
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0011 §9.2 — a R10.2.
+ *
+ * S114 — a regra inteira é "canastra sem curinga". O par `CA-R10.2-1` /
+ * `CA-R10.2-2` é o que trava a interpretação: quem implementar "canastra de 1000
+ * sempre conta" passa no primeiro e falha no segundo.
+ */
+describe('R10.2 — que canastra conta como limpa para bater', () => {
+  it('CA-R10.2-1 — a canastra de 1000 sem curinga conta', () => {
+    expect(contaComoLimpa(posicoes('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥'))).toBe(true)
+  })
+
+  it('CA-R10.2-2 — a canastra de 1000 com curinga não conta', () => {
+    // Mesma janela, mesma categoria `DE_1000`, e a resposta é o contrário. É por
+    // isto que a R10.2 não pode ser lida pela categoria.
+    expect(contaComoLimpa(posicoes('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♠>7 8♥ 9♥ 10♥ J♥ Q♥ K♥ A♥'))).toBe(false)
+  })
+
+  it('CA-R10.2-3 — seis cartas sem curinga não contam: a R8.1 vem antes', () => {
+    expect(contaComoLimpa(posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥'))).toBe(false)
+    // A âncora positiva do mesmo naipe, uma carta adiante.
+    expect(contaComoLimpa(posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥'))).toBe(true)
+  })
+
+  it('CA-R10.2-3 — sete cartas com curinga não contam, e a categoria é SUJA', () => {
+    const suja = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ 2♠>J')
+    const resultado = criarJogo(0, suja)
+
+    expect(resultado.tipo === 'valido' ? categoriaDe(resultado.jogo) : null).toBe('SUJA')
+    expect(contaComoLimpa(suja)).toBe(false)
   })
 })

@@ -43,6 +43,7 @@ function visaoInicial(ajustes: Partial<VisaoDoJogador> = {}): VisaoDoJogador {
     cartasNoMonte: 60,
     cartasNaMaoDoAdversario: 11,
     mortosRestantes: 2,
+    meusMortos: 0,
     placar: [0, 0],
     jogadorDaVez: 0,
     fase: 'Compra',
@@ -865,5 +866,82 @@ describe('S108 — o painel de mortos', () => {
 
     expect(painel.textContent).toMatch(/nenhum morto/i)
     expect(painel.textContent).not.toContain('0 mortos')
+  })
+})
+
+/**
+ * Critérios de interface da spec 0011 §9.4 — o fim da rodada.
+ *
+ * S117 — o encerramento aparece no painel que já existe. Sem ele, a mesa fica
+ * inerte **e sem explicação**: `movimentosValidos` devolve `[]`, a IA para, e
+ * nada na tela diz por quê. É o modo de falha que o roadmap.md §3 já registra
+ * para a R4.8, e repeti-lo de propósito seria pior.
+ */
+describe('S117 — a rodada encerrada aparece na tela', () => {
+  it('CA-S117-1 — quando o humano bate, o painel diz que foi ele', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'RodadaEncerrada', mao: [], jogadorDaVez: 1 })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /vez e fase/i })
+
+    // S113 — quem bateu é a mão vazia. `jogadorDaVez` aponta para o adversário
+    // depois do descarte final, e ler por ele daria a resposta trocada.
+    expect(painel.textContent).toMatch(/você bateu/i)
+    expect(painel.textContent).toMatch(/rodada encerrada/i)
+  })
+
+  it('CA-S117-2 — quando a IA bate, o painel diz que foi o adversário', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'RodadaEncerrada', cartasNaMaoDoAdversario: 0 })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /vez e fase/i })
+
+    expect(painel.textContent).toMatch(/adversário bateu/i)
+    expect(painel.textContent).not.toMatch(/você bateu/i)
+  })
+
+  it('CA-S117-3 — durante a rodada o painel continua falando de vez e fase', () => {
+    // A âncora positiva das duas acima: sem ela, um painel que dissesse "bateu"
+    // o tempo todo passaria nas duas.
+    render(<TelaPartida visao={visaoInicial({ fase: 'Acao' })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    const painel = screen.getByRole('region', { name: /vez e fase/i })
+
+    expect(painel.textContent).toMatch(/fase de ação/i)
+    expect(painel.textContent).not.toMatch(/bateu/i)
+  })
+
+  it('CA-S117-3 — encerrada a rodada, nenhuma carta da mão é selecionável', () => {
+    const visao = visaoInicial({ fase: 'RodadaEncerrada', cartasNaMaoDoAdversario: 0 })
+
+    // A âncora positiva vem primeiro: com movimentos, as cartas são botões.
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'Acao' })}
+        movimentos={descartesDe(visaoInicial())}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    expect(
+      within(screen.getByRole('region', { name: /minha mão/i })).getAllByRole('button').length,
+    ).toBeGreaterThan(0)
+
+    cleanup()
+    render(<TelaPartida visao={visao} movimentos={[]} aoJogar={vi.fn()} />)
+
+    expect(
+      within(screen.getByRole('region', { name: /minha mão/i })).queryAllByRole('button'),
+    ).toHaveLength(0)
   })
 })

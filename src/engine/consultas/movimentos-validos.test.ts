@@ -4,7 +4,7 @@ import type { Comando } from '../comandos/comando.ts'
 import type { Carta, Naipe, Valor } from '../dominio/carta.ts'
 import type { Posicao } from '../dominio/jogo.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
-import type { JogadorId, Partida } from '../dominio/partida.ts'
+import type { JogadorId, Morto, Partida } from '../dominio/partida.ts'
 import {
   NAIPES,
   VALORES,
@@ -1006,5 +1006,108 @@ describe('S109 — sem morto, a jogada deixa duas cartas, não uma', () => {
 
       expect(movimentosValidos(visaoDaVez(resultado.partida))).not.toHaveLength(0)
     }
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0011 §9.3 — a guarda ganha a segunda metade.
+ *
+ * S106 e S109 já diziam quando a mão pode zerar: com morto esperando. A R10.1.3
+ * tem uma segunda condição, e é esta fatia que a traz — **ou** há morto, **ou** a
+ * batida é possível.
+ */
+function comMortos(
+  mao: readonly Carta[],
+  meus: readonly (readonly Posicao[])[],
+  donos: readonly [JogadorId | null, JogadorId | null],
+): Partida {
+  const naMesa = meus.flat().map((posicao) => posicao.carta)
+  const base = construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [meus, []],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+
+  // As cartas do morto reclamado voltam para o monte: a M9 exige que as 104
+  // continuem existindo, e a mão de quem pegou já foi jogada.
+  const reclamar = (morto: Morto, dono: JogadorId | null): Morto =>
+    dono === null ? morto : { ...morto, cartas: [], reclamadoPor: dono }
+
+  return {
+    ...base,
+    mortos: [reclamar(base.mortos[0], donos[0]), reclamar(base.mortos[1], donos[1])],
+    monte: [
+      ...base.monte,
+      ...(donos[0] === null ? [] : base.mortos[0].cartas),
+      ...(donos[1] === null ? [] : base.mortos[1].cartas),
+    ],
+  }
+}
+
+const LIMPA_NA_MESA = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+const SUJA_NA_MESA = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ 2♠>J')
+
+describe('R10.1.3 — a jogada que esvazia a mão depende de morto ou de batida', () => {
+  it('CA-R10.1-2 — sem morto e só com canastra suja, o baixar que zera a mão não é oferecido', () => {
+    expect(baixaresDe(comMortos(cartas('5♠ 6♠ 7♠'), [SUJA_NA_MESA], [0, 1]))).toHaveLength(0)
+  })
+
+  it('CA-R10.1-2 — sem morto, com canastra limpa, o mesmo baixar é oferecido', () => {
+    // A âncora positiva do critério acima: muda **só** o curinga do jogo na mesa.
+    expect(baixaresDe(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA], [0, 1]))).toHaveLength(1)
+  })
+
+  it('CA-R10.1.2-1 — sem morto pego, a canastra limpa não libera: nada esvazia a mão', () => {
+    // R10.1.2 — o adversário levou os dois. A primeira condição da R10.1 falha,
+    // e a guarda continua fechada apesar da canastra limpa.
+    expect(baixaresDe(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA], [1, 1]))).toHaveLength(0)
+  })
+
+  it('CA-R10.1.3-1 — sem morto e sem poder bater, nenhum movimento esvazia a mão', () => {
+    const partida = comMortos(cartas('5♠ 6♠ 7♠'), [SUJA_NA_MESA], [0, 1])
+    const movimentos = movimentosValidos(visaoDaVez(partida))
+    const mao = partida.jogadores[0].mao.length
+
+    expect(movimentos.length).toBeGreaterThan(0)
+
+    for (const comando of movimentos) {
+      expect(cartasCitadasPor(comando).length).toBeLessThan(mao)
+    }
+  })
+})
+
+describe('S115 — a condição da batida vale sobre o resultado, não sobre o estado', () => {
+  it('CA-S115-1 — a jogada que fecha a canastra limpa é a que zera a mão, e é oferecida', () => {
+    // O jogo tem **seis** cartas: não é canastra ainda. Quem avaliar a R10.1 no
+    // estado atual recusa este aumentar, e o jogador perde a batida.
+    const partida = comMortos(cartas('J♥'), [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥')], [0, 1])
+    const movimentos = movimentosValidos(visaoDaVez(partida))
+
+    expect(movimentos.filter((comando) => comando.tipo === 'aumentar')).toHaveLength(1)
+    // E o descarte da mesma carta **não** é oferecido: ele zeraria a mão sem
+    // fechar canastra nenhuma. É o par que separa as duas leituras.
+    expect(movimentos.filter((comando) => comando.tipo === 'descartar')).toHaveLength(0)
+  })
+})
+
+describe('R10.3 e S112 — na rodada encerrada não há jogada', () => {
+  it('CA-R10.3-1 — encerrada a rodada, a lista é vazia para os dois jogadores', () => {
+    const encerrada: Partida = {
+      ...comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA], [0, 1]),
+      fase: 'RodadaEncerrada',
+    }
+
+    expect(movimentosValidos(visaoDe(encerrada, 0))).toHaveLength(0)
+    expect(movimentosValidos(visaoDe(encerrada, 1))).toHaveLength(0)
+  })
+
+  it('CA-S112-1 — a fase nova não cai no ramo de ação', () => {
+    // A âncora positiva: o mesmo estado em `Acao` oferece jogadas. Sem ela, uma
+    // enumeração quebrada passaria no critério acima de graça.
+    const emAcao = comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA], [0, 1])
+
+    expect(movimentosValidos(visaoDe(emAcao, 0)).length).toBeGreaterThan(0)
+    expect(movimentosValidos(visaoDe({ ...emAcao, fase: 'RodadaEncerrada' }, 0))).toHaveLength(0)
   })
 })

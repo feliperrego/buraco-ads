@@ -5,11 +5,12 @@ import {
   CASAS,
   CASA_DO_DOIS,
   casasDe,
+  contaComoLimpa,
   janelaDe,
   regularizarJogo,
   valorDaCasa,
 } from '../dominio/jogo.ts'
-import type { Jogo } from '../dominio/jogo.ts'
+import type { Posicao } from '../dominio/jogo.ts'
 import type { VisaoDoJogador } from './visao-de.ts'
 
 /**
@@ -29,51 +30,86 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
     return []
   }
 
-  if (visao.fase === 'Compra') {
-    // R3.2 — descartar não aparece aqui. A ausência da aresta é a regra
-    // (domain.md §1.3), não uma validação.
-    //
-    // R4.1 — as duas opções de compra são exclusivas entre si, e a
-    // exclusividade também é ausência de aresta (S78): as duas levam a `Acao`,
-    // e de lá não se volta. Nada aqui precisa saber que o jogador "já comprou".
-    const compras: Comando[] = []
+  // S112 — `switch`, e não `if … else`. Com três valores de fase, um `else`
+  // deixaria a `RodadaEncerrada` cair no ramo de ação, oferecendo jogada numa
+  // rodada acabada — e compilaria. Esta forma **não** compila quando um estado
+  // novo aparece, que é a lição da H7 aplicada antes do erro.
+  switch (visao.fase) {
+    case 'RodadaEncerrada':
+      // R10.3 — a rodada encerra imediatamente, para os dois jogadores.
+      return []
+    case 'Compra':
+      return compras(visao)
+    case 'Acao':
+      return acoes(visao)
+  }
+}
 
-    if (visao.cartasNoMonte > 0) {
-      compras.push({ tipo: 'comprarDoMonte' })
-    }
+/**
+ * R3.2 — descartar não aparece aqui. A ausência da aresta é a regra
+ * (domain.md §1.3), não uma validação.
+ *
+ * R4.1 — as duas opções de compra são exclusivas entre si, e a exclusividade
+ * também é ausência de aresta (S78): as duas levam a `Acao`, e de lá não se
+ * volta. Nada aqui precisa saber que o jogador "já comprou".
+ */
+function compras(visao: VisaoDoJogador): readonly Comando[] {
+  const comandos: Comando[] = []
 
-    // S79/R4.5 — espelho exato da linha acima. Com o lixo vazio, a única opção é
-    // o monte, e isso é a **ausência** do comando, não uma recusa com mensagem.
-    if (visao.lixo.length > 0) {
-      compras.push({ tipo: 'pegarLixo' })
-    }
-
-    return compras
+  if (visao.cartasNoMonte > 0) {
+    comandos.push({ tipo: 'comprarDoMonte' })
   }
 
-  // S106/R10.1.3 — esvaziar a mão é legal **quando há morto esperando** (R9.2),
-  // e proibido quando não há. Até a H9 isto era a S45, uma restrição nossa sem
-  // regra por trás; a partir da H10 é a primeira metade da R10.1.3, e a segunda
-  // — a ressalva da batida — chega na H11.
-  const podeEsvaziar = visao.mortosRestantes > 0
+  // S79/R4.5 — espelho exato do bloco acima. Com o lixo vazio, a única opção é
+  // o monte, e isso é a **ausência** do comando, não uma recusa com mensagem.
+  if (visao.lixo.length > 0) {
+    comandos.push({ tipo: 'pegarLixo' })
+  }
 
+  return comandos
+}
+
+function acoes(visao: VisaoDoJogador): readonly Comando[] {
   // R7.1, R7.2 — qualquer carta da mão pode ser descartada, inclusive a que
   // acabou de ser comprada. A T7 pediu enumeração completa antes de otimizar.
   //
   // O descarte **também** esvazia a mão, e é o caminho que a guarda nunca cobriu
-  // até aqui: a S70 afirmou que nenhuma sequência de jogadas oferecidas zerava a
-  // mão, e isso era falso em 58 de 200 partidas medidas.
+  // até a H10: a S70 afirmou que nenhuma sequência de jogadas oferecidas zerava
+  // a mão, e isso era falso em 58 de 200 partidas medidas. O descarte não muda
+  // os jogos da mesa, então a pergunta da R10.1 é feita sobre `SEM_JOGO_NOVO`.
   const descartes =
-    visao.mao.length === 1 && !podeEsvaziar
+    visao.mao.length === 1 && !podeZerar(visao, SEM_JOGO_NOVO)
       ? []
       : visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id }))
 
-  return [
-    ...descartes,
-    ...baixares(visao.mao, podeEsvaziar),
-    ...aumentares(visao.mao, visao.meusJogos, podeEsvaziar),
-    ...regularizacoes(visao.mao, visao.meusJogos, podeEsvaziar),
-  ]
+  return [...descartes, ...baixares(visao), ...aumentares(visao), ...regularizacoes(visao)]
+}
+
+/** O resultado de um comando que não muda jogo nenhum da mesa. */
+const SEM_JOGO_NOVO: readonly Posicao[] = []
+
+/**
+ * R9.2 e R10.1 — as duas continuações legais da mão vazia, e a pergunta que a
+ * guarda faz antes de oferecer uma jogada que a esvazie.
+ *
+ * S115 — a segunda condição é avaliada **sobre o resultado**, e não sobre o
+ * estado atual: a jogada que zera a mão pode ser exatamente a que fecha a
+ * canastra limpa. Ler a R10.1 antes do comando recusaria a jogada mais bonita
+ * do jogo — baixar as últimas cartas e bater com elas.
+ *
+ * A R10.1.2 não precisa de código: quando o adversário levou os dois mortos,
+ * `meusMortos` é zero e a primeira condição já é falsa.
+ */
+function podeZerar(visao: VisaoDoJogador, jogoResultante: readonly Posicao[]): boolean {
+  if (visao.mortosRestantes > 0) {
+    return true
+  }
+
+  return (
+    visao.meusMortos > 0 &&
+    (visao.meusJogos.some((jogo) => contaComoLimpa(jogo.posicoes)) ||
+      contaComoLimpa(jogoResultante))
+  )
 }
 
 /**
@@ -197,7 +233,8 @@ function curingasDisponiveis(mao: readonly Carta[], usadas: ReadonlySet<string>)
  * as três são a mesma coisa: a casa vazia está no meio ou numa ponta, e o código
  * não precisa saber qual.
  */
-function baixares(mao: readonly Carta[], podeEsvaziar: boolean): readonly Comando[] {
+function baixares(visao: VisaoDoJogador): readonly Comando[] {
+  const mao = visao.mao
   const comandos: Comando[] = []
 
   for (const naipe of NAIPES) {
@@ -209,8 +246,9 @@ function baixares(mao: readonly Carta[], podeEsvaziar: boolean): readonly Comand
 
     for (let inicio = 0; inicio < CASAS; inicio++) {
       for (let fim = inicio + 2; fim < CASAS; fim++) {
-        for (const cartas of leiturasDe(casasEntre(inicio, fim), mapa, mao, true)) {
-          adicionar(comandos, mao, podeEsvaziar, { tipo: 'baixar', cartas })
+        for (const leitura of leiturasDe(casasEntre(inicio, fim), mapa, mao, true)) {
+          // O jogo resultante **é** a leitura: baixar cria um jogo novo.
+          adicionar(comandos, visao, { tipo: 'baixar', cartas: leitura.cartas }, leitura.posicoes)
         }
       }
     }
@@ -234,14 +272,11 @@ function baixares(mao: readonly Carta[], podeEsvaziar: boolean): readonly Comand
  * próprios, porque é isso que `visao.meusJogos` carrega. Nenhuma checagem de
  * dono é escrita, e nenhuma pode ser esquecida.
  */
-function aumentares(
-  mao: readonly Carta[],
-  meusJogos: readonly Jogo[],
-  podeEsvaziar: boolean,
-): readonly Comando[] {
+function aumentares(visao: VisaoDoJogador): readonly Comando[] {
+  const mao = visao.mao
   const comandos: Comando[] = []
 
-  for (const jogo of meusJogos) {
+  for (const jogo of visao.meusJogos) {
     const { inicio, fim } = janelaDe(jogo)
     const mapa = porCasa(mao.filter((carta) => carta.naipe === jogo.naipe))
 
@@ -257,8 +292,16 @@ function aumentares(
 
         const casasNovas = [...casasEntre(novoInicio, inicio - 1), ...casasEntre(fim + 1, novoFim)]
 
-        for (const cartas of leiturasDe(casasNovas, mapa, mao, admiteCuringa)) {
-          adicionar(comandos, mao, podeEsvaziar, { tipo: 'aumentar', jogo: jogo.id, cartas })
+        for (const leitura of leiturasDe(casasNovas, mapa, mao, admiteCuringa)) {
+          adicionar(
+            comandos,
+            visao,
+            { tipo: 'aumentar', jogo: jogo.id, cartas: leitura.cartas },
+            // O mesmo multiconjunto que `aumentarJogo` monta antes de `criarJogo`
+            // reordenar. A R10.2 só olha tamanho e curinga, então a ordem não
+            // muda a resposta — e derivá-la aqui seria repetir a regra.
+            [...jogo.posicoes, ...leitura.posicoes],
+          )
         }
       }
     }
@@ -287,14 +330,11 @@ function aumentares(
  * `regularizarJogo`, e é a I2 que recusa o curinga de outro naipe. Nenhuma
  * checagem de naipe é escrita aqui, que é o que a `CA-S98-2` cobra.
  */
-function regularizacoes(
-  mao: readonly Carta[],
-  meusJogos: readonly Jogo[],
-  podeEsvaziar: boolean,
-): readonly Comando[] {
+function regularizacoes(visao: VisaoDoJogador): readonly Comando[] {
+  const mao = visao.mao
   const comandos: Comando[] = []
 
-  for (const jogo of meusJogos) {
+  for (const jogo of visao.meusJogos) {
     if (!jogo.posicoes.some((posicao) => posicao.tipo === 'Curinga')) {
       continue
     }
@@ -330,20 +370,40 @@ function regularizacoes(
 
         const escolhidas = resolvida.naturais.flatMap((carta) => (carta ? [carta] : []))
 
-        if (regularizarJogo(jogo, escolhidas).tipo !== 'valido') {
+        const regularizado = regularizarJogo(jogo, escolhidas)
+
+        if (regularizado.tipo !== 'valido') {
           continue
         }
 
-        adicionar(comandos, mao, podeEsvaziar, {
-          tipo: 'regularizarCuringa',
-          jogo: jogo.id,
-          cartas: escolhidas.map((carta) => carta.id),
-        })
+        adicionar(
+          comandos,
+          visao,
+          {
+            tipo: 'regularizarCuringa',
+            jogo: jogo.id,
+            cartas: escolhidas.map((carta) => carta.id),
+          },
+          // Aqui o jogo resultante já existe: a validade foi conferida
+          // construindo-o (S98).
+          regularizado.jogo.posicoes,
+        )
       }
     }
   }
 
   return comandos
+}
+
+/**
+ * Uma forma de preencher um conjunto de casas, nas duas linguagens de que a
+ * enumeração precisa: as **cartas** que o comando cita e as **posições** que o
+ * jogo terá. As duas descrevem a mesma jogada, e ter as posições aqui é o que
+ * dispensa a guarda de reconstruir o resultado (S115).
+ */
+type Leitura = {
+  readonly cartas: readonly CartaBaixada[]
+  readonly posicoes: readonly Posicao[]
 }
 
 /**
@@ -359,7 +419,7 @@ function leiturasDe(
   mapa: ReadonlyMap<number, readonly Carta[]>,
   mao: readonly Carta[],
   admiteCuringa: boolean,
-): readonly (readonly CartaBaixada[])[] {
+): readonly Leitura[] {
   const resolvida = resolverCasas(casas, mapa)
 
   if (resolvida === null) {
@@ -367,7 +427,14 @@ function leiturasDe(
   }
 
   if (resolvida.casaVazia === null) {
-    return [resolvida.naturais.flatMap((carta) => (carta ? [{ carta: carta.id }] : []))]
+    const naturais = resolvida.naturais.flatMap((carta) => (carta ? [carta] : []))
+
+    return [
+      {
+        cartas: naturais.map((carta) => ({ carta: carta.id })),
+        posicoes: naturais.map((carta) => ({ tipo: 'Natural', carta })),
+      },
+    ]
   }
 
   if (!admiteCuringa) {
@@ -381,41 +448,46 @@ function leiturasDe(
   // estivesse, ela teria sido preenchida como natural acima. É por isso que a
   // S54 não precisa de guarda aqui — ela vive em `criarJogo`, onde protege a
   // engine de um chamador com bug (S22).
-  return curingasDisponiveis(mao, usadas).map((curinga) =>
-    resolvida.naturais.map((carta) =>
+  return curingasDisponiveis(mao, usadas).map((curinga) => ({
+    cartas: resolvida.naturais.map((carta) =>
       carta ? { carta: carta.id } : { carta: curinga.id, representa },
     ),
-  )
+    posicoes: resolvida.naturais.map((carta): Posicao =>
+      carta ? { tipo: 'Natural', carta } : { tipo: 'Curinga', carta: curinga, representa },
+    ),
+  }))
 }
 
 /**
- * S106 e S109 — quanto uma jogada precisa deixar na mão.
+ * S106, S109 e S115 — quanto uma jogada precisa deixar na mão.
  *
- * Com morto esperando (R9.2), nada: esvaziar a mão é legal pela R10.1.3, e a
- * guarda some. Sem morto, são **duas** cartas, não uma.
+ * Duas cartas bastam **sempre**, e o número cai da R7.1: o turno termina com o
+ * descarte obrigatório, então antes dele são uma para descartar e uma para
+ * ficar. A S45 dizia uma, e uma trava a mesa — `movimentosValidos` devolvia `[]`
+ * em fase `Acao` em 15 de 200 partidas simuladas, todas em `mão=1, sem morto`.
+ * O erro foi contar cartas quando a condição é sobre o **fim do turno**, e a
+ * R10.1.3 foi corrigida junto (S118).
  *
- * A S45 dizia uma, e uma era pouco. A R7.1 obriga a descartar e a R10.1.3 proíbe
- * esvaziar a mão sem morto: com uma carta só, as duas regras se contradizem e a
- * mesa congela — `movimentosValidos` devolve `[]` em fase `Acao`. Medido em 15 de
- * 200 partidas simuladas, todas no mesmo estado (`mão=1, mortosRestantes=0`).
- *
- * O erro da S45 foi contar cartas em vez de contar o **turno**. Reter "ao menos
- * uma carta" é uma condição sobre o fim do turno, e o turno termina com o
- * descarte obrigatório. Logo, antes dele são duas: uma para descartar e uma para
- * ficar.
+ * Abaixo de duas, a jogada só é legal se a mão puder zerar — e aí a pergunta
+ * passa a depender do **resultado** do comando, não do estado atual (S115). É a
+ * única pergunta cara desta enumeração, e ela só é feita aqui, para os poucos
+ * candidatos que chegam a este ponto.
  *
  * A propriedade que isso preserva é a mesma que a S70 buscava, agora verdadeira:
- * como cada jogada oferecida deixa ao menos duas cartas, nenhuma sequência delas
- * fecha o caminho do descarte — nem baixar seguido de dois aumentos, que é o que
- * a R3.3 autoriza. A guarda não olha o histórico.
+ * nenhuma sequência de jogadas oferecidas fecha o caminho do descarte — nem
+ * baixar seguido de dois aumentos, que é o que a R3.3 autoriza. A guarda não
+ * olha o histórico.
  */
 function adicionar(
   comandos: Comando[],
-  mao: readonly Carta[],
-  podeEsvaziar: boolean,
+  visao: VisaoDoJogador,
   comando: Extract<Comando, { readonly cartas: readonly (CartaBaixada | string)[] }>,
+  jogoResultante: readonly Posicao[],
 ) {
-  if (mao.length - comando.cartas.length < (podeEsvaziar ? 0 : 2)) {
+  // Duas cartas de sobra bastam sempre: uma para o descarte da R7.1 e uma para
+  // ficar. Abaixo disso, a jogada só é legal se a mão puder zerar (S115), e é
+  // esse o único caso que paga a pergunta cara sobre o resultado.
+  if (visao.mao.length - comando.cartas.length < 2 && !podeZerar(visao, jogoResultante)) {
     return
   }
 

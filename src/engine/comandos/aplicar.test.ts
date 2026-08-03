@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
-import type { FaseDoTurno, Partida } from '../dominio/partida.ts'
+import type { FaseDaRodada, JogadorId, Morto, Partida } from '../dominio/partida.ts'
 import { categoriaDe } from '../dominio/jogo.ts'
 import type { Jogo, Posicao } from '../dominio/jogo.ts'
 import { carta, cartas, construirPartida, outrasCartas, posicoes } from '../testing/construtor.ts'
@@ -580,7 +580,7 @@ const LIXO = 'K♠ 7♦ 3♣'
 const MAO_H7 = '5♥ 6♥ 9♠ J♦ 4♣ Q♦ 8♣ 10♠ A♣ 2♦ 6♠'
 
 /** Uma partida na fase de compra, com lixo. */
-function comLixo(notacaoDaMao: string, notacaoDoLixo: string, fase: FaseDoTurno = 'Compra') {
+function comLixo(notacaoDaMao: string, notacaoDoLixo: string, fase: FaseDaRodada = 'Compra') {
   const mao = cartas(notacaoDaMao)
   const lixo = cartas(notacaoDoLixo)
 
@@ -959,6 +959,140 @@ describe('M9 — conservação ao pegar o morto', () => {
     })
     const ids = todasAsCartas(depois).map((uma) => uma.id)
 
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0011 §9.1 — a batida.
+ *
+ * M4/S111 — bater é **efeito automático**, no mesmo lugar do morto e **depois**
+ * dele. A ordem não é escolha nossa: a R9.2 não tem ressalva, então quem zera a
+ * mão com morto na mesa pega o morto mesmo tendo canastra limpa.
+ */
+
+/** Uma canastra de sete naturais — conta como limpa (R10.2). */
+const LIMPA = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+
+/** A mesma canastra com um curinga no lugar do J — não conta (R10.2). */
+const SUJA = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ 2♠>J')
+
+/**
+ * Uma partida em ação com os jogos do humano na mesa e os mortos no estado
+ * pedido, `null` para intacto e `JogadorId` para quem o pegou.
+ *
+ * As cartas do morto reclamado voltam para o **monte**, e não para a mão de
+ * ninguém: a M9 exige que as 104 continuem existindo, e a mão de quem pegou já
+ * foi jogada. O construtor da C4 reprovaria qualquer descuido aqui.
+ */
+function comJogosEMortos(
+  mao: readonly Carta[],
+  meus: readonly (readonly Posicao[])[],
+  donos: readonly [JogadorId | null, JogadorId | null],
+): Partida {
+  const naMesa = meus.flat().map((posicao) => posicao.carta)
+  const base = construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [meus, []],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+
+  const reclamar = (morto: Morto, dono: JogadorId | null): Morto =>
+    dono === null ? morto : { ...morto, cartas: [], reclamadoPor: dono }
+
+  return {
+    ...base,
+    mortos: [reclamar(base.mortos[0], donos[0]), reclamar(base.mortos[1], donos[1])],
+    monte: [
+      ...base.monte,
+      ...(donos[0] === null ? [] : base.mortos[0].cartas),
+      ...(donos[1] === null ? [] : base.mortos[1].cartas),
+    ],
+  }
+}
+
+/** Baixar as três cartas de espadas que as fixtures abaixo põem na mão. */
+const BAIXAR_TRES: Comando = {
+  tipo: 'baixar',
+  cartas: cartas('5♠ 6♠ 7♠').map((uma): CartaBaixada => ({ carta: uma.id })),
+}
+
+describe('R10.1 e R10.3 — a batida encerra a rodada', () => {
+  it('CA-R10.1-1 — mão zerada, canastra limpa e nenhum morto disponível: a rodada encerra', () => {
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(antes.fase).toBe('Acao')
+    expect(depois.jogadores[0].mao).toHaveLength(0)
+    expect(depois.fase).toBe('RodadaEncerrada')
+  })
+
+  it('CA-R10.4-2 — a batida sem descarte final não mexe no lixo', () => {
+    // R10.4 — bater com ou sem descarte é o mesmo caminho, e este é o "sem".
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(depois.lixo).toEqual(antes.lixo)
+    expect(depois.fase).toBe('RodadaEncerrada')
+  })
+
+  it('CA-R10.4-1 — a batida pelo descarte final também encerra a rodada', () => {
+    const antes = comJogosEMortos(cartas('5♠'), [LIMPA], [0, 1])
+    const depois = aplicado(antes, { tipo: 'descartar', carta: carta('ESPADAS', '5').id })
+
+    expect(depois.jogadores[0].mao).toHaveLength(0)
+    expect(depois.lixo).toHaveLength(1)
+    expect(depois.fase).toBe('RodadaEncerrada')
+  })
+
+  it('CA-S113-1 — quem bateu é a mão vazia, e não o jogadorDaVez', () => {
+    // A leitura intuitiva erra: o `descartar` já passou a vez antes de a batida
+    // acontecer, então `jogadorDaVez` aponta para o **adversário** do batedor.
+    const depois = aplicado(comJogosEMortos(cartas('5♠'), [LIMPA], [0, 1]), {
+      tipo: 'descartar',
+      carta: carta('ESPADAS', '5').id,
+    })
+
+    expect(depois.jogadorDaVez).toBe(1)
+    expect(depois.jogadores[0].mao).toHaveLength(0)
+    expect(depois.jogadores[1].mao.length).toBeGreaterThan(0)
+  })
+
+  it('CA-S111-1 — com morto ainda disponível, a R9.2 vem antes: pega o morto e a rodada segue', () => {
+    // Mesmo estado da CA-R10.1-1, mudando **só** o segundo morto de reclamado
+    // para intacto. É o par que trava a ordem entre a R9.2 e a R10.1.
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, null])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(depois.jogadores[0].mao).toHaveLength(11)
+    expect(depois.fase).toBe('Acao')
+  })
+
+  it('CA-R10.1.2-1 — sem morto pego, a canastra limpa não basta: a rodada não encerra', () => {
+    // R10.1.2 — o adversário levou os dois, e a exigência do morto **continua**
+    // valendo. A R10.1.1, que a suspende, depende da conversão da R4.6 (H14).
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [1, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(depois.fase).toBe('Acao')
+  })
+
+  it('CA-R10.1-1 — com canastra apenas suja, a rodada não encerra', () => {
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [SUJA], [0, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(depois.fase).toBe('Acao')
+  })
+})
+
+describe('M9 — conservação na batida', () => {
+  it('CA-M9-13 — após a batida, as 104 cartas se conservam', () => {
+    const depois = aplicado(comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, 1]), BAIXAR_TRES)
+    const ids = todasAsCartas(depois).map((uma) => uma.id)
+
+    expect(depois.fase).toBe('RodadaEncerrada')
     expect(ids).toHaveLength(104)
     expect(new Set(ids).size).toBe(104)
   })

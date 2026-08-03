@@ -1,7 +1,7 @@
 import type { Carta } from '../dominio/carta.ts'
-import { aumentarJogo, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
+import { aumentarJogo, contaComoLimpa, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
 import type { Posicao } from '../dominio/jogo.ts'
-import type { Jogador, JogadorId, Partida } from '../dominio/partida.ts'
+import type { Jogador, JogadorId, Morto, Partida } from '../dominio/partida.ts'
 import type { CartaBaixada, Comando, Resultado } from './comando.ts'
 
 /**
@@ -19,8 +19,55 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
   const resultado = executar(partida, comando)
 
   return resultado.tipo === 'sucesso'
-    ? { tipo: 'sucesso', partida: comMorto(resultado.partida, quem) }
+    ? { tipo: 'sucesso', partida: comFimDeMao(resultado.partida, quem) }
     : resultado
+}
+
+/**
+ * As duas continuações da mão vazia, na ordem em que as regras as põem.
+ *
+ * S111 — a batida entra **depois** do morto, e a ordem não é escolha nossa: a
+ * R9.2 não tem ressalva. Quem zera a mão com morto na mesa pega o morto, mesmo
+ * tendo canastra limpa e podendo bater — o `domain.md` §1.3 já dizia isso ao
+ * exigir "não há morto disponível" para a batida (M4).
+ *
+ * O terceiro caso — mão vazia, sem morto, sem poder bater — é o que a R10.1.3
+ * proíbe, e a guarda de `movimentosValidos` não o oferece. Se um chamador
+ * insistir, o estado fica como está (S22): a engine não inventa regra para
+ * consertar quem não escolheu da lista.
+ */
+function comFimDeMao(partida: Partida, quem: JogadorId): Partida {
+  if (partida.jogadores[quem].mao.length > 0) {
+    return partida
+  }
+
+  const indice = partida.mortos.findIndex((morto) => morto.reclamadoPor === null)
+  const morto = partida.mortos[indice]
+
+  if (morto !== undefined) {
+    return comMorto(partida, quem, indice, morto)
+  }
+
+  return podeBater(partida, quem) ? { ...partida, fase: 'RodadaEncerrada' } : partida
+}
+
+/**
+ * R10.1 — as duas condições da batida, e nada além delas.
+ *
+ * A primeira é a R9.5: só bate quem já pegou morto. A R10.1.2 é o caso em que
+ * ela morde — o adversário levou os dois — e **não** precisa de código: a
+ * condição simplesmente é falsa. A R10.1.1, que a suspende quando um morto virou
+ * monte, depende da R4.6 e é da H14 (S110).
+ *
+ * A segunda é a R10.2, e ela mora inteira em `contaComoLimpa` (S114).
+ *
+ * A mão vazia não aparece aqui porque quem chama já a garantiu.
+ */
+function podeBater(partida: Partida, quem: JogadorId): boolean {
+  return (
+    partida.mortos.some((morto) => morto.reclamadoPor === quem) &&
+    partida.jogadores[quem].jogos.some((jogo) => contaComoLimpa(jogo.posicoes))
+  )
 }
 
 /**
@@ -39,21 +86,7 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
  * provou, neste projeto, que uma guarda replicada por comando deixa um comando
  * de fora e ninguém nota por seis fatias.
  */
-function comMorto(partida: Partida, quem: JogadorId): Partida {
-  if (partida.jogadores[quem].mao.length > 0) {
-    return partida
-  }
-
-  const indice = partida.mortos.findIndex((morto) => morto.reclamadoPor === null)
-  const morto = partida.mortos[indice]
-
-  if (morto === undefined) {
-    // R10.1.3 diz que a interface não deve oferecer a jogada que chega aqui
-    // (S106). Se chegou mesmo assim, o estado fica como está: a rodada sem morto
-    // é a R4.8 e a batida é a H11.
-    return partida
-  }
-
+function comMorto(partida: Partida, quem: JogadorId, indice: number, morto: Morto): Partida {
   // S104 — o primeiro não reclamado. A R4.7 já decidiu que tanto faz qual, e as
   // cartas entram no **fim** da mão, na ordem do morto (S23, S77).
   //

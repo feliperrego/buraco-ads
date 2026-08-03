@@ -222,10 +222,25 @@ Só é possível quando as três condições valem ao mesmo tempo:
 - **R10.1** `[D]` Um jogador **bate** ao ficar sem cartas na mão, cumpridas duas condições: já ter pegado **ao menos um morto**, **e** possuir ao menos uma canastra **limpa** na mesa.
 - **R10.1.1** `[D]` **Exceção.** Se não houver mais morto disponível **por conversão em monte** (R4.6), a exigência de ter pegado morto **deixa de valer** para o jogador que não teve chance de pegar nenhum. Basta a canastra limpa.
 - **R10.1.2** `[D]` Se não houver mais morto disponível **porque o adversário pegou os dois** (R9.3), a exigência **continua valendo**: o jogador sem morto não pode bater.
-- **R10.1.3** `[D]` É **proibido** realizar uma jogada que esvazie a mão quando não há morto disponível e as condições de batida não estão satisfeitas. O jogador deve reter ao menos uma carta.
+- **R10.1.3** `[D]` É **proibido** realizar uma jogada que esvazie a mão quando não há morto disponível e as condições de batida não estão satisfeitas. O jogador deve reter cartas suficientes para cumprir o descarte obrigatório da R7.1.
 - **R10.2** `[D]` Para efeito de R10.1, as canastras `DE_500` e `DE_1000` **sem curinga** contam como limpas; com curinga, não contam.
 - **R10.3** `[F]` A batida **encerra a rodada imediatamente**. O adversário não joga mais nenhum turno.
 - **R10.4** `[D]` (mesma decisão de R7.3) — A batida pode ocorrer **com ou sem** descarte final.
+
+> **Correção de 2026-08-03 (S118).** A segunda frase da R10.1.3 dizia *"o jogador deve reter ao
+> menos uma carta"*, e o número estava errado. Reter **uma** trava a mesa: a R7.1 obriga a
+> descartar, o descarte esvaziaria a mão, e a R10.1.3 o proíbe. Medido na H10 —
+> `movimentosValidos` devolvia lista vazia em fase de ação em **15 de 200** partidas simuladas,
+> todas em `mão=1, sem morto`.
+>
+> A frase passou a **derivar** o número em vez de fixá-lo, e é assim que ela deveria ter nascido:
+> quantas cartas reter é consequência do descarte obrigatório, não uma escolha independente. Hoje
+> a conta dá duas — uma para descartar e uma para ficar —, e se a R7.1 mudar, a R10.1.3 acompanha
+> sozinha.
+>
+> A leitura errada sobreviveu seis fatias porque, até a H10, quem tinha uma carta na mão sempre
+> podia descartá-la: o estado que a contradiz só passou a existir quando a mão vazia ganhou
+> especificação.
 
 ---
 

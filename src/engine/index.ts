@@ -6,7 +6,7 @@
  * `movimentosValidos` entra na H2, junto com o primeiro comando.
  */
 export { iniciarPartida } from './dominio/partida.ts'
-export { categoriaDe, criarJogo, ehCanastra, valorDa } from './dominio/jogo.ts'
+export { categoriaDe, contaComoLimpa, criarJogo, ehCanastra, valorDa } from './dominio/jogo.ts'
 export { visaoDe } from './consultas/visao-de.ts'
 export { movimentosValidos } from './consultas/movimentos-validos.ts'
 export { aplicar } from './comandos/aplicar.ts'
@@ -17,7 +17,7 @@ export type { Aleatorio } from './aleatorio/criar-aleatorio.ts'
 
 export type { Carta, Naipe, Valor } from './dominio/carta.ts'
 
-export type { FaseDoTurno, Jogador, JogadorId, Morto, Partida } from './dominio/partida.ts'
+export type { FaseDaRodada, Jogador, JogadorId, Morto, Partida } from './dominio/partida.ts'
 
 export type {
   CategoriaCanastra,

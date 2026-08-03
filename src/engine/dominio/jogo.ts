@@ -334,6 +334,24 @@ export function ehCanastra(jogo: Jogo): boolean {
 }
 
 /**
+ * R10.2 — a canastra que **conta como limpa** para efeito de batida (R10.1).
+ *
+ * S114 — a regra inteira cabe em "canastra sem curinga", e nenhum `if` por
+ * categoria é escrito. A R10.2 parece pedir uma tabela de quatro linhas, mas
+ * `LIMPA` já significa "sem curinga" e `SUJA` já significa "com curinga": o que
+ * ela acrescenta é só que `DE_500` e `DE_1000` **não** são uma terceira coisa —
+ * elas contam ou não conforme tenham curinga.
+ *
+ * Recebe **posições**, e não um `Jogo`, porque a S115 precisa da mesma pergunta
+ * sobre o resultado de um comando que ainda não foi aplicado. Uma definição, dois
+ * chamadores — expressá-la duas vezes seria a duplicação de intenção que a H9
+ * mediu como decisão sem rede.
+ */
+export function contaComoLimpa(posicoes: readonly Posicao[]): boolean {
+  return posicoes.length >= CANASTRA && !posicoes.some((posicao) => posicao.tipo === 'Curinga')
+}
+
+/**
  * S64 — aumentar passa pela **mesma porta** que baixar.
  *
  * `criarJogo` é a única porta de `Jogo` (S40, S52), e um `Jogo` inválido não é

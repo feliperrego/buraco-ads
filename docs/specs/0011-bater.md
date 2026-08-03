@@ -1,6 +1,6 @@
 # Spec 0011 — H11: bater e encerrar a rodada
 
-> Status: **rascunho anotado** — 9 propostas, nenhuma confirmada
+> Status: **confirmada** — 9 decisões, nenhuma pendência
 > História: `H11` — *"Fico sem cartas com uma canastra limpa e bato, encerrando a rodada"*
 > Fecha: R7.3, R9.5, R9.6, R10.1, R10.1.2, R10.1.3, R10.2, R10.3, R10.4, M4
 > Deriva de: [rules.md](../rules.md) · [domain.md](../domain.md) · [user-stories.md](../user-stories.md)
@@ -50,7 +50,7 @@ O item 2 é o que carrega o risco desta fatia, e a §4 é sobre ele.
   com a H12.
 - **A próxima rodada** (R12) — a rodada encerra e fica encerrada. Encadear rodadas é a H13.
 
-- `[P]` **S110** — A H11 implementa a **R10.1.2** e deixa a **R10.1.1** para a H14, junto com a
+- `[D]` **S110** — A H11 implementa a **R10.1.2** e deixa a **R10.1.1** para a H14, junto com a
   conversão que a torna alcançável. É o mesmo corte da S102 na H10, e pelo mesmo motivo: a
   exceção depende de um estado que a fatia anterior não sabe produzir.
 
@@ -73,7 +73,7 @@ O trecho em negrito é o que resolve a única ambiguidade real entre a R9.2 e a 
 com canastra limpa, morto já pego, mão zerada **e ainda um morto na mesa** pega o segundo morto
 (R9.2, R9.3) em vez de bater. Não há escolha a oferecer — a R9.2 não tem ressalva.
 
-- `[P]` **S111** — A batida entra no **mesmo lugar** da S103, no fim de `aplicar`, e **depois**
+- `[D]` **S111** — A batida entra no **mesmo lugar** da S103, no fim de `aplicar`, e **depois**
   do morto. Uma função só, com a forma "mão vazia → morto se houver, senão batida se a R10.1
   permitir, senão nada". Não é um segundo ponto de saída: é o mesmo `comMorto` da H10 crescendo
   para `comFimDeMao`.
@@ -106,7 +106,7 @@ ficam errados.
 
 Isso não é argumento contra a A: é a especificação do que precisa vir junto com ela.
 
-- `[P]` **S112** — Alternativa **A**, com duas obrigações amarradas: o tipo passa a se chamar
+- `[D]` **S112** — Alternativa **A**, com duas obrigações amarradas: o tipo passa a se chamar
   **`FaseDaRodada`** (um valor chamado `RodadaEncerrada` num tipo chamado `FaseDoTurno` é uma
   mentira que alguém vai acreditar), e **todo lugar que enumera `fase` vira `switch` exaustivo**.
   É a forma que **não compila** quando um estado novo aparece — a mesma lição da H7, aplicada
@@ -119,7 +119,7 @@ A interface precisa dizer quem. E a R11.5, na H12, vai precisar saber. A tentaç
 dito de novo. A H9 já mostrou o que isso custa: *"uma decisão expressa duas vezes é uma decisão
 sem rede"*, e a mutação que troca uma das duas expressões não reprova nada.
 
-- `[P]` **S113** — Quem bateu é **derivado**: é o jogador com a mão vazia. Nada novo no estado,
+- `[D]` **S113** — Quem bateu é **derivado**: é o jogador com a mão vazia. Nada novo no estado,
   na linha da S71 (janela), S85 (categoria) e S105 (`mortosPegos`).
 
 Duas coisas que fazem esta derivação funcionar, e uma que ela **não** pode usar:
@@ -153,7 +153,7 @@ comportam conforme tenham curinga ou não.
 
 A coluna da direita é a coluna do meio negada. Logo:
 
-- `[P]` **S114** — `contaComoLimpa(jogo)` é **`ehCanastra(jogo) && nenhuma posição é curinga`**.
+- `[D]` **S114** — `contaComoLimpa(jogo)` é **`ehCanastra(jogo) && nenhuma posição é curinga`**.
   Nenhum `if` por categoria é escrito, e a função **não consulta `categoriaDe`** para decidir —
   só para saber se são sete cartas.
 
@@ -188,7 +188,7 @@ O corte é observar **quantos** candidatos precisam da checagem cara:
   candidato** que a zere.
 - O pior caso da T7 é uma mão de 22 cartas. Ele tem **zero** candidatos caros.
 
-- `[P]` **S115** — A guarda avalia a condição da R10.1 **sobre o resultado do comando**, e só
+- `[D]` **S115** — A guarda avalia a condição da R10.1 **sobre o resultado do comando**, e só
   para os candidatos que zerariam a mão. Os outros saem pela comparação de tamanhos, que é o que
   a guarda já faz hoje.
 
@@ -199,7 +199,7 @@ O corte é observar **quantos** candidatos precisam da checagem cara:
 
 E a visão precisa de um dado que hoje não carrega:
 
-- `[P]` **S116** — `VisaoDoJogador` ganha **`meusMortos: number`**, derivado de
+- `[D]` **S116** — `VisaoDoJogador` ganha **`meusMortos: number`**, derivado de
   `mortos.filter(reclamadoPor === eu)`. Só o meu — o do adversário não é necessário para
   nenhuma regra desta fatia, e a RF5.2 é mais barata de manter quando o campo não existe.
 
@@ -219,7 +219,7 @@ Isso é exatamente o caso que o acordo prevê: *"se uma regra parece ambígua, �
 documento: corrija a regra, não só o caso"*. E a correção melhor não é trocar "uma" por "duas",
 porque isso repete o erro de origem — fixar um número em vez de derivá-lo.
 
-- `[P]` **S118** — A segunda frase da R10.1.3 passa a ser: *"O jogador deve reter cartas
+- `[D]` **S118** — A segunda frase da R10.1.3 passa a ser: *"O jogador deve reter cartas
   suficientes para cumprir o descarte obrigatório da R7.1."* O número deixa de estar na regra e
   passa a cair dela, que é o que a S109 já faz no código.
 
@@ -237,7 +237,7 @@ A mesa fica inerte quando a rodada acaba: `movimentosValidos` devolve `[]`, e a 
 `decidir` devolve `null`. Inerte **e sem explicação** é o modo de falha que o `roadmap.md` §3 já
 registra para a R4.8 — *"a mesa fica inerte sem explicar nada"*. Não vale repeti-lo de propósito.
 
-- `[P]` **S117** — O encerramento aparece no painel **"Vez e fase"**, que já existe e já é o
+- `[D]` **S117** — O encerramento aparece no painel **"Vez e fase"**, que já existe e já é o
   lugar onde o jogador lê em que ponto o jogo está. Ele passa a mostrar *"Você bateu — rodada
   encerrada"* ou *"O adversário bateu — rodada encerrada"* no lugar de vez e fase. Sem tela nova,
   sem painel novo: a apuração da H12 é que traz o painel sobreposto (`screens.md` §1).
@@ -319,11 +319,11 @@ rede no passo 6.
 
 ---
 
-## 10. Pendências
+## 10. Decisões
 
-Nove propostas. Nenhuma confirmada.
+Nove, confirmadas em bloco em 2026-08-03.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S110** | Escopo | A H11 faz a **R10.1.2**; a **R10.1.1** vai para a H14, junto com a conversão que a torna alcançável |
 | **S111** | Domínio | A batida entra no mesmo lugar do morto e **depois** dele — a R9.2 não tem ressalva |
