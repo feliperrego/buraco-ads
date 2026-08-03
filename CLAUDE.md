@@ -133,7 +133,7 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H10** estão fechadas e implementadas.
+**H11** estão fechadas e implementadas.
 
 **O Marco 0, o Marco I e o Marco II estão fechados, e o Marco III começou.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
@@ -154,11 +154,16 @@ especificar a mão vazia, então a guarda deixou de ser restrição nossa e viro
 Pegar o morto é **efeito automático**, num lugar só, no fim de `aplicar`: nenhum comando novo
 entrou, e os seis do `domain.md` §6 continuam sendo seis.
 
-**A próxima é a H11** — bater (R7.3, R9.5, R9.6, R10.1–R10.4, M4) —, e ela não tem spec. É a
-fatia que traz a **segunda metade da R10.1.3**, a ressalva da batida, e com ela a condição da
-guarda muda pela última vez.
+**A H11 fechou o `domain.md` §1.3.** A batida é a terceira e última transição automática do
+turno, e o estado `RodadaEncerrada` — que existia no diagrama desde a Onda 1 e nunca no código —
+finalmente existe. Uma rodada inteira roda do começo ao fim: em 200 partidas simuladas, **17**
+terminam em batida e **nenhuma** trava.
 
-Dez coisas que valem saber antes de mexer no que estas sete fatias deixaram:
+**A próxima é a H12** — a apuração da rodada (R11.1–R11.6, RF4.2, M5) —, e ela não tem spec.
+Hoje a rodada encerra e o **placar não muda**: `0 × 0` na tela depois da batida é a lacuna que a
+H12 fecha, e ela é proposital (S110).
+
+Doze coisas que valem saber antes de mexer no que estas oito fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -173,16 +178,26 @@ Dez coisas que valem saber antes de mexer no que estas sete fatias deixaram:
   o preserva. Era escolha de implementação registrada em comentário, e a H6 foi a fatia que a
   quebrou — crescer pela esquerda troca a primeira posição. Voltou na **H9**, quando regularizar
   o curinga mudou o conteúdo do jogo sem que ele deixasse de ser o mesmo jogo.
-- A guarda da mão vazia **deixou de ser decisão nossa e virou regra** na H10 (S106): sem morto
-  disponível, esvaziar a mão é proibido pela R10.1.3, e com morto é legal pela R9.2. Continua
-  vivendo **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas
-  enquanto todo chamador escolher da lista. Duas coisas mudaram junto e são fáceis de esquecer:
-  o `descartar` **também** passa por ela agora (a S70 achava que não precisava, e estava errada),
-  e a contagem é **duas** cartas, não uma (S109) — uma para descartar, uma para ficar.
+- A guarda da mão vazia **deixou de ser decisão nossa e virou regra** na H10 (S106) e ficou
+  completa na H11: a mão pode zerar quando **há morto** (R9.2) **ou** quando a **batida é
+  possível** (R10.1). Continua vivendo **só em `movimentosValidos`** — `aplicar` aceitaria o
+  comando, e isso é seguro apenas enquanto todo chamador escolher da lista. Três coisas mudaram
+  junto e são fáceis de esquecer: o `descartar` **também** passa por ela (a S70 achava que não
+  precisava, e estava errada), a contagem é **duas** cartas e não uma (S109), e esse número
+  agora **cai da R7.1** em vez de estar escrito na regra (S118).
 - A **S109** é a decisão que mais some se alguém "simplificar" a condição de `adicionar`. Reter
   uma carta parece suficiente e **trava a mesa**: a R7.1 obriga a descartar e a R10.1.3 proíbe
   esvaziar, então com uma carta as duas regras se contradizem. Medido em 15 de 200 partidas antes
   do conserto, 0 depois. As `CA-S109-1/2/3` mordem — reprovam três testes quando o `2` vira `1`.
+- A **S115** é a armadilha mais fácil de cair da guarda: a condição da batida vale **sobre o
+  resultado** do comando, nunca sobre o estado atual. A jogada que zera a mão pode ser a que
+  fecha a canastra limpa — na verificação da H11 no navegador foi **exatamente** o que
+  aconteceu, com `3♦ 4♦ 5♦ 6♦ 7♦` virando canastra ao receber as duas últimas cartas da mão.
+  Ler no estado atual recusaria a jogada e o jogador nunca bateria. A `CA-S115-1` morde.
+- A **S112** trocou `FaseDoTurno` por **`FaseDaRodada`**, com três valores. Todo lugar que
+  enumera `fase` é `switch` exaustivo de propósito: `if (fase === 'Compra') … else` compila com
+  três valores e cai no ramo errado. Não é hipótese — o ternário do `TelaPartida` mostrava
+  *"fase de ação"* na rodada encerrada, e foram os dois primeiros testes da S117 que o pegaram.
 - A identidade do `Jogo` (S63) tem **um lugar só** desde a H9: `comMesmaIdentidade`, em
   `jogo.ts`. Os dois comandos que mudam jogo na mesa passam por ela, e a mutação que recalcula o
   `id` reprova três testes — antes reprovava um.
@@ -385,6 +400,29 @@ e nenhuma teria sido pega por teste, `tsc` ou navegador:
   **uma** carta selecionada aparecem *"Descartar"* **e** a jogada de mesa, nessa ordem, porque
   os descartes vêm primeiro no `return` de `movimentosValidos`. Clicar "o primeiro botão" pega
   sempre o descarte.
+
+**A H11 é a primeira fatia em que o passo 3 rodou sem conserto desde a H6, e o número importa:
+20 testes novos, 14 vermelhos antes da primeira linha de implementação.** Os 6 que passaram de
+graça eram todos negativos ou de ordem, e cada um tinha âncora positiva no vermelho.
+
+- **A S112 previu um defeito e o defeito apareceu, no mesmo lugar.** A spec disse que um
+  terceiro valor de `fase` faria `fase === 'Compra' ? 'compra' : 'ação'` mostrar *"fase de ação"*
+  na rodada encerrada. Os dois primeiros testes da S117 reprovaram com exatamente esse texto.
+  Prever o erro **e** deixá-lo acontecer uma vez, num teste, vale mais que evitá-lo em silêncio:
+  é o que prova que o `switch` exaustivo não é cerimônia.
+- **A verificação no navegador passou de primeira pela terceira vez seguida — e achou o caso da
+  S115 sozinha.** Semente 376, humano jogando guloso, batida na 100ª ação dele. A jogada final
+  foi *"Aumentar o jogo de 3 a 7 de ouros"* com as **duas últimas** cartas da mão: `3♦ 4♦ 5♦ 6♦
+  7♦` virou canastra limpa de sete **no mesmo comando** que zerou a mão. Antes dele o jogador não
+  tinha canastra nenhuma. Uma guarda que lesse a R10.1 no estado atual teria recusado a jogada, e
+  a partida não teria fim. É a decisão mais teórica da spec confirmada por acaso num jogo real.
+- **A quarta rede mediu o que a fatia não fecha.** Em 200 partidas, 17 terminam em batida e
+  **183 batem no limite de passos**: sem a R4.6, o monte esgota e o lixo é reciclado
+  indefinidamente. Não é defeito da H11 — é a H14 faltando —, mas só a simulação de partida
+  inteira diz isso. Entrou na tabela de gatilhos.
+- **A guarda abriu e não custou nada.** 84 mortos entregues antes e depois, 0 travamentos, e a
+  T7 remedida no mesmo pior caso: **1738 comandos em 5,95 ms**, número idêntico ao da H7. A
+  pergunta cara da S115 não aparece lá porque, com 52 cartas na mão, nenhum comando a zera.
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando

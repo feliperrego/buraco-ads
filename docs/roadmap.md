@@ -158,7 +158,6 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Guarda das jogadas que esvaziam a mão | **Ao implementar a H11** — a H10 disparou este gatilho e a resposta foi que a guarda **não sai**: ela virou a primeira metade da R10.1.3 (S106) e ganhou a contagem certa (S109). O que falta é a ressalva da batida (R7.3), e aí sim a condição muda pela última vez | S45, S58, S70, S95, S106, S109 |
 | Ordem em que `movimentosValidos` devolve os comandos | **Ao implementar a H15** — a heurística vai querer ordenar por qualidade, e aí a ordem deixa de ser incidental. Hoje ninguém a decidiu, e a interface já a usa: com uma carta selecionada aparecem "Descartar" **e** a jogada de mesa, nessa ordem, porque os descartes vêm primeiro no `return` | H10, S48 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
@@ -170,6 +169,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Tela de rota inexistente em português | **No Marco VI (acabamento)** — hoje é o "Not Found" padrão do TanStack, em inglês e sem `<h1>` | tarefa 0.7, RNF3.2 |
 | Roteamento por arquivos | **Se as rotas passarem de oito ou virarem dinâmicas** — a justificativa do ADR-0009 é serem quatro e estáticas | ADR-0009 |
 | `eventos[]` no retorno de `aplicar` | **Ao escrever a H12** — decidir entre acrescentá-los ou derivar a apuração do estado | M8, S21 |
+| Rodada que não termina com o monte esgotado | **Ao implementar a H14** — medido na H11: em **183 de 200** partidas simuladas ninguém bate, o monte esgota e o lixo é reciclado indefinidamente pelo `pegarLixo`. Não é travamento: é a R4.6 faltando, e é ela que dá fim à rodada sem batida | R4.6, R4.8, H11 |
 | Partida travada com monte **e** lixo vazios | **Ao implementar a H14** — `movimentosValidos` devolve `[]` e a mesa fica inerte sem explicar nada. É a R4.8, e o estado existe desde a H2; a H7 o estreitou, porque com o monte vazio e lixo cheio a partida agora continua | S75, R4.8 |
 
 - `[D]` Cada gatilho acionado gera **decisão registrada**: ADR se mudar
@@ -190,6 +190,8 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | H8, 2026-08-02 | **Restaurada.** Os dois voltaram a afirmar `LIMPA` e `SUJA`, e a asserção de posição da H5 ficou junto — ela é o que explica **por que** a categoria é essa (S90) |
 | Se o modelo de posições (M2) está certo | H9, 2026-08-02 | **Certo.** `regularizarJogo` é a conversão de uma posição mais uma chamada a `criarJogo`. As **três** condições da R6.5 caem de dois invariantes — I2 para o naipe, I3 para o caminho e para a reposição — e **nenhum `if` de regra foi escrito**. A previsão do domain.md §2 se sustentou |
 | Guarda das jogadas que esvaziam a mão (**parcial**) | H10, 2026-08-03 | **Não sai — vira regra.** A R10.1.3 passou a especificar a mão vazia, então a guarda deixou de ser restrição nossa e virou primeira metade de uma regra (S106). E a contagem estava errada: reter **uma** carta trava a mesa em 15 de 200 partidas, porque a R7.1 obriga a descartar. São **duas** (S109), e a correção não custou nenhum dos 84 mortos entregues. Continua na tabela acima, agora com prazo na H11 |
+| Guarda das jogadas que esvaziam a mão | H11, 2026-08-03 | **Fechado.** A guarda nunca saiu — virou regra. Hoje ela lê a R10.1.3 inteira: a mão pode zerar quando há morto (R9.2) **ou** quando a batida é possível (R10.1). O número de cartas a reter deixou de ser escolha e passou a cair da R7.1 (S109, S118). O que a H11 acrescentou foi a segunda condição, avaliada **sobre o resultado** do comando (S115) — a jogada que zera a mão pode ser a que fecha a canastra limpa, e foi exatamente o que aconteceu na verificação no navegador |
+| Custo da enumeração **com a guarda da batida** | H11, 2026-08-03 | **Medido: 1738 comandos em 5,95 ms** — o mesmo pior caso construível da H7, mesmo número, mesmo tempo. A pergunta cara da S115 não aparece ali: com 52 cartas na mão, nenhum comando a zera, porque a maior sequência tem 14 posições. O limiar de ~2000 continua a 13% |
 | Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro

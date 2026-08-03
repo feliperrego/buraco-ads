@@ -146,7 +146,7 @@ Imutáveis, sem identidade, comparados por valor.
 | `Carta` | `id`, `naipe`, `valor` | Imutável (M1) |
 | `Jogo` | `id`, `dono`, `naipe`, `posicoes[]` | Ver §4 |
 | `Morto` | `id`, `cartas[]`, `reclamadoPor` | 11 cartas (R2.3); sem dono até ser reclamado |
-| `Jogador` | `id`, `mao[]`, `jogos[]`, `mortosPegos` | `mortosPegos` ∈ {0, 1, 2} (R9.3) |
+| `Jogador` | `id`, `mao[]`, `jogos[]` | **S105 (H10)** — `mortosPegos` saiu: é `mortos.filter(reclamadoPor === quem).length`, e o limite de 2 da R9.3 é o número de mortos que existem, não uma validação |
 | `Partida` | ver §5 | Raiz do agregado |
 
 ---
@@ -191,12 +191,12 @@ Funções derivadas, nunca campos:
 ```
 Partida
   semente               Aleatoriedade determinística (RNF1.3)
-  jogadores[2]          mao, jogos, mortosPegos
+  jogadores[2]          mao, jogos   (S105 removeu `mortosPegos`: é derivado de `mortos`)
   monte[]               oculto; só a contagem é pública (RF3.3)
   lixo[]                pilha ordenada, integralmente pública (R4.3, RF3.1)
   mortos[2]             ocultos; contagem de não reclamados é pública (RF3.4)
   jogadorDaVez
-  fase                  Compra | Acao (R3.1)
+  fase                  Compra | Acao | RodadaEncerrada (R3.1, R10.3 — S112)
   placar                acumulado por jogador (R12.1)
   numeroDaRodada
 ```

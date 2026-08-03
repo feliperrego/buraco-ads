@@ -65,6 +65,7 @@ testada, os testes passam a ser a especificação viva.
 | [0008-categoria-da-canastra.md](specs/0008-categoria-da-canastra.md) | H8 — categoria da canastra | **Implementada** — 11 novos e 12 herdados |
 | [0009-regularizar-o-curinga.md](specs/0009-regularizar-o-curinga.md) | H9 — regularizar o curinga | **Implementada** — 11 novos e 4 herdados |
 | [0010-pegar-morto.md](specs/0010-pegar-morto.md) | H10 — pegar o morto | **Implementada** — 16 novos e 1 herdado |
+| [0011-bater.md](specs/0011-bater.md) | H11 — bater e encerrar a rodada | **Implementada** — 16 novos e 2 herdados |
 
 ## Verificação
 
