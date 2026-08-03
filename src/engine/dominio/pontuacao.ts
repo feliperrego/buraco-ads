@@ -137,7 +137,14 @@ function pontuacaoDe(partida: Partida, quem: JogadorId): Pontuacao {
     pontosDeCanastra,
     cartasNaMesa,
     // R11.3 — o sinal mora no valor (S121), e `totalDe` é uma soma sem subtração.
-    cartasNaMao: -jogador.mao.reduce((soma, carta) => soma + valorDaCarta(carta.valor), 0),
+    //
+    // A subtração acontece **dentro** do `reduce`, e não como `-soma` depois: com
+    // a mão vazia, negar zero dá `-0`. Ele imprime como "0" na tela e mente em
+    // dois lugares — `expect(-0).toBe(0)` reprova, porque o Vitest compara com
+    // `Object.is`, e `JSON.stringify` o converte para `0`, mudando o valor no
+    // trajeto que a RNF1.2 exige preservar. Achado na verificação da H12 no
+    // navegador, onde a mão do batedor sempre é vazia.
+    cartasNaMao: jogador.mao.reduce((soma, carta) => soma - valorDaCarta(carta.valor), 0),
     // R11.4 e S113 — quem bateu é quem está sem cartas na mão. Ler `jogadorDaVez`
     // daria a resposta trocada na batida por descarte final.
     bonusDeBatida: jogador.mao.length === 0 ? BONUS_DE_BATIDA : 0,

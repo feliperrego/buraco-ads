@@ -147,6 +147,20 @@ describe('R11.4, R11.5 e R11.6 — bônus, penalidade e saldo negativo', () => {
   })
 })
 
+describe('S121 — os sinais e o zero', () => {
+  it('CA-S121-2 — a mão vazia dá 0, e não -0', () => {
+    const [minha] = apurar(comEstado([], [LIMPA_5_A_J]))
+
+    // Não é preciosismo. `expect(-0).toBe(0)` reprova — o Vitest compara com
+    // `Object.is` —, e `JSON.stringify(-0)` devolve `"0"`, o que muda o valor no
+    // trajeto que a RNF1.2 exige preservar.
+    expect(Object.is(minha.cartasNaMao, -0)).toBe(false)
+    expect(minha.cartasNaMao).toBe(0)
+    // A âncora: com cartas na mão, o sinal continua negativo.
+    expect(apurar(comEstado(cartas('A♦'), [LIMPA_5_A_J]))[0].cartasNaMao).toBe(-15)
+  })
+})
+
 describe('R8.5 — a categoria é recalculada, e a apuração acompanha', () => {
   it('CA-R8.5-1 — a canastra suja regularizada vale 200 na mesma rodada', () => {
     const suja = apurar(comEstado([], [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ 2♠>J')]))[0]

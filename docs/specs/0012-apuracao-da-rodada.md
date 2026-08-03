@@ -235,6 +235,8 @@ Dois vêm do [acceptance-tests.md](../acceptance-tests.md) e são citados, não 
 | **CA-S122-1** | a jogada que encerra a rodada | o `placar` já reflete o saldo **no mesmo estado** em que a fase vira `RodadaEncerrada` |
 | **CA-S122-2** | placar em `[430, 120]` e nova apuração de `+200` | soma, não substitui |
 | **CA-S121-1** | qualquer apuração | `totalDe` é a soma dos cinco números, e não existe campo `total` a divergir |
+| **CA-S121-2** | a mão do batedor, vazia | `cartasNaMao` é `0` e **não `-0`** — negar zero mente para o `Object.is` do Vitest e para o `JSON.stringify` da RNF1.2 |
+| **CA-S113-2** | batida pelo **descarte final** | o `+100` é de quem esvaziou a mão, e `jogadorDaVez` aponta para o adversário |
 
 ### 8.3 A fronteira da visão
 
@@ -268,6 +270,21 @@ Nove, confirmadas em bloco em 2026-08-03.
 | **S125** | Consultas | A visão ganha `apuracao`, **não-nula só** na rodada encerrada |
 | **S126** | Interface | Painel `Apuração da rodada` só na fase encerrada, item por item, sem botão de fechar |
 | **S127** | **`rules.md`** | A linha `2 (curinga)` da R11.2 perde o parêntese |
+
+### O que a implementação acrescentou
+
+Dois critérios nasceram **depois** da spec, e os dois vieram de medir em vez de raciocinar:
+
+- **`CA-S113-2`** saiu de uma mutação que mordeu pelo motivo errado. Trocar "quem bateu" de
+  `mao.length === 0` por `jogadorDaVez === quem` reprovou **um** teste, e por acaso — nas
+  fixtures da §8.1 as duas leituras coincidem. A S113 diz que elas divergem **na batida por
+  descarte final**, e nenhum critério desta spec alcançava esse estado. Agora alcança, e a mesma
+  mutação reprova dois.
+- **`CA-S121-2`** saiu da verificação no navegador. O painel do batedor mostrava
+  *"Cartas na mão: 0"*, e o valor era **`-0`**: `-soma` com a mão vazia. Ele mente em dois
+  lugares — `expect(-0).toBe(0)` reprova, porque o Vitest compara com `Object.is`, e
+  `JSON.stringify(-0)` devolve `"0"`, mudando o valor no trajeto que a RNF1.2 exige preservar. A
+  subtração passou para dentro do `reduce`.
 
 ### Onde eu erraria, se errasse
 

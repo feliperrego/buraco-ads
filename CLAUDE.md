@@ -133,9 +133,9 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H11** estão fechadas e implementadas.
+**H12** estão fechadas e implementadas.
 
-**O Marco 0, o Marco I e o Marco II estão fechados, e o Marco III começou.** Existe um jogo em
+**Os Marcos 0, I, II e III estão fechados, e o Marco IV é o próximo.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
 monte e pegar o lixo inteiro, e **ver a categoria de cada canastra dos dois lados da mesa**. Os
 **sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4 alcançava cinco, a H5
@@ -159,11 +159,17 @@ turno, e o estado `RodadaEncerrada` — que existia no diagrama desde a Onda 1 e
 finalmente existe. Uma rodada inteira roda do começo ao fim: em 200 partidas simuladas, **17**
 terminam em batida e **nenhuma** trava.
 
-**A próxima é a H12** — a apuração da rodada (R11.1–R11.6, RF4.2, M5) —, e ela não tem spec.
-Hoje a rodada encerra e o **placar não muda**: `0 × 0` na tela depois da batida é a lacuna que a
-H12 fecha, e ela é proposital (S110).
+**A H12 fechou o Marco III e respondeu ao segundo gatilho de modelo do projeto.** A pergunta do
+`roadmap.md` §3 era se `aplicar` deveria devolver `eventos[]` para a apuração somar o que
+aconteceu; a resposta é **não precisamos** — o estado no fim da rodada já contém tudo que os seis
+itens da R11 pedem, e `apurar(partida)` é função pura dele. O que reabriria a pergunta é um item
+de pontuação que dependesse de **como** o jogo chegou ali, e a R11 não tem nenhum.
 
-Doze coisas que valem saber antes de mexer no que estas oito fatias deixaram:
+**A próxima é a H13** — várias rodadas até 3000 (R2.6, R12.1, R12.2, RF1.5, RF4.1) —, e ela não
+tem spec. É ela que dá função ao botão de fechar o painel de apuração, que a H12 deixou de fora
+de propósito (S119).
+
+Treze coisas que valem saber antes de mexer no que estas nove fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -194,6 +200,11 @@ Doze coisas que valem saber antes de mexer no que estas oito fatias deixaram:
   fecha a canastra limpa — na verificação da H11 no navegador foi **exatamente** o que
   aconteceu, com `3♦ 4♦ 5♦ 6♦ 7♦` virando canastra ao receber as duas últimas cartas da mão.
   Ler no estado atual recusaria a jogada e o jogador nunca bateria. A `CA-S115-1` morde.
+- A **S120** é a resposta ao gatilho do `eventos[]`, e o que ela protege é a **ausência** de um
+  campo. Quatro decisões já disseram "derive, não guarde" — S71 (janela), S85 (categoria), S105
+  (`mortosPegos`), S113 (quem bateu) —, e a S120 é a quinta. O contraexemplo é o `placar`, que
+  **é** guardado porque sobrevive à rodada: quando a H13 redistribuir o baralho, os jogos e as
+  mãos que produziram o saldo deixam de existir.
 - A **S112** trocou `FaseDoTurno` por **`FaseDaRodada`**, com três valores. Todo lugar que
   enumera `fase` é `switch` exaustivo de propósito: `if (fase === 'Compra') … else` compila com
   três valores e cai no ramo errado. Não é hipótese — o ternário do `TelaPartida` mostrava
@@ -423,6 +434,24 @@ graça eram todos negativos ou de ordem, e cada um tinha âncora positiva no ver
 - **A guarda abriu e não custou nada.** 84 mortos entregues antes e depois, 0 travamentos, e a
   T7 remedida no mesmo pior caso: **1738 comandos em 5,95 ms**, número idêntico ao da H7. A
   pergunta cara da S115 não aparece lá porque, com 52 cartas na mão, nenhum comando a zera.
+
+**A H12 trouxe dois achados, e os dois vieram de medir depois de implementar — nenhum de
+raciocinar antes:**
+
+- **Uma mutação mordeu pelo motivo errado, e isso valeu mais que uma que morde certo.** Trocar
+  "quem bateu" de `mao.length === 0` por `jogadorDaVez === quem` reprovou **um** teste, e por
+  acaso: nas fixtures da apuração as duas leituras coincidem. A S113 diz que elas divergem **na
+  batida por descarte final**, e nenhum critério da spec alcançava esse estado. Virou a
+  `CA-S113-2`, e a mesma mutação passou a reprovar dois. **Contar quantos testes uma mutação
+  reprova não basta — vale olhar se são os testes certos.**
+- **A verificação no navegador achou `-0`.** O painel do batedor mostrava *"Cartas na mão: 0"*
+  e o valor era `-0`, porque `-soma` com a mão vazia nega zero. Ele mente em dois lugares:
+  `expect(-0).toBe(0)` **reprova** — o Vitest compara com `Object.is` — e `JSON.stringify(-0)`
+  devolve `"0"`, mudando o valor no trajeto que a RNF1.2 exige preservar. A subtração passou
+  para dentro do `reduce`, e a `CA-S121-2` a prende. É a quarta vez em seis fatias que rodar o
+  app acha o que teste nenhum pegaria.
+- **O `pkill` num encadeamento engoliu uma escrita de arquivo, de novo.** Mesma lição da H10:
+  comando destrutivo vai sozinho, porque o código de saída dele derruba o resto da linha.
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando

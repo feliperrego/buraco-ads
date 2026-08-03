@@ -1140,3 +1140,25 @@ describe('R11 e S122 — o placar acompanha o fim da rodada', () => {
     expect(depois.placar).toEqual([0, 0])
   })
 })
+
+describe('S113 e R11.4 — o bônus vai para quem bateu, não para quem é da vez', () => {
+  it('CA-S113-2 — na batida pelo descarte final, o +100 é de quem esvaziou a mão', () => {
+    // O caso que separa as duas leituras, e que nenhum critério da §8.1 alcança:
+    // o `descartar` já passou a vez antes de a batida acontecer, então
+    // `jogadorDaVez` aponta para o **adversário** do batedor.
+    //
+    // Achado por mutação: trocar `mao.length === 0` por
+    // `jogadorDaVez === quem` reprovava um teste só, e por acaso — nas outras
+    // fixtures as duas leituras coincidem.
+    const depois = aplicado(comJogosEMortos(cartas('5♠'), [LIMPA], [0, 1]), {
+      tipo: 'descartar',
+      carta: carta('ESPADAS', '5').id,
+    })
+    const [minha, dele] = apurar(depois)
+
+    expect(depois.jogadorDaVez).toBe(1)
+    expect(minha.bonusDeBatida).toBe(100)
+    expect(dele.bonusDeBatida).toBe(0)
+    expect(depois.placar[0]).toBeGreaterThan(depois.placar[1])
+  })
+})
