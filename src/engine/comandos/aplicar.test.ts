@@ -765,3 +765,201 @@ describe('M9 — conservação após regularizar', () => {
     expect(new Set(ids).size).toBe(104)
   })
 })
+
+/**
+ * Critérios de aceite da spec 0010 §8 — pegar o morto.
+ *
+ * M3/S103 — pegar o morto **não é comando**: é efeito automático, aplicado num
+ * lugar só, no fim de `aplicar`. A alternativa — cada comando chamar o efeito —
+ * foi recusada porque a S70 já provou, neste projeto, que uma guarda replicada
+ * por comando deixa um comando de fora e ninguém nota por seis fatias.
+ */
+
+/** Uma partida em ação com a mão do humano no tamanho pedido. */
+function comMaoDe(quantas: number, mortosReclamados = 0): Partida {
+  const mao = outrasCartas([], quantas)
+  const base = construirPartida({
+    maos: [mao, outrasCartas(mao, 11)],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+
+  if (mortosReclamados === 0) {
+    return base
+  }
+
+  // Reclamar um morto **sem** mover as cartas seria estado impossível (M9). O
+  // jeito honesto é o mesmo do jogo: as cartas vão para a mão de quem pegou.
+  const [primeiro, segundo] = base.mortos
+  const reclamado = { ...primeiro, cartas: [], reclamadoPor: 1 as const }
+
+  return {
+    ...base,
+    mortos: [
+      reclamado,
+      mortosReclamados > 1 ? { ...segundo, cartas: [], reclamadoPor: 1 } : segundo,
+    ],
+    jogadores: [
+      base.jogadores[0],
+      {
+        ...base.jogadores[1],
+        mao: [
+          ...base.jogadores[1].mao,
+          ...primeiro.cartas,
+          ...(mortosReclamados > 1 ? segundo.cartas : []),
+        ],
+      },
+    ],
+  }
+}
+
+function mortosRestantesDe(partida: Partida): number {
+  return partida.mortos.filter((morto) => morto.reclamadoPor === null).length
+}
+
+describe('R9.2 e R9.4 — o morto chega sozinho quando a mão zera', () => {
+  it('CA-R9.2-1 — descartar a última carta entrega o morto, e a mão fica com 11', () => {
+    const antes = comMaoDe(1)
+    const ultima = antes.jogadores[0].mao[0]
+
+    expect(ultima).toBeDefined()
+
+    const depois = aplicado(antes, { tipo: 'descartar', carta: ultima?.id ?? '' })
+
+    expect(mortosRestantesDe(antes)).toBe(2)
+    expect(depois.jogadores[0].mao).toHaveLength(11)
+    expect(mortosRestantesDe(depois)).toBe(1)
+  })
+
+  it('CA-S107-2 — quando a mão zera pelo descarte, o turno termina mesmo assim', () => {
+    const antes = comMaoDe(1)
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    // R9.4 — pegar o morto **não** encerra o turno; quem encerra é o descarte.
+    // O efeito não toca `fase` nem `jogadorDaVez` (S107).
+    expect(depois.fase).toBe('Compra')
+    expect(depois.jogadorDaVez).toBe(1)
+  })
+
+  it('CA-S107-1 — quando a mão zera ao baixar, a vez não passa e o descarte fica pendente', () => {
+    const mao = cartas('5♥ 6♥ 7♥')
+    const antes = construirPartida({
+      maos: [mao, outrasCartas(mao, 11)],
+      jogadorDaVez: 0,
+      fase: 'Acao',
+    })
+
+    const depois = aplicado(antes, {
+      tipo: 'baixar',
+      cartas: mao.map((uma) => ({ carta: uma.id })),
+    })
+
+    // O par que rejeitou a P21 em julho: quem implementar "pegar o morto encerra
+    // o turno" passa no critério de cima e falha neste.
+    expect(depois.fase).toBe('Acao')
+    expect(depois.jogadorDaVez).toBe(0)
+    expect(depois.jogadores[0].mao).toHaveLength(11)
+    expect(mortosRestantesDe(depois)).toBe(1)
+  })
+
+  it('CA-R9.2-2 — a mão zerada ao baixar recebe o morto na mesma jogada', () => {
+    const mao = cartas('5♥ 6♥ 7♥')
+    const antes = construirPartida({
+      maos: [mao, outrasCartas(mao, 11)],
+      jogadorDaVez: 0,
+      fase: 'Acao',
+    })
+
+    const depois = aplicado(antes, {
+      tipo: 'baixar',
+      cartas: mao.map((uma) => ({ carta: uma.id })),
+    })
+
+    expect(depois.jogadores[0].jogos).toHaveLength(1)
+    expect(depois.jogadores[0].mao.length).toBeGreaterThan(0)
+  })
+})
+
+describe('R9.3 e S104 — qual morto, e o que fica registrado', () => {
+  it('CA-S104-1 — o entregue é o primeiro não reclamado, e as cartas entram no fim da mão', () => {
+    const antes = comMaoDe(1)
+    const primeiro = antes.mortos[0]
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    expect(depois.mortos[0].reclamadoPor).toBe(0)
+    expect(depois.mortos[1].reclamadoPor).toBeNull()
+    // S23/S77 — a engine não reordena: as onze entram na ordem em que estavam.
+    expect(depois.jogadores[0].mao.map((uma) => uma.id)).toEqual(
+      primeiro.cartas.map((uma) => uma.id),
+    )
+  })
+
+  it('CA-S104-1 — o morto reclamado fica sem cartas, senão elas existiriam duas vezes', () => {
+    const antes = comMaoDe(1)
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    expect(depois.mortos[0].cartas).toHaveLength(0)
+  })
+
+  it('CA-R9.3-1 — o mesmo jogador pega o segundo morto ao zerar de novo', () => {
+    // R9.3 — "não há reserva para o adversário". Aqui o jogador 0 já pegou um.
+    const antes = comMaoDe(1, 0)
+    const primeiro = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    expect(mortosRestantesDe(primeiro)).toBe(1)
+    expect(primeiro.mortos[0].reclamadoPor).toBe(0)
+  })
+
+  it('CA-S105-1 — o registro fica em `mortos`, e não existe contador a divergir', () => {
+    const antes = comMaoDe(1)
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    // S105 — `mortosPegos` saiu do `Jogador`. Quantos alguém pegou é derivado,
+    // como a janela da S71 e a categoria da S85.
+    expect(Object.keys(depois.jogadores[0]).sort()).toEqual(['id', 'jogos', 'mao'])
+    expect(depois.mortos.filter((morto) => morto.reclamadoPor === 0)).toHaveLength(1)
+  })
+
+  it('CA-R9.2-1 — sem morto disponível, a mão zerada continua zerada', () => {
+    // A âncora do outro lado. A R10.1.3 diz que a interface não deve **oferecer**
+    // essa jogada (S106), mas `aplicar` a aceita — a recusa da S22 protege a
+    // engine de chamador com bug, e aqui não há bug: só não há morto.
+    const antes = comMaoDe(1, 2)
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+
+    expect(mortosRestantesDe(antes)).toBe(0)
+    expect(depois.jogadores[0].mao).toHaveLength(0)
+  })
+})
+
+describe('M9 — conservação ao pegar o morto', () => {
+  it('CA-M9-12 — após pegar o morto, as 104 cartas se conservam', () => {
+    const antes = comMaoDe(1)
+    const depois = aplicado(antes, {
+      tipo: 'descartar',
+      carta: antes.jogadores[0].mao[0]?.id ?? '',
+    })
+    const ids = todasAsCartas(depois).map((uma) => uma.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+})

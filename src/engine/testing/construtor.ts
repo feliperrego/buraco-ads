@@ -186,7 +186,6 @@ export function construirPartida(descricao: DescricaoDaPartida): Partida {
     id,
     mao: descricao.maos[id],
     jogos: jogos[id],
-    mortosPegos: 0,
   })
 
   const partida: Partida = {

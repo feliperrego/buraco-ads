@@ -829,3 +829,41 @@ describe('S101 — limpar a canastra', () => {
     expect(painel.textContent).toMatch(/canastra limpa/i)
   })
 })
+
+/**
+ * Critério de interface da spec 0010 §8.3.
+ *
+ * S108 — a metade observável de pegar o morto não precisa de elemento novo: o
+ * painel de mortos já existe desde a H1 e passa a mudar sozinho.
+ */
+describe('S108 — o painel de mortos', () => {
+  it('CA-S108-1 — com um morto reclamado, o painel fala no singular', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ mortosRestantes: 1 })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /mortos/i })
+
+    expect(painel.textContent).toContain('1 morto por pegar')
+    expect(painel.textContent).not.toContain('1 mortos')
+  })
+
+  it('CA-S108-2 — com os dois reclamados, o painel não mostra um zero solto', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ mortosRestantes: 0 })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /mortos/i })
+
+    expect(painel.textContent).toMatch(/nenhum morto/i)
+    expect(painel.textContent).not.toContain('0 mortos')
+  })
+})

@@ -14,12 +14,21 @@ export type JogadorId = 0 | 1
 /** R3.1, colapsado em duas fases pelo domain.md §2. */
 export type FaseDoTurno = 'Compra' | 'Acao'
 
+/**
+ * S105 — **não** existe campo `mortosPegos`.
+ *
+ * O `domain.md` §3 previa um, e a H10 o removeu: `Morto.reclamadoPor` já diz a
+ * mesma coisa, e dois lugares para a mesma verdade divergem. Quantos mortos um
+ * jogador pegou é `mortos.filter((morto) => morto.reclamadoPor === quem).length`
+ * — derivado, como a janela da S71 e a categoria da S85.
+ *
+ * A R9.3 continua garantida sem contador: o limite de dois é o número de mortos
+ * que existem, não uma validação.
+ */
 export type Jogador = {
   readonly id: JogadorId
   readonly mao: readonly Carta[]
   readonly jogos: readonly Jogo[]
-  /** R9.3 — no máximo dois. */
-  readonly mortosPegos: 0 | 1 | 2
 }
 
 /**
@@ -68,8 +77,8 @@ export function iniciarPartida(semente: number): Partida {
   return {
     semente,
     jogadores: [
-      { id: 0, mao: baralho.slice(0, 11), jogos: [], mortosPegos: 0 },
-      { id: 1, mao: baralho.slice(11, 22), jogos: [], mortosPegos: 0 },
+      { id: 0, mao: baralho.slice(0, 11), jogos: [] },
+      { id: 1, mao: baralho.slice(11, 22), jogos: [] },
     ],
     mortos: [
       { id: 'A', cartas: baralho.slice(22, 33), reclamadoPor: null },

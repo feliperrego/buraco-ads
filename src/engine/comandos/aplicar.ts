@@ -13,6 +13,65 @@ import type { CartaBaixada, Comando, Resultado } from './comando.ts'
  * daqui é invariante de movimento.
  */
 export function aplicar(partida: Partida, comando: Comando): Resultado {
+  // M3/S103 — quem jogou, capturado **antes** do comando: o `descartar` passa a
+  // vez, e o morto é de quem esvaziou a mão, não de quem joga em seguida.
+  const quem = partida.jogadorDaVez
+  const resultado = executar(partida, comando)
+
+  return resultado.tipo === 'sucesso'
+    ? { tipo: 'sucesso', partida: comMorto(resultado.partida, quem) }
+    : resultado
+}
+
+/**
+ * M3/S103 — pegar o morto é **efeito automático**, e este é o **único** lugar
+ * onde ele acontece.
+ *
+ * R9.2 — quem fica sem cartas na mão pega um morto, se houver. R9.3 — pode
+ * acontecer duas vezes na rodada, porque não há reserva para o adversário.
+ *
+ * S107 — a função **não toca** `fase` nem `jogadorDaVez`, e é daí que os dois
+ * casos da R9.4 caem de graça: quem zerou baixando continua na `Acao` com o
+ * descarte pendente, e quem zerou descartando já teve o turno encerrado pelo
+ * próprio descarte. A P21 morreu por querer que o efeito encerrasse o turno.
+ *
+ * A alternativa — cada comando chamar o efeito — foi recusada porque a S70 já
+ * provou, neste projeto, que uma guarda replicada por comando deixa um comando
+ * de fora e ninguém nota por seis fatias.
+ */
+function comMorto(partida: Partida, quem: JogadorId): Partida {
+  if (partida.jogadores[quem].mao.length > 0) {
+    return partida
+  }
+
+  const indice = partida.mortos.findIndex((morto) => morto.reclamadoPor === null)
+  const morto = partida.mortos[indice]
+
+  if (morto === undefined) {
+    // R10.1.3 diz que a interface não deve oferecer a jogada que chega aqui
+    // (S106). Se chegou mesmo assim, o estado fica como está: a rodada sem morto
+    // é a R4.8 e a batida é a H11.
+    return partida
+  }
+
+  // S104 — o primeiro não reclamado. A R4.7 já decidiu que tanto faz qual, e as
+  // cartas entram no **fim** da mão, na ordem do morto (S23, S77).
+  //
+  // O morto reclamado fica **sem cartas**: elas foram para a mão, e mantê-las
+  // aqui as faria existir duas vezes (M9).
+  const reclamado = { ...morto, cartas: [], reclamadoPor: quem }
+
+  return {
+    ...partida,
+    jogadores: comJogador(partida, quem, {
+      ...partida.jogadores[quem],
+      mao: [...partida.jogadores[quem].mao, ...morto.cartas],
+    }),
+    mortos: indice === 0 ? [reclamado, partida.mortos[1]] : [partida.mortos[0], reclamado],
+  }
+}
+
+function executar(partida: Partida, comando: Comando): Resultado {
   switch (comando.tipo) {
     case 'comprarDoMonte':
       return comprarDoMonte(partida)

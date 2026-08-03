@@ -194,11 +194,16 @@ describe('S45 — o baixar que esvaziaria a mão não é oferecido', () => {
     expect(baixaresDe(emAcaoCom('5♥ 6♥ 7♥ 8♠'))).toHaveLength(1)
   })
 
-  it('CA-S45-1 — com a mão contendo só a sequência, o baixar não é oferecido', () => {
-    // R7.1 exige o descarte, e a exceção é a batida (R7.3), que é a H10. Sem
-    // esta guarda a partida alcançaria um estado sem especificação: mão vazia e
-    // descarte obrigatório. Sai junto com a batida.
-    expect(baixaresDe(emAcaoCom('5♥ 6♥ 7♥'))).toHaveLength(0)
+  it('CA-S45-1 — sem morto disponível, o baixar que esvaziaria a mão não é oferecido', () => {
+    // **Mudou na H10 (S106).** Até a H9 a guarda era incondicional: esvaziar a
+    // mão levava a um estado sem especificação. Agora a R9.2 diz o que acontece
+    // — o jogador pega um morto —, e a proibição só vale quando não há morto,
+    // que é a primeira metade da R10.1.3. A âncora do outro lado é a CA-S106-3.
+    expect(
+      movimentosValidos(visaoDaVez(semMortos(cartas('5♥ 6♥ 7♥')))).filter(
+        (comando) => comando.tipo === 'baixar',
+      ),
+    ).toHaveLength(0)
   })
 })
 
@@ -524,12 +529,13 @@ describe('S70 — o aumentar que esvaziaria a mão não é oferecido', () => {
     expect(aumentaresDe(emAcaoComJogos(cartas('4♥ K♦'), [posicoes('5♥ 6♥ 7♥')]))).toHaveLength(1)
   })
 
-  it('CA-S70-1 — com a mão contendo só a carta do aumento, ele não é oferecido', () => {
-    // A R7.1 exige o descarte e a batida é a H10, exatamente como na S45. A
-    // propriedade que isto preserva é mais forte do que parece: com a guarda por
-    // comando, **nenhuma sequência** de jogadas oferecidas esvazia a mão, porque
-    // cada uma deixa ao menos uma carta.
-    expect(aumentaresDe(emAcaoComJogos(cartas('4♥'), [posicoes('5♥ 6♥ 7♥')]))).toHaveLength(0)
+  it('CA-S70-1 — sem morto disponível, o aumentar que esvaziaria a mão não é oferecido', () => {
+    // **Mudou na H10 (S106).** O comentário anterior afirmava que "nenhuma
+    // sequência de jogadas oferecidas esvazia a mão", e isso era **falso**: a
+    // guarda vivia só em `adicionar`, e o `descartar` nunca passou por ela. Em
+    // 200 partidas medidas, 58 chegaram a mão vazia. A guarda agora olha o
+    // morto, e cobre o descarte também (CA-S106-1).
+    expect(aumentaresDe(semMortos(cartas('4♥'), [posicoes('5♥ 6♥ 7♥')]))).toHaveLength(0)
   })
 })
 
@@ -873,5 +879,75 @@ describe('S99 — a enumeração das regularizações', () => {
     const partida = emAcaoComJogos(cartas('7♥ 8♥ 9♥ K♦ 9♣'), [posicoes('A♥ 2♥ 3♥ 4♥ 5♥ 6♥ 2♥>7')])
 
     expect(regularizacoesDe(partida)).toHaveLength(0)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0010 §8.1 — a guarda que virou regra.
+ *
+ * S106 — a guarda da S45 não sai na H10: ela **estreita e alarga**. Passa a
+ * permitir esvaziar a mão quando há morto esperando (R9.2), e passa a valer para
+ * o `descartar`, que nunca cobriu — a S70 afirmou que nenhuma sequência de
+ * jogadas oferecidas esvaziava a mão, e isso era falso em 58 de 200 partidas.
+ */
+function semMortos(mao: readonly Carta[], meus: readonly (readonly Posicao[])[] = []): Partida {
+  const naMesa = meus.flat().map((posicao) => posicao.carta)
+  const base = construirPartida({
+    maos: [mao, outrasCartas([...mao, ...naMesa], 11)],
+    jogos: [meus, []],
+    jogadorDaVez: 0,
+    fase: 'Acao',
+  })
+
+  // Os dois mortos reclamados pelo adversário, com as cartas na mão dele: a
+  // alternativa seria esvaziá-los sem destino, e o construtor da C4 recusaria.
+  return {
+    ...base,
+    mortos: [
+      { ...base.mortos[0], cartas: [], reclamadoPor: 1 },
+      { ...base.mortos[1], cartas: [], reclamadoPor: 1 },
+    ],
+    jogadores: [
+      base.jogadores[0],
+      {
+        ...base.jogadores[1],
+        mao: [...base.jogadores[1].mao, ...base.mortos[0].cartas, ...base.mortos[1].cartas],
+      },
+    ],
+  }
+}
+
+describe('S106 — a guarda passa a olhar o morto, e passa a cobrir o descarte', () => {
+  it('CA-S106-2 — com morto disponível, descartar a última carta é oferecido', () => {
+    const partida = emAcaoCom('5♥')
+    const descartes = movimentosValidos(visaoDaVez(partida)).filter(
+      (comando) => comando.tipo === 'descartar',
+    )
+
+    // R9.2 dá o morto a quem zera a mão, então a jogada deixou de ser proibida.
+    expect(descartes).toHaveLength(1)
+  })
+
+  it('CA-S106-1 — sem morto disponível, descartar a última carta não é oferecido', () => {
+    // R10.1.3, primeira metade. É o caminho que a guarda da S45 nunca cobriu:
+    // ela vivia só nos comandos que põem cartas na mesa.
+    const descartes = movimentosValidos(visaoDaVez(semMortos(cartas('5♥')))).filter(
+      (comando) => comando.tipo === 'descartar',
+    )
+
+    expect(descartes).toHaveLength(0)
+  })
+
+  it('CA-S106-3 — com morto disponível, o baixar que usa a mão inteira é oferecido', () => {
+    // O que a S45 recusava desde a H4. A mão zera, e o morto chega (R9.2).
+    expect(baixaresDe(emAcaoCom('5♥ 6♥ 7♥'))).toHaveLength(1)
+  })
+
+  it('CA-S106-1 — sem morto disponível, o baixar que usa a mão inteira volta a ser recusado', () => {
+    expect(
+      movimentosValidos(visaoDaVez(semMortos(cartas('5♥ 6♥ 7♥')))).filter(
+        (comando) => comando.tipo === 'baixar',
+      ),
+    ).toHaveLength(0)
   })
 })

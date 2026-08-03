@@ -45,6 +45,21 @@ function quantasCartas(quantas: number): string {
 }
 
 /**
+ * S108 — "nenhum morto por pegar", "1 morto por pegar", "2 mortos por pegar".
+ *
+ * O zero ganha palavra em vez de algarismo porque *"0 mortos por pegar"* lê como
+ * defeito de contagem. É o mesmo cuidado do `quantasCartas`, que nasceu de um
+ * *"1 cartas"* achado no navegador.
+ */
+function quantosMortos(quantos: number): string {
+  if (quantos === 0) {
+    return 'nenhum morto por pegar'
+  }
+
+  return `${String(quantos)} ${quantos === 1 ? 'morto' : 'mortos'} por pegar`
+}
+
+/**
  * O nome de uma posição na mesa, com o papel visível.
  *
  * Sem isto, o jogo baixado com curinga é indistinguível do mesmo conjunto de
@@ -391,7 +406,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
       </section>
 
       <section aria-label="Mortos">
-        <p>{visao.mortosRestantes} mortos por pegar</p>
+        <p>{quantosMortos(visao.mortosRestantes)}</p>
       </section>
 
       <section aria-label="Meus jogos">

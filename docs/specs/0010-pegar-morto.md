@@ -1,6 +1,6 @@
 # Spec 0010 — Pegar o morto
 
-> Status: **rascunho** — 7 propostas aguardando confirmação
+> Status: **confirmado** — 7 decisões, nenhuma pendência
 > História: **H10** — "Fico sem cartas na mão e recebo um morto automaticamente"
 > Fecha: R2.3, R9.1, R9.2, R9.3, R9.4, M3
 > Última atualização: 2026-08-02
@@ -56,7 +56,7 @@ longo da rodada (R9.3).
 | Penalidade por terminar sem morto (R9.6, R11.5) | H12 |
 | Morto convertido em monte (R4.6, R4.7, R10.1.1) | H14 |
 
-- `[P]` **S102** — A H10 implementa a **primeira metade** da R10.1.3 —
+- `[D]` **S102** — A H10 implementa a **primeira metade** da R10.1.3 —
   *"é proibido realizar uma jogada que esvazie a mão quando não há morto disponível"* — e deixa
   a segunda, a ressalva da batida, para a H11. Não é invasão de escopo: sem ela, remover a
   guarda da S45 abriria um estado sem especificação, que é exatamente o que a guarda existia
@@ -76,7 +76,7 @@ tinha especificação. Agora tem, e a guarda muda de natureza em vez de sumir:
 | Condição | a jogada usa a mão inteira | a jogada esvazia a mão **e não há morto disponível** |
 | Comandos cobertos | `baixar`, `aumentar`, `regularizarCuringa` | os três **mais o `descartar`** |
 
-- `[P]` **S106** — A guarda **estreita e alarga ao mesmo tempo**: passa a
+- `[D]` **S106** — A guarda **estreita e alarga ao mesmo tempo**: passa a
   permitir esvaziar a mão quando há morto esperando, e passa a valer para o `descartar`, que
   nunca cobriu. O gatilho do [roadmap.md](../roadmap.md) §3 não é resolvido aqui — ele muda de
   texto e continua aberto até a H11, que traz a ressalva da batida.
@@ -95,7 +95,7 @@ O [domain.md](../domain.md) §1.3 já decidiu (M3):
 > *"Pegar o morto não é fase nem comando. É um **efeito automático**: sempre que a mão de um
 > jogador zera e há morto disponível, a engine o entrega. O jogador nunca 'pede' o morto."*
 
-- `[P]` **S103** — O efeito é aplicado em **um lugar só**: uma função
+- `[D]` **S103** — O efeito é aplicado em **um lugar só**: uma função
   `entregarMortoSePreciso(partida)` chamada no fim de `aplicar`, depois do efeito do comando e
   antes de devolver o `Resultado`.
 
@@ -122,7 +122,7 @@ O [acceptance-tests.md](../acceptance-tests.md) §4.5 avisa:
 > *"CA-R9.4-1 é o critério que rejeitou a minha proposta original (P21). Quem implementar
 > 'pegar o morto encerra o turno' falha exatamente aqui."*
 
-- `[P]` **S107** — O efeito **não toca** `fase` nem `jogadorDaVez`. Quem as
+- `[D]` **S107** — O efeito **não toca** `fase` nem `jogadorDaVez`. Quem as
   move é o comando, e por isso os dois casos da R9.4 caem de graça:
 
 | A mão zerou por | O comando faz | Resultado |
@@ -138,7 +138,7 @@ O [acceptance-tests.md](../acceptance-tests.md) §4.5 avisa:
 
 ## 5. Qual morto, e em que ordem as cartas entram
 
-- `[P]` **S104** — O morto entregue é o **primeiro não reclamado**, na ordem
+- `[D]` **S104** — O morto entregue é o **primeiro não reclamado**, na ordem
   em que estão na `Partida`. A R4.7 já decidiu que não há ambiguidade — *"como os mortos não têm
   dono (R2.3), são intercambiáveis"* —, então a escolha é livre e o critério registra qual foi
   feita. As onze cartas entram no **fim** da mão, na ordem do morto, herdando a S23 e a S77 sem
@@ -157,7 +157,7 @@ primeira fatia que precisa manter alguma delas em dia.
 | **A** | Derivar: `mortosPegos` sai de `mortos.filter(...)` e o campo é **removido** | Uma verdade num lugar só, como a S71 fez com a janela e a S85 com a categoria | Contradiz uma linha `[D]` do `domain.md` §3, que precisa de nota |
 | **B** | Manter o campo, atualizado pelo efeito | Nada no `domain.md` muda | Dois lugares para a mesma verdade, e o segundo só é lido na H11 — tempo de sobra para divergirem |
 
-- `[P]` **S105** — **Alternativa A.** O campo sai, e o `domain.md` §3 ganha
+- `[D]` **S105** — **Alternativa A.** O campo sai, e o `domain.md` §3 ganha
   nota explicando. A R9.3 continua garantida: o limite de dois é o número de mortos que existem,
   não um contador a validar.
 
@@ -170,7 +170,7 @@ primeira fatia que precisa manter alguma delas em dia.
 
 ## 7. Interface
 
-- `[P]` **S108** — A metade observável é o painel de **mortos**, que já
+- `[D]` **S108** — A metade observável é o painel de **mortos**, que já
   mostra *"2 mortos por pegar"* desde a H1 e passa a mudar sozinho. A mão saltar de zero para
   onze é o outro sinal, e nenhum dos dois precisa de elemento novo na tela.
 
@@ -220,11 +220,11 @@ como estão; a `CA-R9.3-2` remete à `CA-R10.1.3-1`, que é da H11.
 
 ---
 
-## 9. Pendências
+## 9. Decisões
 
-Sete propostas. Responda no formato *"todas ok exceto S105 e S106"*.
+Sete, confirmadas em bloco em 2026-08-02.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S102** | Escopo | A H10 implementa a **primeira metade** da R10.1.3; a ressalva da batida é da H11 |
 | **S103** | Domínio | O efeito é aplicado num **lugar só**, no fim de `aplicar` |

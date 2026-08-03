@@ -51,13 +51,28 @@ export function movimentosValidos(visao: VisaoDoJogador): readonly Comando[] {
     return compras
   }
 
+  // S106/R10.1.3 — esvaziar a mão é legal **quando há morto esperando** (R9.2),
+  // e proibido quando não há. Até a H9 isto era a S45, uma restrição nossa sem
+  // regra por trás; a partir da H10 é a primeira metade da R10.1.3, e a segunda
+  // — a ressalva da batida — chega na H11.
+  const podeEsvaziar = visao.mortosRestantes > 0
+
   // R7.1, R7.2 — qualquer carta da mão pode ser descartada, inclusive a que
   // acabou de ser comprada. A T7 pediu enumeração completa antes de otimizar.
+  //
+  // O descarte **também** esvazia a mão, e é o caminho que a guarda nunca cobriu
+  // até aqui: a S70 afirmou que nenhuma sequência de jogadas oferecidas zerava a
+  // mão, e isso era falso em 58 de 200 partidas medidas.
+  const descartes =
+    visao.mao.length === 1 && !podeEsvaziar
+      ? []
+      : visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id }))
+
   return [
-    ...visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id })),
-    ...baixares(visao.mao),
-    ...aumentares(visao.mao, visao.meusJogos),
-    ...regularizacoes(visao.mao, visao.meusJogos),
+    ...descartes,
+    ...baixares(visao.mao, podeEsvaziar),
+    ...aumentares(visao.mao, visao.meusJogos, podeEsvaziar),
+    ...regularizacoes(visao.mao, visao.meusJogos, podeEsvaziar),
   ]
 }
 
@@ -182,7 +197,7 @@ function curingasDisponiveis(mao: readonly Carta[], usadas: ReadonlySet<string>)
  * as três são a mesma coisa: a casa vazia está no meio ou numa ponta, e o código
  * não precisa saber qual.
  */
-function baixares(mao: readonly Carta[]): readonly Comando[] {
+function baixares(mao: readonly Carta[], podeEsvaziar: boolean): readonly Comando[] {
   const comandos: Comando[] = []
 
   for (const naipe of NAIPES) {
@@ -195,7 +210,7 @@ function baixares(mao: readonly Carta[]): readonly Comando[] {
     for (let inicio = 0; inicio < CASAS; inicio++) {
       for (let fim = inicio + 2; fim < CASAS; fim++) {
         for (const cartas of leiturasDe(casasEntre(inicio, fim), mapa, mao, true)) {
-          adicionar(comandos, mao, { tipo: 'baixar', cartas })
+          adicionar(comandos, mao, podeEsvaziar, { tipo: 'baixar', cartas })
         }
       }
     }
@@ -219,7 +234,11 @@ function baixares(mao: readonly Carta[]): readonly Comando[] {
  * próprios, porque é isso que `visao.meusJogos` carrega. Nenhuma checagem de
  * dono é escrita, e nenhuma pode ser esquecida.
  */
-function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly Comando[] {
+function aumentares(
+  mao: readonly Carta[],
+  meusJogos: readonly Jogo[],
+  podeEsvaziar: boolean,
+): readonly Comando[] {
   const comandos: Comando[] = []
 
   for (const jogo of meusJogos) {
@@ -239,7 +258,7 @@ function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly
         const casasNovas = [...casasEntre(novoInicio, inicio - 1), ...casasEntre(fim + 1, novoFim)]
 
         for (const cartas of leiturasDe(casasNovas, mapa, mao, admiteCuringa)) {
-          adicionar(comandos, mao, { tipo: 'aumentar', jogo: jogo.id, cartas })
+          adicionar(comandos, mao, podeEsvaziar, { tipo: 'aumentar', jogo: jogo.id, cartas })
         }
       }
     }
@@ -268,7 +287,11 @@ function aumentares(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly
  * `regularizarJogo`, e é a I2 que recusa o curinga de outro naipe. Nenhuma
  * checagem de naipe é escrita aqui, que é o que a `CA-S98-2` cobra.
  */
-function regularizacoes(mao: readonly Carta[], meusJogos: readonly Jogo[]): readonly Comando[] {
+function regularizacoes(
+  mao: readonly Carta[],
+  meusJogos: readonly Jogo[],
+  podeEsvaziar: boolean,
+): readonly Comando[] {
   const comandos: Comando[] = []
 
   for (const jogo of meusJogos) {
@@ -311,7 +334,7 @@ function regularizacoes(mao: readonly Carta[], meusJogos: readonly Jogo[]): read
           continue
         }
 
-        adicionar(comandos, mao, {
+        adicionar(comandos, mao, podeEsvaziar, {
           tipo: 'regularizarCuringa',
           jogo: jogo.id,
           cartas: escolhidas.map((carta) => carta.id),
@@ -380,9 +403,10 @@ function leiturasDe(
 function adicionar(
   comandos: Comando[],
   mao: readonly Carta[],
+  podeEsvaziar: boolean,
   comando: Extract<Comando, { readonly cartas: readonly (CartaBaixada | string)[] }>,
 ) {
-  if (comando.cartas.length === mao.length) {
+  if (comando.cartas.length === mao.length && !podeEsvaziar) {
     return
   }
 
