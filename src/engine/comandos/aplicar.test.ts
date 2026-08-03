@@ -3,6 +3,7 @@ import type { Carta } from '../dominio/carta.ts'
 import { iniciarPartida } from '../dominio/partida.ts'
 import type { FaseDaRodada, JogadorId, Morto, Partida } from '../dominio/partida.ts'
 import { categoriaDe } from '../dominio/jogo.ts'
+import { apurar, totalDe } from '../dominio/pontuacao.ts'
 import type { Jogo, Posicao } from '../dominio/jogo.ts'
 import { carta, cartas, construirPartida, outrasCartas, posicoes } from '../testing/construtor.ts'
 import { aplicar } from './aplicar.ts'
@@ -1095,5 +1096,47 @@ describe('M9 — conservação na batida', () => {
     expect(depois.fase).toBe('RodadaEncerrada')
     expect(ids).toHaveLength(104)
     expect(new Set(ids).size).toBe(104)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0012 §8.2 — o placar.
+ *
+ * S122 — o saldo é somado ao `placar` no **mesmo ponto** em que a rodada
+ * encerra. A alternativa — somar ao iniciar a próxima rodada — deixaria o
+ * jogador olhando uma apuração de `+430` com o placar ainda em `0 × 0` durante
+ * toda a tela.
+ */
+describe('R11 e S122 — o placar acompanha o fim da rodada', () => {
+  it('CA-S122-1 — o placar já reflete o saldo no mesmo estado em que a fase vira RodadaEncerrada', () => {
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+    const [minha, dele] = apurar(depois)
+
+    expect(antes.placar).toEqual([0, 0])
+    expect(depois.fase).toBe('RodadaEncerrada')
+    expect(depois.placar).toEqual([totalDe(minha), totalDe(dele)])
+    // E não é zero de nenhum dos lados: quem bateu tem canastra, quem não bateu
+    // tem cartas na mão contando negativo.
+    expect(depois.placar[0]).toBeGreaterThan(0)
+    expect(depois.placar[1]).toBeLessThan(0)
+  })
+
+  it('CA-S122-2 — o saldo soma ao placar anterior, e não o substitui', () => {
+    const base = comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [0, 1])
+    const doZero = aplicado(base, BAIXAR_TRES)
+    const comPlacar = aplicado({ ...base, placar: [430, 120] }, BAIXAR_TRES)
+
+    expect(comPlacar.placar[0]).toBe(430 + doZero.placar[0])
+    expect(comPlacar.placar[1]).toBe(120 + doZero.placar[1])
+  })
+
+  it('CA-S122-1 — enquanto a rodada corre, o placar não se move', () => {
+    // A âncora negativa: sem ela, somar a cada comando passaria nos dois acima.
+    const antes = comJogosEMortos(cartas('5♠ 6♠ 7♠ 8♠'), [LIMPA], [0, 1])
+    const depois = aplicado(antes, BAIXAR_TRES)
+
+    expect(depois.fase).toBe('Acao')
+    expect(depois.placar).toEqual([0, 0])
   })
 })

@@ -1,6 +1,7 @@
 import type { Carta } from '../dominio/carta.ts'
 import { aumentarJogo, contaComoLimpa, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
 import type { Posicao } from '../dominio/jogo.ts'
+import { apurar, totalDe } from '../dominio/pontuacao.ts'
 import type { Jogador, JogadorId, Morto, Partida } from '../dominio/partida.ts'
 import type { CartaBaixada, Comando, Resultado } from './comando.ts'
 
@@ -48,7 +49,29 @@ function comFimDeMao(partida: Partida, quem: JogadorId): Partida {
     return comMorto(partida, quem, indice, morto)
   }
 
-  return podeBater(partida, quem) ? { ...partida, fase: 'RodadaEncerrada' } : partida
+  return podeBater(partida, quem) ? encerrar(partida) : partida
+}
+
+/**
+ * R10.3 e R11 — a rodada encerra e o saldo entra no placar.
+ *
+ * S122 — a soma acontece **aqui**, e não ao iniciar a rodada seguinte. A
+ * alternativa deixaria o jogador olhando uma apuração de `+430` com o placar
+ * ainda em `0 × 0` durante toda a tela de apuração, que é justamente o que esta
+ * fatia veio entregar.
+ *
+ * O `placar` é a única coisa desta fatia que é **guardada** em vez de derivada,
+ * e a razão é que ele sobrevive à rodada: quando a H13 redistribuir o baralho,
+ * os jogos e as mãos que produziram o saldo deixam de existir.
+ */
+function encerrar(partida: Partida): Partida {
+  const [minha, dele] = apurar(partida)
+
+  return {
+    ...partida,
+    fase: 'RodadaEncerrada',
+    placar: [partida.placar[0] + totalDe(minha), partida.placar[1] + totalDe(dele)],
+  }
 }
 
 /**

@@ -256,10 +256,24 @@ Ao fim da rodada, cada jogador apura seu saldo somando os itens abaixo.
 | Ás | 15 |
 | 8, 9, 10, J, Q, K | 10 |
 | 3, 4, 5, 6, 7 | 5 |
-| 2 (curinga) | 10 |
+| 2 | 10 |
 
 > O valor do 2 é o único ponto em que as fontes não convergem. Propus 10, alinhado à faixa
 > das figuras. Se você joga com outro valor, é este item que precisa mudar.
+
+> **Correção de 2026-08-03 (S127).** Esta linha dizia `2 (curinga)`, e o parêntese foi lido
+> como condição. Desde a S51 um `2` na mesa pode estar em dois papéis — **curinga**, fazendo o
+> valor de outra carta, ou **natural**, ocupando a própria casa em `A-2-3` —, e a tabela não
+> dizia quanto valia o segundo. Não é caso raro: o fixture da `CA-S55-1` tem as duas cópias do
+> `2♥` no mesmo jogo, uma de cada papel.
+>
+> O valor é **10 nos dois casos**, e o parêntese saiu. A razão é de modelo: o valor é
+> propriedade da **carta** (M1) e "curinga" é **papel** (M2); deixar o papel mexer no valor
+> faria a mesma carta valer coisas diferentes em duas casas do mesmo jogo.
+>
+> É a segunda ambiguidade do documento achada em duas fatias, e as duas estavam em **parênteses
+> e ressalvas**, não no corpo das regras — os lugares onde o texto fala do caso típico e o
+> leitor entende "só neste caso". A primeira foi a R10.1.3 (S118).
 
 - **R11.3** `[F]` Cartas **baixadas na mesa** contam **positivo**. Cartas que sobraram **na mão** contam **negativo**.
 - **R11.4** `[D]` Quem bate recebe **+100 pontos** de bônus.

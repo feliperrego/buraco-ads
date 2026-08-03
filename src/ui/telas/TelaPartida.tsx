@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { categoriaDe, valorDa } from '../../engine/index.ts'
+import { categoriaDe, totalDe, valorDa } from '../../engine/index.ts'
 import type {
   Carta,
   CartaBaixada,
   CategoriaCanastra,
   Comando,
   Jogo,
+  Pontuacao,
   Posicao,
   VisaoDoJogador,
 } from '../../engine/index.ts'
@@ -82,6 +83,55 @@ const NOME_DA_CATEGORIA: Readonly<Record<CategoriaCanastra, string>> = {
   DE_500: 'canastra de 500',
   LIMPA: 'canastra limpa',
   SUJA: 'canastra suja',
+}
+
+/** O plural de cada categoria, para a contagem da RF4.2. */
+const PLURAL_DA_CATEGORIA: Readonly<Record<CategoriaCanastra, string>> = {
+  DE_1000: 'canastras de 1000',
+  DE_500: 'canastras de 500',
+  LIMPA: 'canastras limpas',
+  SUJA: 'canastras sujas',
+}
+
+const CATEGORIAS: readonly CategoriaCanastra[] = ['DE_1000', 'DE_500', 'LIMPA', 'SUJA']
+
+/**
+ * S126 — a apuração da R11, item por item, para os dois jogadores (RF4.2).
+ *
+ * A RF4.2 pede "canastras **por categoria**", e é a parte fácil de perder: um
+ * total de 400 não diz se são duas limpas ou quatro sujas. Por isso a contagem
+ * aparece antes dos pontos, com o plural certo — a `CA-S126-1` cobra as duas
+ * coisas, e o par "1 canastra limpa" / "1 canastras limpas" é a lição da H7.
+ */
+function ApuracaoDoJogador({ pontuacao, nome }: { pontuacao: Pontuacao; nome: string }) {
+  const linhas = CATEGORIAS.flatMap((categoria) => {
+    const quantas = pontuacao.canastras[categoria]
+
+    return quantas === 0
+      ? []
+      : [
+          `${String(quantas)} ${quantas === 1 ? NOME_DA_CATEGORIA[categoria] : PLURAL_DA_CATEGORIA[categoria]}`,
+        ]
+  })
+
+  return (
+    <li>
+      <h3>{nome}</h3>
+      <ul>
+        <li>
+          Canastras: {linhas.length === 0 ? 'nenhuma' : linhas.join(', ')} —{' '}
+          {pontuacao.pontosDeCanastra}
+        </li>
+        <li>Cartas na mesa: {pontuacao.cartasNaMesa}</li>
+        <li>Cartas na mão: {pontuacao.cartasNaMao}</li>
+        <li>Bônus de batida: {pontuacao.bonusDeBatida}</li>
+        <li>Penalidade por não pegar morto: {pontuacao.penalidadeDeMorto}</li>
+        <li>
+          <strong>Total: {totalDe(pontuacao)}</strong>
+        </li>
+      </ul>
+    </li>
+  )
 }
 
 /**
@@ -374,6 +424,21 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
       <section aria-label="Vez e fase">
         <p>{estadoDaRodada(visao)}</p>
       </section>
+
+      {/* S126 — só existe na rodada encerrada, e a ausência é o `null` da S125,
+          não uma condição de interface. "Sobreposto" (screens.md §1) é
+          apresentação; a RNF2.2 fixou que o critério é comportamento. */}
+      {visao.apuracao === null ? null : (
+        <section aria-label="Apuração da rodada">
+          <ul>
+            <ApuracaoDoJogador pontuacao={visao.apuracao[visao.eu]} nome="Você" />
+            <ApuracaoDoJogador
+              pontuacao={visao.apuracao[visao.eu === 0 ? 1 : 0]}
+              nome="Adversário"
+            />
+          </ul>
+        </section>
+      )}
 
       <section aria-label="Mão do adversário">
         <p>{visao.cartasNaMaoDoAdversario} cartas viradas</p>

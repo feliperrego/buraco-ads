@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TelaPartida from './TelaPartida.tsx'
-import type { Carta, Comando, VisaoDoJogador } from '../../engine/index.ts'
+import type { Carta, Comando, Pontuacao, VisaoDoJogador } from '../../engine/index.ts'
 
 /**
  * Critérios de interface das specs 0001 §6 e 0002 §6, nível 4 da
@@ -44,6 +44,7 @@ function visaoInicial(ajustes: Partial<VisaoDoJogador> = {}): VisaoDoJogador {
     cartasNaMaoDoAdversario: 11,
     mortosRestantes: 2,
     meusMortos: 0,
+    apuracao: null,
     placar: [0, 0],
     jogadorDaVez: 0,
     fase: 'Compra',
@@ -943,5 +944,107 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
     expect(
       within(screen.getByRole('region', { name: /minha mão/i })).queryAllByRole('button'),
     ).toHaveLength(0)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0012 §8.4 — o painel de apuração.
+ *
+ * S126 — a `screens.md` §1 já decidiu que a apuração não é tela: é painel
+ * sobreposto à partida. "Sobreposto" é apresentação, e a RNF2.2 fixou que os
+ * testes falam de comportamento — o critério é o painel existir com os itens
+ * certos, não onde ele flutua.
+ */
+function pontuacao(ajustes: Partial<Pontuacao> = {}): Pontuacao {
+  return {
+    canastras: { DE_1000: 0, DE_500: 0, LIMPA: 0, SUJA: 0 },
+    pontosDeCanastra: 0,
+    cartasNaMesa: 0,
+    cartasNaMao: 0,
+    bonusDeBatida: 0,
+    penalidadeDeMorto: 0,
+    ...ajustes,
+  }
+}
+
+describe('S126 — o painel de apuração', () => {
+  it('CA-S126-2 — durante a rodada o painel não existe', () => {
+    // A âncora positiva é o critério seguinte, que monta a mesma tela encerrada
+    // e acha o painel. Sem ela, uma tela que nunca o renderiza passaria aqui.
+    render(<TelaPartida visao={visaoInicial({ fase: 'Acao' })} movimentos={[]} aoJogar={vi.fn()} />)
+
+    expect(screen.queryByRole('region', { name: /apuração/i })).toBeNull()
+  })
+
+  it('CA-S126-1 — encerrada a rodada, o painel diz a categoria e a contagem', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({
+          fase: 'RodadaEncerrada',
+          mao: [],
+          apuracao: [
+            pontuacao({
+              canastras: { DE_1000: 0, DE_500: 0, LIMPA: 2, SUJA: 0 },
+              pontosDeCanastra: 400,
+            }),
+            pontuacao({ cartasNaMao: -55, penalidadeDeMorto: -100 }),
+          ],
+        })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /apuração/i })
+
+    // RF4.2 — "canastras **por categoria**". Um total de 400 não diz se são
+    // duas limpas ou quatro sujas, e é essa a diferença que o critério cobra.
+    expect(painel.textContent).toMatch(/2 canastras limpas/i)
+    expect(painel.textContent).toContain('400')
+    // E o adversário aparece no mesmo painel, com os itens dele.
+    expect(painel.textContent).toContain('-55')
+    expect(painel.textContent).toContain('-100')
+  })
+
+  it('CA-S126-1 — o painel fala no singular com uma canastra só', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({
+          fase: 'RodadaEncerrada',
+          mao: [],
+          apuracao: [
+            pontuacao({
+              canastras: { DE_1000: 0, DE_500: 0, LIMPA: 1, SUJA: 0 },
+              pontosDeCanastra: 200,
+            }),
+            pontuacao(),
+          ],
+        })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /apuração/i })
+
+    // A lição da H7: um critério que confere o número sem conferir o texto
+    // passa com a tela errada. "1 canastras limpas" foi exatamente o defeito.
+    expect(painel.textContent).toMatch(/1 canastra limpa/i)
+    expect(painel.textContent).not.toMatch(/1 canastras/i)
+  })
+
+  it('CA-S126-3 — o placar na tela mostra o total novo, e não 0 × 0', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'RodadaEncerrada', mao: [], placar: [455, -155] })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+      />,
+    )
+
+    const placar = screen.getByRole('region', { name: /placar/i })
+
+    expect(placar.textContent).toContain('455')
+    expect(placar.textContent).toContain('-155')
   })
 })

@@ -1,5 +1,7 @@
 import type { Carta } from '../dominio/carta.ts'
 import type { Jogo } from '../dominio/jogo.ts'
+import { apurar } from '../dominio/pontuacao.ts'
+import type { Pontuacao } from '../dominio/pontuacao.ts'
 import type { FaseDaRodada, JogadorId, Partida } from '../dominio/partida.ts'
 
 /**
@@ -34,6 +36,16 @@ export type VisaoDoJogador = {
   readonly placar: readonly [number, number]
   readonly jogadorDaVez: JogadorId
   readonly fase: FaseDaRodada
+  /**
+   * S125 — a apuração da R11, **não-nula só** na rodada encerrada (RF4.2).
+   *
+   * É o primeiro campo que expõe algo do adversário além de contagem: os pontos
+   * dele saem das cartas dele. Está certo porque a rodada acabou e a R11 é
+   * pública — mas o `null` durante a rodada **é** a fronteira, não conveniência.
+   * Preenchido em `Acao`, ele deixaria a IA ler a mão do adversário pela
+   * pontuação, furando a RF5.2 exatamente onde ela é estrutural.
+   */
+  readonly apuracao: readonly [Pontuacao, Pontuacao] | null
   readonly numeroDaRodada: number
 }
 
@@ -57,6 +69,7 @@ export function visaoDe(partida: Partida, jogador: JogadorId): VisaoDoJogador {
     placar: partida.placar,
     jogadorDaVez: partida.jogadorDaVez,
     fase: partida.fase,
+    apuracao: partida.fase === 'RodadaEncerrada' ? apurar(partida) : null,
     numeroDaRodada: partida.numeroDaRodada,
   }
 }

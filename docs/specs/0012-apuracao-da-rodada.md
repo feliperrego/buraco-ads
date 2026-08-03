@@ -1,6 +1,6 @@
 # Spec 0012 — H12: a apuração da rodada
 
-> Status: **rascunho anotado** — 9 propostas, nenhuma confirmada
+> Status: **confirmada** — 9 decisões, nenhuma pendência
 > História: `H12` — *"Vejo a apuração detalhada da rodada, item por item"*
 > Fecha: R11.1, R11.2, R11.3, R11.4, R11.5, R11.5.2, R11.6, RF4.2, M5
 > Deriva de: [rules.md](../rules.md) · [requirements.md](../requirements.md) · [domain.md](../domain.md)
@@ -34,7 +34,7 @@ Os jogos estão na mesa com suas posições, as mãos estão como ficaram, `mort
 quem pegou morto, e a mão vazia diz quem bateu (S113). Nenhum item da R11 pede informação que só
 existiria num histórico.
 
-- `[P]` **S120** — A apuração é uma **consulta derivada** do estado, `apurar(partida)`, e o
+- `[D]` **S120** — A apuração é uma **consulta derivada** do estado, `apurar(partida)`, e o
   retorno de `aplicar` continua sendo `Sucesso(partida) | Recusa(motivo)`. O gatilho fecha com
   "não precisamos".
 
@@ -67,7 +67,7 @@ conhecido — `placar` **é** guardado, e a §5 explica por quê.
   e é ela que dá sentido ao botão.
 - **O fim da partida** (R12.1, R12.2) — chegar a 3000 é a H13.
 
-- `[P]` **S119** — A H12 apura, mostra e soma ao placar. A R11.5.1 e o encadeamento de rodadas
+- `[D]` **S119** — A H12 apura, mostra e soma ao placar. A R11.5.1 e o encadeamento de rodadas
   ficam para as fatias que os tornam alcançáveis.
 
 ---
@@ -86,7 +86,7 @@ vale 200, ou 200 mais o valor das sete?
 O texto não exclui as cartas da canastra da contagem da R11.3, e as duas regras falam de coisas
 diferentes: a R11.1 premia **a estrutura**, a R11.3 conta **o material**.
 
-- `[P]` **S123** — Contam as duas: o bônus da categoria **mais** o valor individual de cada
+- `[D]` **S123** — Contam as duas: o bônus da categoria **mais** o valor individual de cada
   carta baixada, inclusive as que estão dentro de canastras. Uma canastra limpa de `5♥` a `J♥`
   vale `200 + (5+5+5+10+10+10+10) = 255`.
 
@@ -112,10 +112,10 @@ Três leituras possíveis:
 | **B** | 5, junto com `3`–`7` | o valor segue a vizinhança numérica, e o papel muda pontuação |
 | **C** | 10 na mesa, 10 na mão | igual à A, dito de outro jeito |
 
-- `[P]` **S124** — Alternativa **A**: o `2` vale **10 sempre**, natural ou curinga. O valor é
+- `[D]` **S124** — Alternativa **A**: o `2` vale **10 sempre**, natural ou curinga. O valor é
   propriedade da carta (M1), e "curinga" é papel (M2) — deixar o papel mexer no valor faria a
   mesma carta valer coisas diferentes em duas casas do mesmo jogo.
-- `[P]` **S127** — E o texto da R11.2 muda: a linha passa de `2 (curinga)` para `2`. O
+- `[D]` **S127** — E o texto da R11.2 muda: a linha passa de `2 (curinga)` para `2`. O
   parêntese descreve o caso comum e foi lido como condição.
 
 > A S118 fez a mesma coisa com a R10.1.3 ontem, e o padrão vale notar: **as duas ambiguidades
@@ -140,7 +140,7 @@ A pergunta é quando somar. Três formas:
 A **B** é tentadora porque parece "cada fatia cuida do seu", e é justamente ela que quebra o que
 esta fatia entrega: o jogador olharia a apuração dizendo `+430` com o placar ainda em `0 × 0`.
 
-- `[P]` **S122** — Alternativa **A**. `aplicar` soma o saldo de cada jogador ao `placar` no
+- `[D]` **S122** — Alternativa **A**. `aplicar` soma o saldo de cada jogador ao `placar` no
   mesmo ponto em que marca `RodadaEncerrada` — é a mesma pergunta ("a rodada acabou?") sendo
   respondida uma vez só, na linha da S111.
 
@@ -161,7 +161,7 @@ A RF4.2 pede mais do que "mostre os componentes". Ela diz:
 "Por categoria" é a parte fácil de perder: não basta *"canastras: 400"*, é *"duas limpas: 400"*.
 A estrutura precisa carregar a contagem por categoria, não só a soma.
 
-- `[P]` **S121** — `Pontuacao` tem um campo por componente da R11, mais a contagem por
+- `[D]` **S121** — `Pontuacao` tem um campo por componente da R11, mais a contagem por
   categoria, e o **total é função**, não campo:
 
 ```
@@ -189,14 +189,14 @@ soma — espalha a R11.3 por dois lugares.
 A `screens.md` §1 já decidiu que a apuração **não é tela**: é painel sobreposto à partida, que
 o jogador fecha para seguir. A parte de fechar é da H13 (S119).
 
-- `[P]` **S126** — Um `<section aria-label="Apuração da rodada">` que existe **apenas** na fase
+- `[D]` **S126** — Um `<section aria-label="Apuração da rodada">` que existe **apenas** na fase
   `RodadaEncerrada`, com os dois jogadores lado a lado, item por item. "Sobreposto" é
   apresentação, e a RNF2.2 já fixou que os testes falam de comportamento — o critério é o painel
   existir com os itens certos, não onde ele flutua.
 
 E a apuração precisa chegar à interface pelo caminho de sempre:
 
-- `[P]` **S125** — `VisaoDoJogador` ganha `apuracao: readonly [Pontuacao, Pontuacao] | null`,
+- `[D]` **S125** — `VisaoDoJogador` ganha `apuracao: readonly [Pontuacao, Pontuacao] | null`,
   **não-nula só na rodada encerrada**. A M11 diz que a tela renderiza exatamente a visão, e a
   RF5.2 continua garantida por construção: enquanto a rodada corre o campo é `null`, e ninguém
   soma as cartas da mão do adversário antes da hora.
@@ -253,11 +253,11 @@ Dois vêm do [acceptance-tests.md](../acceptance-tests.md) e são citados, não 
 
 ---
 
-## 9. Pendências
+## 9. Decisões
 
-Nove propostas. Nenhuma confirmada.
+Nove, confirmadas em bloco em 2026-08-03.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S119** | Escopo | A H12 apura, mostra e soma; a **R11.5.1** vai para a H14 e o botão de fechar para a H13 |
 | **S120** | Domínio | A apuração é **derivada** do estado; `aplicar` **não** ganha `eventos[]` — o gatilho fecha com "não" |

@@ -7,6 +7,8 @@
  */
 export { iniciarPartida } from './dominio/partida.ts'
 export { categoriaDe, contaComoLimpa, criarJogo, ehCanastra, valorDa } from './dominio/jogo.ts'
+export { apurar, totalDe, valorDaCarta } from './dominio/pontuacao.ts'
+export type { Pontuacao } from './dominio/pontuacao.ts'
 export { visaoDe } from './consultas/visao-de.ts'
 export { movimentosValidos } from './consultas/movimentos-validos.ts'
 export { aplicar } from './comandos/aplicar.ts'
