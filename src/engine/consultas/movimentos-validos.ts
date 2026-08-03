@@ -389,16 +389,25 @@ function leiturasDe(
 }
 
 /**
- * S45 e S70 — a única decisão do projeto que restringe o jogo além das regras.
+ * S106 e S109 — quanto uma jogada precisa deixar na mão.
  *
- * Jogar a mão inteira deixaria o jogador sem carta para descartar, e a R7.1
- * exige o descarte; a exceção é a batida (R7.3), que é a H10. Sem a guarda, a
- * partida alcança um estado sem especificação. Sai junto com a batida.
+ * Com morto esperando (R9.2), nada: esvaziar a mão é legal pela R10.1.3, e a
+ * guarda some. Sem morto, são **duas** cartas, não uma.
  *
- * A S70 a estende ao `aumentar`, e a propriedade que isso preserva é mais forte
- * do que a guarda por comando sugere: como **cada** jogada oferecida deixa ao
- * menos uma carta, nenhuma sequência delas esvazia a mão — nem baixar seguido de
- * dois aumentos, que é o que a R3.3 autoriza. A guarda não olha o histórico.
+ * A S45 dizia uma, e uma era pouco. A R7.1 obriga a descartar e a R10.1.3 proíbe
+ * esvaziar a mão sem morto: com uma carta só, as duas regras se contradizem e a
+ * mesa congela — `movimentosValidos` devolve `[]` em fase `Acao`. Medido em 15 de
+ * 200 partidas simuladas, todas no mesmo estado (`mão=1, mortosRestantes=0`).
+ *
+ * O erro da S45 foi contar cartas em vez de contar o **turno**. Reter "ao menos
+ * uma carta" é uma condição sobre o fim do turno, e o turno termina com o
+ * descarte obrigatório. Logo, antes dele são duas: uma para descartar e uma para
+ * ficar.
+ *
+ * A propriedade que isso preserva é a mesma que a S70 buscava, agora verdadeira:
+ * como cada jogada oferecida deixa ao menos duas cartas, nenhuma sequência delas
+ * fecha o caminho do descarte — nem baixar seguido de dois aumentos, que é o que
+ * a R3.3 autoriza. A guarda não olha o histórico.
  */
 function adicionar(
   comandos: Comando[],
@@ -406,7 +415,7 @@ function adicionar(
   podeEsvaziar: boolean,
   comando: Extract<Comando, { readonly cartas: readonly (CartaBaixada | string)[] }>,
 ) {
-  if (comando.cartas.length === mao.length && !podeEsvaziar) {
+  if (mao.length - comando.cartas.length < (podeEsvaziar ? 0 : 2)) {
     return
   }
 

@@ -86,6 +86,49 @@ tinha especificação. Agora tem, e a guarda muda de natureza em vez de sumir:
 > dos quatro caminhos é pior que nenhuma, porque quem a lê acredita estar protegido — foi
 > exatamente o que a S70 escreveu.
 
+### 3.1 A contagem também estava errada: são duas cartas, não uma
+
+*Acrescentado depois de implementar a S106 e medir.* Com a guarda nova de pé, 200 partidas
+simuladas entre IAs foram até o fim, e **15 delas pararam**: `movimentosValidos` devolveu `[]`
+em fase `Acao`, e as quinze no mesmo estado — `mão=1, mortosRestantes=0`.
+
+O estado é uma contradição entre duas regras que a S106 juntou sem reparar:
+
+| Regra | Diz |
+|---|---|
+| **R7.1** | o turno **termina** com um descarte obrigatório |
+| **R10.1.3** | sem morto disponível, é proibido esvaziar a mão |
+
+Com uma carta na mão, descartá-la esvazia — proibido —, e não descartar também é proibido. A
+mesa congela.
+
+O defeito não é da R10.1.3: é da **contagem** que a S45 escolheu em julho e a S106 herdou.
+Reter "ao menos uma carta" é uma condição sobre o **turno**, e o turno acaba no descarte. Logo,
+antes dele são duas: uma para descartar e uma para ficar. A S45 contou cartas quando devia ter
+contado o fim do turno, e o erro atravessou seis fatias sem aparecer porque, até a H10, quem
+tinha uma carta só na mão sempre podia descartá-la.
+
+- `[D]` **S109** — Sem morto disponível, uma jogada oferecida precisa deixar **≥ 2** cartas na
+  mão. Uma linha em `adicionar`: `mao.length - comando.cartas.length < (podeEsvaziar ? 0 : 2)`.
+  Com morto, o limite é zero e a guarda some — a S106 continua inteira.
+
+Medido antes de propor, e de novo depois de implementar:
+
+| | Antes da S109 | Depois |
+|---|---|---|
+| partidas travadas em fase `Acao` | **15 / 200** | **0 / 200** |
+| mortos entregues em 200 partidas | 84 | **84** |
+
+O segundo número é o que faz a decisão barata: apertar a guarda **não** custou nenhum morto.
+Era o risco real — uma guarda mais estreita poderia bloquear justamente a jogada que zera a mão
+e chama a R9.2.
+
+> Duas correções da mesma decisão na mesma fatia, e as duas vieram de **medir o que a spec
+> afirmou sem medir**. A S70 afirmou uma propriedade falsa; a S45 escolheu um número sem derivá-lo
+> da regra que o justificava. Nenhuma das duas caiu em revisão, em teste ou em `tsc` — caíram
+> quando 200 partidas foram jogadas até o fim. Simular a partida inteira é uma rede nova, e é a
+> primeira que pega **contradição entre regras**, não erro de código.
+
 ---
 
 ## 4. Pegar o morto é efeito, não comando
@@ -182,10 +225,12 @@ primeira fatia que precisa manter alguma delas em dia.
 
 ## 8. Critérios de aceite
 
-O [acceptance-tests.md](../acceptance-tests.md) §4.5 define **quatro**. Três vão para os testes
-como estão; a `CA-R9.3-2` remete à `CA-R10.1.3-1`, que é da H11.
+O [acceptance-tests.md](../acceptance-tests.md) §4.5 define **quatro**, e a `CA-R9.3-2` remete à
+`CA-R10.1.3-1`, que é da H11. Das três restantes, só a `CA-R9.3-1` vai para o teste com o nome
+dela: a `CA-R9.4-1` e a `CA-R9.4-2` são exatamente o par da §8.2, e estão nos testes como
+`CA-S107-1` e `CA-S107-2` — mesmo caso, nome da decisão que o implementa.
 
-`CA-R9.4-1` · `CA-R9.4-2` · `CA-R9.3-1`
+Ao todo: **16 critérios novos** nas tabelas abaixo, mais a `CA-R9.3-1` herdada.
 
 ### 8.1 Domínio e comandos
 
@@ -218,11 +263,24 @@ como estão; a `CA-R9.3-2` remete à `CA-R10.1.3-1`, que é da H11.
 | **CA-S108-1** | um morto já reclamado | o painel mostra **1 morto por pegar** |
 | **CA-S108-2** | os dois reclamados | o painel mostra **nenhum morto por pegar**, e não um "0" solto |
 
+### 8.4 A contagem da S109
+
+| # | Dado | Então |
+|---|---|---|
+| **CA-S109-1** | sem morto, jogada que deixaria **uma** carta na mão | **não** é oferecida — e a que deixa duas **é**, que é a âncora positiva |
+| **CA-S109-2** | sem morto, `aumentar` que deixaria uma carta | **não** é oferecido — a guarda é uma só, e vale para os três comandos |
+| **CA-S109-3** | sem morto, qualquer jogada oferecida | depois dela **ainda existe jogada** — a mesa nunca para |
+
+> A `CA-S109-3` é o critério que fala do defeito, e não do conserto. Ela aplica **cada** comando
+> oferecido e exige que a lista seguinte não seja vazia; com a contagem antiga, o `baixar` de
+> `5♥ 6♥ 7♥` numa mão de quatro cartas a reprova, que é o travamento medido.
+
 ---
 
 ## 9. Decisões
 
-Sete, confirmadas em bloco em 2026-08-02.
+Sete, confirmadas em bloco em 2026-08-02, mais a **S109**, que nasceu da medição depois de
+implementar e foi confirmada em separado.
 
 | # | Assunto | Decisão confirmada |
 |---|---|---|
@@ -233,6 +291,7 @@ Sete, confirmadas em bloco em 2026-08-02.
 | **S106** | Enumeração | A guarda **estreita e alarga**: cobre o `descartar` e libera com morto disponível |
 | **S107** | Domínio | O efeito **não toca** fase nem vez — é daí que os dois casos da R9.4 caem |
 | **S108** | Interface | Sem aviso novo: o estado muda em dois painéis que já existem |
+| **S109** | Enumeração | Sem morto, a jogada deixa **duas** cartas: uma para descartar, uma para ficar |
 
 ### Onde eu erraria, se errasse
 
@@ -244,6 +303,11 @@ Mas esta spec começa com uma **correção de uma decisão minha já confirmada*
   se lê; o corpo é o que se assina.** Vale considerar se afirmações de propriedade — "nenhuma
   sequência de jogadas faz X" — deveriam entrar na tabela como proposta própria, para receberem
   o mesmo olho que as decisões.
+- E a segunda correção veio **depois** desta spec ser confirmada: a **S45** escolheu o número 1
+  sem derivá-lo da R7.1, e o número certo era 2 (§3.1). Duas decisões minhas caídas na mesma
+  fatia, as duas sobre a mesma guarda, e nenhuma delas sobre o domínio — o que muda a leitura da
+  calibragem acima. O padrão não é "erro sobre Buraco": é **afirmação sobre o comportamento do
+  sistema inteiro feita sem simular o sistema inteiro**.
 
 Das propostas em si, a de domínio é uma só:
 

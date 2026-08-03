@@ -158,7 +158,8 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
-| Guarda das jogadas que esvaziam a mão | **Ao implementar a H10** — remover junto com a batida. É **uma** guarda só, em `adicionar`, e desde a H9 servem-se dela **três** comandos: `baixar`, `aumentar` e `regularizarCuringa` | S45, S58, S70, S95 |
+| Guarda das jogadas que esvaziam a mão | **Ao implementar a H11** — a H10 disparou este gatilho e a resposta foi que a guarda **não sai**: ela virou a primeira metade da R10.1.3 (S106) e ganhou a contagem certa (S109). O que falta é a ressalva da batida (R7.3), e aí sim a condição muda pela última vez | S45, S58, S70, S95, S106, S109 |
+| Ordem em que `movimentosValidos` devolve os comandos | **Ao implementar a H15** — a heurística vai querer ordenar por qualidade, e aí a ordem deixa de ser incidental. Hoje ninguém a decidiu, e a interface já a usa: com uma carta selecionada aparecem "Descartar" **e** a jogada de mesa, nessa ordem, porque os descartes vêm primeiro no `return` | H10, S48 |
 | `ia-strategy.md` como documento próprio | **Antes de começar H15** | U2 |
 | Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
 | `useReducer` + Context vs Zustand | **Se houver re-render perceptível** durante Marco VI | A6 |
@@ -188,6 +189,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Custo de enumerar `aumentar`, **com jogos na mesa** | H6, 2026-08-02 | **Medido: 218 comandos, dos quais 85 `aumentar`, em 1,08 ms**, com a mão de 22 cartas da `CA-S46-1` e quatro jogos na mesa. A estimativa da spec 0006 §4.3 era de "menos de 200 por jogo"; o real ficou em **~21 por jogo**, uma ordem de grandeza abaixo |
 | Asserção de categoria em `CA-R1.3-1` e `CA-R1.3-2` | H8, 2026-08-02 | **Restaurada.** Os dois voltaram a afirmar `LIMPA` e `SUJA`, e a asserção de posição da H5 ficou junto — ela é o que explica **por que** a categoria é essa (S90) |
 | Se o modelo de posições (M2) está certo | H9, 2026-08-02 | **Certo.** `regularizarJogo` é a conversão de uma posição mais uma chamada a `criarJogo`. As **três** condições da R6.5 caem de dois invariantes — I2 para o naipe, I3 para o caminho e para a reposição — e **nenhum `if` de regra foi escrito**. A previsão do domain.md §2 se sustentou |
+| Guarda das jogadas que esvaziam a mão (**parcial**) | H10, 2026-08-03 | **Não sai — vira regra.** A R10.1.3 passou a especificar a mão vazia, então a guarda deixou de ser restrição nossa e virou primeira metade de uma regra (S106). E a contagem estava errada: reter **uma** carta trava a mesa em 15 de 200 partidas, porque a R7.1 obriga a descartar. São **duas** (S109), e a correção não custou nenhum dos 84 mortos entregues. Continua na tabela acima, agora com prazo na H11 |
 | Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro

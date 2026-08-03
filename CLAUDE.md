@@ -133,7 +133,7 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H9** estão fechadas e implementadas.
+**H10** estão fechadas e implementadas.
 
 **O Marco 0, o Marco I e o Marco II estão fechados, e o Marco III começou.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
@@ -149,10 +149,16 @@ errado. `regularizarJogo` é a conversão de **uma** posição mais uma chamada 
 três condições da R6.5 caem de dois invariantes — I2 para o naipe, I3 para o caminho e para a
 reposição. **Nenhum `if` de regra foi escrito.**
 
-**A próxima é a H10** — pegar morto (R2.3, R9.1–R9.4, M3) —, e ela não tem spec. É também a
-fatia que **remove a guarda da S45**, hoje servindo três comandos.
+**A H10 fechou, e ela não removeu a guarda da S45 — mudou a natureza dela.** A R10.1.3 passou a
+especificar a mão vazia, então a guarda deixou de ser restrição nossa e virou regra (S106).
+Pegar o morto é **efeito automático**, num lugar só, no fim de `aplicar`: nenhum comando novo
+entrou, e os seis do `domain.md` §6 continuam sendo seis.
 
-Nove coisas que valem saber antes de mexer no que estas seis fatias deixaram:
+**A próxima é a H11** — bater (R7.3, R9.5, R9.6, R10.1–R10.4, M4) —, e ela não tem spec. É a
+fatia que traz a **segunda metade da R10.1.3**, a ressalva da batida, e com ela a condição da
+guarda muda pela última vez.
+
+Dez coisas que valem saber antes de mexer no que estas sete fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -165,13 +171,18 @@ Nove coisas que valem saber antes de mexer no que estas seis fatias deixaram:
   não se limpa, porque a casa 1 está tomada pela irmã natural.
 - A **S63** decidiu que jogo na mesa tem **identidade**: o `id` nasce no `baixar` e o `aumentar`
   o preserva. Era escolha de implementação registrada em comentário, e a H6 foi a fatia que a
-  quebrou — crescer pela esquerda troca a primeira posição. Ela volta na **H9**, quando
-  regularizar o curinga mudar o conteúdo do jogo sem que ele deixe de ser o mesmo jogo.
-- A **S45** é a única decisão que **restringe o jogo além das regras**: a jogada que esvaziaria
-  a mão não é oferecida, porque a batida é a H10. É **uma guarda só**, em `adicionar`, e desde a
-  H9 passam por ela **três** comandos — `baixar`, `aumentar` e `regularizarCuringa`. Ela vive
-  **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas enquanto
-  todo chamador escolher da lista. Sai na H10.
+  quebrou — crescer pela esquerda troca a primeira posição. Voltou na **H9**, quando regularizar
+  o curinga mudou o conteúdo do jogo sem que ele deixasse de ser o mesmo jogo.
+- A guarda da mão vazia **deixou de ser decisão nossa e virou regra** na H10 (S106): sem morto
+  disponível, esvaziar a mão é proibido pela R10.1.3, e com morto é legal pela R9.2. Continua
+  vivendo **só em `movimentosValidos`** — `aplicar` aceitaria o comando, e isso é seguro apenas
+  enquanto todo chamador escolher da lista. Duas coisas mudaram junto e são fáceis de esquecer:
+  o `descartar` **também** passa por ela agora (a S70 achava que não precisava, e estava errada),
+  e a contagem é **duas** cartas, não uma (S109) — uma para descartar, uma para ficar.
+- A **S109** é a decisão que mais some se alguém "simplificar" a condição de `adicionar`. Reter
+  uma carta parece suficiente e **trava a mesa**: a R7.1 obriga a descartar e a R10.1.3 proíbe
+  esvaziar, então com uma carta as duas regras se contradizem. Medido em 15 de 200 partidas antes
+  do conserto, 0 depois. As `CA-S109-1/2/3` mordem — reprovam três testes quando o `2` vira `1`.
 - A identidade do `Jogo` (S63) tem **um lugar só** desde a H9: `comMesmaIdentidade`, em
   `jogo.ts`. Os dois comandos que mudam jogo na mesa passam por ela, e a mutação que recalcula o
   `id` reprova três testes — antes reprovava um.
@@ -247,7 +258,7 @@ não produz apenas código errado: produz um teste que passa e **documenta** o e
 verificação confirmá-lo. Nos passos 3–6 isso não acontece, porque o julgamento já foi feito e
 aprovado antes.
 
-**Medido em oito fatias — H2 a H9: zero retrabalho.** Nenhum commit do loop precisou ser
+**Medido em nove fatias — H2 a H10: zero retrabalho.** Nenhum commit do loop precisou ser
 refeito. (A redação anterior contava commits; o número não é verificável por script
 e envelhecia a cada fatia, então saiu — regra 4 do global.) Dois modos de falha apareceram, e
 ambos valem vigiar:
@@ -353,8 +364,32 @@ nenhuma reprovou.** Isso é dado, não silêncio:
 - **O construtor da C4 pegou colisão de fixture pela quarta vez** — um `8♥` na mão e no jogo ao
   mesmo tempo. Sem ele, teria virado teste passando sobre estado impossível.
 
+**A H10 acrescentou a quarta rede, e é a primeira que pega contradição entre regras em vez de
+erro de código: jogar 200 partidas inteiras até o fim.** As duas correções da fatia vieram dela,
+e nenhuma teria sido pega por teste, `tsc` ou navegador:
+
+- **A S70 afirmou uma propriedade que ninguém mediu, e ela era falsa.** *"Nenhuma sequência de
+  jogadas oferecidas esvazia a mão"* — a guarda vivia em `adicionar`, e o `descartar` nunca
+  passou por lá. Em 200 partidas, **58** chegaram a mão vazia, 7299 ocorrências. A afirmação
+  estava no **corpo** da spec, não na tabela de pendências. **A tabela é o que se lê; o corpo é
+  o que se assina** — vale considerar pôr afirmação de propriedade na tabela.
+- **A S45 escolheu um número sem derivá-lo da regra.** Reter "ao menos uma carta" trava a mesa:
+  a R7.1 obriga a descartar e a R10.1.3 proíbe esvaziar sem morto. Medido: `movimentosValidos`
+  devolveu `[]` em fase `Acao` em **15 de 200** partidas, todas em `mão=1, mortosRestantes=0`. O
+  certo é **duas** (S109), e a correção não custou nenhum dos 84 mortos entregues. Contar cartas
+  quando a condição é sobre o **fim do turno** é o erro, e ele atravessou seis fatias.
+- **A verificação no navegador passou de primeira, pela segunda vez.** Semente 49, com o humano
+  jogando guloso — baixar antes de descartar —, entrega o morto na 21ª ação dele: a mão vai de
+  **1 para 11** e o painel de *"2 mortos por pegar"* para *"1 morto por pegar"*, no singular.
+- **O roteiro do navegador tropeçou na ordem dos botões**, e isso é dado sobre a interface: com
+  **uma** carta selecionada aparecem *"Descartar"* **e** a jogada de mesa, nessa ordem, porque
+  os descartes vêm primeiro no `return` de `movimentosValidos`. Clicar "o primeiro botão" pega
+  sempre o descarte.
+
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando
 > alguma fatia a torna consequente: o `id` derivado na H4→H6, a ponta do Ás na H4→H8. O
 > candidato seguinte é a **ordem em que `movimentosValidos` devolve os comandos** — ninguém a
-> decidiu, e a interface já a usa para ordenar botões.
+> decidiu, a interface já a usa para ordenar botões, e a H10 mediu que ela é observável. Entrou
+> na tabela de gatilhos do `roadmap.md` §3 com prazo na **H15**, quando a heurística vai querer
+> ordenar por qualidade.

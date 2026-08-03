@@ -951,3 +951,60 @@ describe('S106 — a guarda passa a olhar o morto, e passa a cobrir o descarte',
     ).toHaveLength(0)
   })
 })
+
+/**
+ * Critérios de aceite da spec 0010 §8.4 — a contagem que a S45 errou.
+ *
+ * S109 — sem morto, uma jogada precisa deixar **duas** cartas na mão. A S45 dizia
+ * uma, e uma fecha a mesa: a R7.1 obriga a descartar e a R10.1.3 proíbe esvaziar
+ * a mão sem morto, então com uma carta só as duas regras se contradizem.
+ * `movimentosValidos` devolvia `[]` em fase `Acao` em 15 de 200 partidas
+ * simuladas, todas em `mão=1, mortosRestantes=0`.
+ */
+describe('S109 — sem morto, a jogada deixa duas cartas, não uma', () => {
+  it('CA-S109-1 — sem morto, o baixar que deixa duas cartas é oferecido', () => {
+    // A âncora positiva. Sem ela, uma enumeração que nunca oferece `baixar` sem
+    // morto passaria no critério negativo abaixo de graça.
+    expect(
+      movimentosValidos(visaoDaVez(semMortos(cartas('5♥ 6♥ 7♥ 8♠ 9♠')))).filter(
+        (comando) => comando.tipo === 'baixar',
+      ),
+    ).toHaveLength(1)
+  })
+
+  it('CA-S109-1 — sem morto, o baixar que deixaria uma carta não é oferecido', () => {
+    // O caso que a S45 deixava passar: sobra o 8♠, o descarte dele é proibido
+    // pela CA-S106-1, e não há mais jogada nenhuma.
+    expect(
+      movimentosValidos(visaoDaVez(semMortos(cartas('5♥ 6♥ 7♥ 8♠')))).filter(
+        (comando) => comando.tipo === 'baixar',
+      ),
+    ).toHaveLength(0)
+  })
+
+  it('CA-S109-2 — a mesma contagem vale para o aumentar', () => {
+    const jogo = [posicoes('5♥ 6♥ 7♥')]
+
+    // Duas cartas de sobra: oferecido. Uma: não. A guarda é uma só, em
+    // `adicionar`, e os três comandos que põem carta na mesa passam por ela.
+    expect(aumentaresDe(semMortos(cartas('4♥ K♦ 9♣'), jogo))).toHaveLength(1)
+    expect(aumentaresDe(semMortos(cartas('4♥ K♦'), jogo))).toHaveLength(0)
+  })
+
+  it('CA-S109-3 — sem morto, nenhuma jogada oferecida leva a uma mesa parada', () => {
+    // O travamento em si, e não a contagem que o evita. Com a regra da S45, o
+    // `baixar` de 5-6-7 apareceria, deixaria o 8♠ sozinho, e a lista seguinte
+    // seria vazia — que é o estado medido em 15 das 200 partidas.
+    const partida = semMortos(cartas('5♥ 6♥ 7♥ 8♠'))
+
+    for (const comando of movimentosValidos(visaoDaVez(partida))) {
+      const resultado = aplicar(partida, comando)
+
+      if (resultado.tipo !== 'sucesso') {
+        throw new Error(`jogada oferecida e recusada: ${comando.tipo}`)
+      }
+
+      expect(movimentosValidos(visaoDaVez(resultado.partida))).not.toHaveLength(0)
+    }
+  })
+})
