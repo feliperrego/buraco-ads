@@ -129,7 +129,7 @@ Imutáveis, sem identidade, comparados por valor.
 | `ValorDeCarta` | `{ naipe, valor }` — o que as regras comparam | R1.2 |
 | `PosicaoSequencia` | `Natural \| Curinga` (ver M2) | R1.3, R6.5 |
 | `CategoriaCanastra` | `DE_1000 \| DE_500 \| LIMPA \| SUJA` | R8.2 |
-| `FaseDoTurno` | `Compra \| Acao` | R3.1 |
+| `FaseDaRodada` | `Compra \| Acao \| RodadaEncerrada` | R3.1, R10.3 — **S112 (H11)** |
 | `Pontuacao` | Detalhamento por componente, não só total | R11, RF4.2 |
 
 - `[D]` `Pontuacao` é um objeto com um campo por componente da R11
