@@ -186,7 +186,7 @@ describe('R8.5 — a categoria é recalculada, e a apuração acompanha', () => 
  * os dois é, e a `CA-R11.5.2-1` acima é a âncora que separa os dois casos.
  */
 describe('R11.5.1 — sem penalidade para quem não teve chance de pegar morto', () => {
-  it('CA-S141-1 — com um morto convertido em monte, não há penalidade', () => {
+  it('CA-R11.5.1-1 e CA-S141-1 — com morto convertido, não há penalidade', () => {
     const base = comEstado(cartas('5♥'), [], [1, 1])
     const comConversao: Partida = {
       ...base,

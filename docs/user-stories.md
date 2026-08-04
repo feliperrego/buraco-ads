@@ -119,9 +119,17 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 | **H13** | Jogo várias rodadas até alguém atingir 3000 pontos e vejo o vencedor | R2.6, R12.1, R12.2, RF1.5, RF4.1 |
 | **H14** | O monte acaba, um morto vira o novo monte e a partida continua | R4.6, R4.7, R4.8, R10.1.1–R10.1.3, R11.5.1, R11.5.2 |
 
-> H14 é puro caso de borda e vale um marco próprio junto de H13 porque é a história com mais
-> chance de nunca acontecer numa partida real de teste. Precisa de teste com semente
-> específica, não de sorte.
+> **Corrigido em 2026-08-04, ao escrever a spec 0014.** Este parágrafo dizia que a H14 era
+> *"puro caso de borda"* e *"a história com mais chance de nunca acontecer numa partida real de
+> teste"*. Medido em 200 rodadas simuladas: **o monte esgota em 200 delas**, e nas 200 há morto
+> por converter no instante do esgotamento. A conversão da R4.6 é a regra mais frequente do jogo.
+>
+> A leitura de julho não foi descuidada — foi feita sem o jogo existir para medir. O que ela
+> custou foi uma fatia de atraso, e não código errado: antes da H14, **184 de 200 partidas não
+> terminavam**. Depois, terminam **200 de 200**, em 6 rodadas na mediana.
+>
+> O que continua valendo do parágrafo antigo: os casos da R10.1.1 e da R11.5.1 **exigem estado
+> construído**. Eles são raros; o esgotamento do monte não é.
 
 > **A R10.1.1 é da H14, e a H11 não a implementa (S110).** A H11 citava `R10.1–R10.4` como
 > intervalo, o que a incluía sem querer: a exceção suspende a exigência do morto quando um

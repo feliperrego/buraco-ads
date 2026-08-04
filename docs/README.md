@@ -68,6 +68,7 @@ testada, os testes passam a ser a especificação viva.
 | [0011-bater.md](specs/0011-bater.md) | H11 — bater e encerrar a rodada | **Implementada** — 16 novos e 2 herdados |
 | [0012-apuracao-da-rodada.md](specs/0012-apuracao-da-rodada.md) | H12 — a apuração da rodada | **Implementada** — 17 novos e 2 herdados |
 | [0013-varias-rodadas.md](specs/0013-varias-rodadas.md) | H13 — várias rodadas até 3000 | **Implementada** — 20 critérios verdes |
+| [0014-monte-esgotado.md](specs/0014-monte-esgotado.md) | H14 — o monte esgotado | **Implementada** — 15 novos e 5 herdados |
 
 ## Verificação
 

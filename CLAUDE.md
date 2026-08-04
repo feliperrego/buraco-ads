@@ -134,9 +134,9 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H13** estão fechadas e implementadas.
+**H14** estão fechadas e implementadas.
 
-**Os Marcos 0, I, II e III estão fechados, e o Marco IV é o próximo.** Existe um jogo em
+**Os Marcos 0 a IV estão fechados, e o Marco V — a IA por heurística — é o próximo.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
 monte e pegar o lixo inteiro, e **ver a categoria de cada canastra dos dois lados da mesa**. Os
 **sete invariantes de `Jogo`** do `domain.md` §4 estão fechados — a H4 alcançava cinco, a H5
@@ -171,12 +171,16 @@ coisas atravessam a rodada — o placar acumulado e a alternância do iniciante 
 outros sete campos são o que `iniciarPartida` produz. A rota `/fim`, esqueleto desde a tarefa
 0.7, finalmente mostra alguma coisa.
 
-**A próxima é a H14** — o monte esgotado (R4.6, R4.7, R4.8, R10.1.1, R11.5.1) —, e ela não tem
-spec. É a fatia que falta para uma partida **terminar**: medido na H13, em 200 partidas
-simuladas, **184 param na rodada 1**, 15 chegam à rodada 2, uma à rodada 3, e **nenhuma** alcança
-os 3000. O maior placar visto foi **2210**.
+**A H14 fez o jogo terminar, e é a fatia com o maior salto medido do projeto.** Antes dela, em
+200 partidas simuladas, **184 paravam na rodada 1** e nenhuma alcançava os 3000; depois,
+**200 de 200 terminam**, em 6 rodadas na mediana, com placar máximo de 4585. As **66 regras do
+`rules.md` têm teste que as cita** — verificado por script.
 
-Catorze coisas que valem saber antes de mexer no que estas dez fatias deixaram:
+**A próxima é a H15** — o oponente por heurística (RF5.1, RF5.2, RF5.3) —, e ela não tem spec. A
+IA aleatória **não** é descartada nela: a E7 fixou que ela vira a linha de base contra a qual a
+heurística é medida, e o gatilho do limiar de 70% no `roadmap.md` §3 espera esse número.
+
+Dezesseis coisas que valem saber antes de mexer no que estas onze fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -212,6 +216,16 @@ Catorze coisas que valem saber antes de mexer no que estas dez fatias deixaram:
   (`mortosPegos`), S113 (quem bateu) —, e a S120 é a quinta. O contraexemplo é o `placar`, que
   **é** guardado porque sobrevive à rodada: quando a H13 redistribuir o baralho, os jogos e as
   mãos que produziram o saldo deixam de existir.
+- A **S140** é a que impede o pior defeito possível da guarda: a condição da R10.1 tinha **duas**
+  expressões, em `aplicar` e em `movimentosValidos`, que concordavam por acaso de escrita. Se
+  divergirem, a lista recusa a jogada que a engine aceitaria — e o jogador **nunca vê** a batida
+  que a regra lhe dá. Hoje é uma função só, em `dominio/batida.ts`, e a `CA-S140-3` cobra a
+  concordância.
+- A **S115** exige o resultado **inteiro**, e a H14 mostrou o que "inteiro" significa: o
+  `aumentar` e o `regularizarCuringa` **substituem** um jogo, e somar o resultado à lista sem
+  tirar a versão antiga faz a guarda ler um jogo que deixou de existir. Uma partida em 200 travou
+  porque o `aumentar` sujou a única canastra limpa com um curinga enquanto a guarda ainda via a
+  versão limpa. A `CA-S140-4` prende isso.
 - A **S131** é o campo mais fácil de "simplificar" errado: `iniciante` **não** é `jogadorDaVez`.
   No fim da rodada a vez diz onde ela parou, não onde começou — depois de uma batida por descarte
   final ela aponta para o adversário do batedor. Alternar a partir dela dá o mesmo jogador de
@@ -491,6 +505,22 @@ raciocinar antes:**
   `/fim` renderiza *"Fim de partida"* — o texto do esqueleto da tarefa 0.7 —, quando o critério
   dele fala de **registro de rota**. O sinal para reconhecer o caso continua o mesmo: o teste que
   quebra não é sobre a fatia nova.
+
+**A H14 fechou o `rules.md`, e as três coisas que ela ensinou vieram todas de medir:**
+
+- **A spec corrigiu uma afirmação de julho, e a margem foi larga.** O `user-stories.md` chamava a
+  H14 de *"puro caso de borda… a história com mais chance de nunca acontecer"*. Medido: o monte
+  esgota em **200 de 200** rodadas, e nas 200 há morto por converter. A conversão da R4.6 é a
+  regra **mais frequente** do jogo. A leitura não foi descuidada — foi feita sem jogo para medir
+  —, e o que ela custou foi uma fatia de atraso.
+- **A quarta rede achou uma trava em 1 de 200 partidas, e o defeito era meu, desta fatia.** A
+  guarda somava o jogo resultante à lista de `meusJogos` **sem tirar a versão antiga**, então o
+  `aumentar` que sujava a única canastra limpa passava batido. Duas linhas de conserto, um
+  critério (`CA-S140-4`), e as 200 voltaram a terminar.
+- **A mutação que não morde apareceu pela terceira fatia seguida, e no mesmo ponto cego.** Trocar
+  a ordem de `comFimDeMao` e `comFimDeMonte` passou nos 314 testes. A `CA-S139-1` estava
+  **escrita na spec** e nunca virou teste — igual à `CA-S131-3` na H13 e à `CA-S113-2` na H12.
+  Três fatias, três vezes o mesmo: **critério que a spec argumenta e o teste não visita**.
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando

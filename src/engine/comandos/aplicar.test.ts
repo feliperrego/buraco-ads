@@ -1205,11 +1205,12 @@ function comMonteDe(
 }
 
 describe('R4.6 e R4.7 — o morto vira o novo monte', () => {
-  it('CA-R4.7-1 — com os dois mortos intactos, o primeiro vira monte e o segundo fica', () => {
+  it('CA-R4.6-1 e CA-R4.7-1 — o morto vira monte com 11 cartas, e o segundo fica', () => {
     // O monte com uma carta: comprá-la o esgota.
     const antes = comMonteDe(1)
     const depois = aplicado(antes, { tipo: 'comprarDoMonte' })
 
+    // CA-R4.6-1 — o morto convertido entrega **11** cartas ao monte (R2.3).
     expect(depois.monte).toHaveLength(11)
     expect(depois.mortos[0].destino).toBe('Monte')
     expect(depois.mortos[1].destino).toBeNull()
@@ -1222,6 +1223,36 @@ describe('R4.6 e R4.7 — o morto vira o novo monte', () => {
     expect(depois.mortos.filter((morto) => morto.destino === 0)).toHaveLength(0)
     expect(depois.mortos.filter((morto) => morto.destino === 1)).toHaveLength(0)
     expect(depois.mortos.filter((morto) => morto.destino === null)).toHaveLength(1)
+  })
+
+  it('CA-S139-1 — a mão zera e o monte esgota no mesmo comando: o morto é do jogador', () => {
+    // A ordem dos dois efeitos **não** é livre, e este é o estado que separa as
+    // duas leituras. Com um morto só restando, monte vazio e uma jogada que zera
+    // a mão:
+    //
+    //   ordem certa  — o jogador pega o último morto (R9.2, sem ressalva), e aí
+    //                  o monte fica sem morto para converter: a rodada acaba (R4.8)
+    //   ordem errada — o morto vira monte, e o jogador fica com a mão em zero e
+    //                  sem morto para receber
+    //
+    // Achado por mutação: trocar a ordem passava nos 314 testes, porque nenhum
+    // outro critério alcança este estado.
+    const base = construirPartida({
+      maos: [cartas('5♠ 6♠ 7♠'), outrasCartas(cartas('5♠ 6♠ 7♠'), 11)],
+      jogadorDaVez: 0,
+      fase: 'Acao',
+    })
+    const semMonte: Partida = {
+      ...base,
+      monte: [],
+      lixo: [...base.lixo, ...base.monte, ...base.mortos[1].cartas],
+      mortos: [base.mortos[0], { ...base.mortos[1], cartas: [], destino: 1 }],
+    }
+    const depois = aplicado(semMonte, BAIXAR_TRES)
+
+    expect(depois.jogadores[0].mao).toHaveLength(11)
+    expect(depois.mortos[0].destino).toBe(0)
+    expect(depois.mortos.some((morto) => morto.destino === 'Monte')).toBe(false)
   })
 
   it('CA-S139-2 — quem compra a última carta termina o turno normalmente', () => {
@@ -1282,7 +1313,7 @@ describe('R4.8 — o monte esgota sem morto e a rodada acaba', () => {
 describe('R10.1.1 — a exigência do morto cai para quem não teve chance', () => {
   const LIMPA_DE_COPAS = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
 
-  it('CA-S140-1 — com morto convertido, a canastra limpa basta para bater', () => {
+  it('CA-R10.1.1-1 e CA-S140-1 — com morto convertido, a canastra limpa basta', () => {
     const comJogo = construirPartida({
       maos: [cartas('5♠ 6♠ 7♠'), outrasCartas(cartas('5♠ 6♠ 7♠ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥'), 11)],
       jogos: [[LIMPA_DE_COPAS], []],

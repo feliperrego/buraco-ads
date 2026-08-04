@@ -1151,3 +1151,53 @@ describe('S115 — o resultado substitui o jogo antigo, não se soma a ele', () 
     ).toBe(true)
   })
 })
+
+/**
+ * Critérios de aceite da spec 0014 §8.3 — as duas exceções, pelo lado da lista.
+ *
+ * S140 — a condição da R10.1 tinha duas expressões, em módulos diferentes, que
+ * concordavam por acaso de escrita. A `CA-S140-3` é o critério que passa a
+ * cobrar a concordância, e sem ele a ressalva da R10.1.1 poderia entrar em só um
+ * dos lados: `movimentosValidos` recusaria a jogada que `aplicar` aceitaria, e o
+ * jogador nunca veria a batida que a regra lhe dá.
+ */
+describe('R10.1.1 e R10.1.2 — as duas razões de não ter morto', () => {
+  const LIMPA_NA_MESA_2 = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+
+  /** O mesmo estado com o primeiro morto convertido em vez de reclamado. */
+  function comConversao(partida: Partida): Partida {
+    return {
+      ...partida,
+      mortos: [{ ...partida.mortos[0], destino: 'Monte' }, partida.mortos[1]],
+    }
+  }
+
+  it('CA-S140-1 — com morto convertido, a jogada que zera a mão é oferecida', () => {
+    const semChance = comConversao(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [1, 1]))
+
+    expect(baixaresDe(semChance)).toHaveLength(1)
+  })
+
+  it('CA-S140-2 — com os dois mortos pegos pelo adversário, ela não é oferecida', () => {
+    // A R10.1.2 sobrevive à ressalva da R10.1.1: é o mesmo estado sem conversão.
+    expect(baixaresDe(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [1, 1]))).toHaveLength(0)
+  })
+
+  it('CA-S140-3 — a condição da R10.1 dá a mesma resposta nos dois lugares', () => {
+    // `movimentosValidos` oferecer a jogada e `aplicar` recusar a batida — ou o
+    // contrário — é o defeito que a S140 existe para tornar impossível.
+    for (const partida of [
+      comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [1, 1]),
+      comConversao(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [1, 1])),
+      comMortos(cartas('5♠ 6♠ 7♠'), [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ 2♠>J')], [1, 1]),
+      comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [0, 1]),
+    ]) {
+      const oferecida = baixaresDe(partida).length > 0
+      const comando = baixaresDe(comMortos(cartas('5♠ 6♠ 7♠'), [LIMPA_NA_MESA_2], [0, 1]))[0]
+      const resultado = comando === undefined ? null : aplicar(partida, comando)
+      const encerrou = resultado?.tipo === 'sucesso' && resultado.partida.fase === 'RodadaEncerrada'
+
+      expect(oferecida).toBe(encerrou)
+    }
+  })
+})
