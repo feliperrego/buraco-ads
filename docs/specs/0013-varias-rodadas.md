@@ -1,6 +1,6 @@
 # Spec 0013 — H13: várias rodadas até 3000
 
-> Status: **rascunho anotado** — 8 propostas, nenhuma confirmada
+> Status: **confirmada** — 8 decisões, nenhuma pendência
 > História: `H13` — *"Jogo várias rodadas até alguém atingir 3000 pontos e vejo o vencedor"*
 > Fecha: R2.6, R12.1, R12.2, RF1.5, RF4.1
 > Deriva de: [rules.md](../rules.md) · [requirements.md](../requirements.md) · [screens.md](../screens.md)
@@ -41,7 +41,7 @@ Três coisas mudam, e a terceira é a que carrega a decisão:
 - **A R11.5.1** — segue esperando a conversão da R4.6 (S119).
 - **A RF1.3** — abandonar uma partida em curso, com confirmação, é a H16.
 
-- `[P]` **S128** — A H13 encadeia rodadas e fecha a partida. Nada do monte esgotado entra aqui,
+- `[D]` **S128** — A H13 encadeia rodadas e fecha a partida. Nada do monte esgotado entra aqui,
   e a partida que não termina em batida continua rodando indefinidamente — um defeito conhecido,
   com fatia marcada.
 
@@ -68,7 +68,7 @@ Três coisas mudam, e a terceira é a que carrega a decisão:
 
 Sete dos nove são exatamente o que `iniciarPartida` já produz. Só dois atravessam.
 
-- `[P]` **S129** — `novaRodada(partida, semente)` é **função da engine**, chamada de `estado/`
+- `[D]` **S129** — `novaRodada(partida, semente)` é **função da engine**, chamada de `estado/`
   como `iniciarPartida`, e **não** um sétimo comando. Ela reusa `iniciarPartida` e sobrepõe o
   que atravessa.
 
@@ -106,7 +106,7 @@ partida reproduzível a partir de um número.
 O que se perde é o que nunca existiu: uma partida **jogada no app** nunca foi reproduzível,
 porque a semente da primeira rodada já é sorteada e nunca mostrada.
 
-- `[P]` **S130** — Alternativa **A**. A semente da rodada nova vem de `estado/`, pelo mesmo
+- `[D]` **S130** — Alternativa **A**. A semente da rodada nova vem de `estado/`, pelo mesmo
   caminho da primeira. A engine continua sem nenhuma fonte de aleatoriedade, e a RNF1.3 passa a
   se ler como *"determinística dadas as suas entradas"*, com a semente sendo uma entrada por
   rodada em vez de uma por partida.
@@ -136,7 +136,7 @@ Três formas de descobrir:
 | **B** — derivar da semente | reexecutar `iniciarPartida(semente)` e ler o `jogadorDaVez` | reembaralha 104 cartas para ler um bit, e amarra o dado à ordem dos sorteios (S7) |
 | **C** — derivar de `numeroDaRodada` | ímpar começa quem foi sorteado, par o outro | ainda precisa saber quem foi sorteado — cai na B |
 
-- `[P]` **S131** — Alternativa **A**: `Partida` ganha `iniciante: JogadorId`, posto por
+- `[D]` **S131** — Alternativa **A**: `Partida` ganha `iniciante: JogadorId`, posto por
   `iniciarPartida` e **invertido** por `novaRodada`.
 
 É a segunda coisa guardada em vez de derivada nas últimas duas fatias, e pelo mesmo motivo do
@@ -161,13 +161,13 @@ que ele, logo o `argmax` já o escolhe. Se os dois passaram, o `argmax` é exata
 manda. E o empate exato devolve **nada**, que é precisamente *"joga-se mais uma rodada"* — não
 um caso à parte, e sim a ausência de vencedor.
 
-- `[P]` **S132** — `vencedorDa(partida): JogadorId | null` é **derivado** de `placar`, e a R12.2
+- `[D]` **S132** — `vencedorDa(partida): JogadorId | null` é **derivado** de `placar`, e a R12.2
   inteira cai de uma expressão: `null` quando o máximo não chegou a 3000 **ou** quando há
   empate. Nenhum `if` por caso da regra é escrito.
 
 E o estado de "partida encerrada" não precisa existir:
 
-- `[P]` **S133** — **Não** há quarta fase. A partida acabou quando a rodada está encerrada
+- `[D]` **S133** — **Não** há quarta fase. A partida acabou quando a rodada está encerrada
   **e** `vencedorDa` devolve alguém. `FaseDaRodada` continua com três valores, e a S112 continua
   valendo como está.
 
@@ -189,7 +189,7 @@ A `screens.md` §1 já dizia que o painel de apuração *"o jogador fecha para s
 rodada"*, e a H12 o entregou sem botão de propósito (S119). Ele entra aqui, e tem **dois**
 destinos possíveis.
 
-- `[P]` **S134** — **Um** botão, com rótulo que muda conforme haja vencedor: *"Próxima rodada"*
+- `[D]` **S134** — **Um** botão, com rótulo que muda conforme haja vencedor: *"Próxima rodada"*
   quando a partida continua, *"Ver o resultado"* quando acabou. Não dois botões, nem um botão
   que às vezes desaparece — a decisão de qual caminho seguir é do jogo, não do jogador.
 
@@ -197,7 +197,7 @@ destinos possíveis.
 
 Hoje a rota `/fim` renderiza `<h1>Fim de partida</h1>`, o esqueleto que a tarefa 0.7 criou.
 
-- `[P]` **S135** — A `/fim` mostra **quem venceu**, o **placar final** dos dois e um botão de
+- `[D]` **S135** — A `/fim` mostra **quem venceu**, o **placar final** dos dois e um botão de
   **nova partida** (RF1.5). Sem partida em memória ela volta para `/`, pelo mesmo efeito que a
   `RotaPartida` usa desde a H1 (S14).
 
@@ -258,11 +258,11 @@ nesta spec.
 
 ---
 
-## 9. Pendências
+## 9. Decisões
 
-Oito propostas. Nenhuma confirmada.
+Oito, confirmadas em bloco em 2026-08-04.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S128** | Escopo | A H13 encadeia rodadas e fecha a partida; monte esgotado segue na H14 |
 | **S129** | Domínio | `novaRodada(partida, semente)` é **função**, não um sétimo comando |

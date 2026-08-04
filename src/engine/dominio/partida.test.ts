@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { NAIPES, VALORES } from './carta.ts'
 import type { Carta } from './carta.ts'
-import { iniciarPartida } from './partida.ts'
-import type { Partida } from './partida.ts'
+import { iniciarPartida, novaRodada, vencedorDa } from './partida.ts'
+import type { JogadorId, Partida } from './partida.ts'
 
 /**
  * Critérios de aceite da spec 0001 §6, níveis 1 e 2 da testing-strategy.md.
@@ -235,5 +235,151 @@ describe('S4 — o embaralhamento está congelado', () => {
     expect(ids(partida.monte).slice(0, 5)).toEqual(DOURADO.montePrimeiras5)
     expect(ids(partida.monte).slice(-5)).toEqual(DOURADO.monteUltimas5)
     expect(partida.jogadorDaVez).toBe(DOURADO.jogadorDaVez)
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0013 §8.1 e §8.2 — várias rodadas.
+ *
+ * S129 — `novaRodada` é função, não comando. Só **duas** coisas atravessam a
+ * rodada: o placar acumulado e a alternância do iniciante (R2.6). Os outros sete
+ * campos são o que `iniciarPartida` produz, e é por isso que ela é reusada.
+ */
+
+/** A partida da semente, levada ao fim da rodada com o placar pedido. */
+function encerradaCom(placar: readonly [number, number], semente = 7): Partida {
+  return { ...iniciarPartida(semente), fase: 'RodadaEncerrada', placar }
+}
+
+describe('R2.6 — o início alterna entre rodadas', () => {
+  it('CA-R2.6-3 — a rodada 2 começa pelo outro, e a 3 volta ao primeiro', () => {
+    const primeira = iniciarPartida(7)
+    const segunda = novaRodada(primeira, 8)
+    const terceira = novaRodada(segunda, 9)
+
+    expect(segunda.iniciante).not.toBe(primeira.iniciante)
+    expect(terceira.iniciante).toBe(primeira.iniciante)
+  })
+
+  it('CA-S131-1 — na rodada nova, iniciante e jogadorDaVez coincidem', () => {
+    // Se o campo fosse decorativo, este critério passaria com ele fixo em 0.
+    // A CA-R2.6-3 é a âncora que impede isso.
+    const segunda = novaRodada(iniciarPartida(7), 8)
+
+    expect(segunda.jogadorDaVez).toBe(segunda.iniciante)
+  })
+
+  it('CA-S131-2 — durante a rodada, iniciante não acompanha a vez', () => {
+    const primeira = iniciarPartida(7)
+    const outro: JogadorId = primeira.jogadorDaVez === 0 ? 1 : 0
+    const meio: Partida = { ...primeira, jogadorDaVez: outro }
+
+    // É a razão de o campo existir: `jogadorDaVez` diz onde a rodada parou,
+    // nunca onde ela começou (S113).
+    expect(meio.iniciante).toBe(primeira.iniciante)
+    expect(meio.iniciante).not.toBe(meio.jogadorDaVez)
+  })
+})
+
+describe('S129 — o que a rodada nova preserva e o que ela refaz', () => {
+  it('CA-S129-1 — mãos de 11, mesas vazias e os dois mortos intactos', () => {
+    const gasta: Partida = {
+      ...iniciarPartida(7),
+      fase: 'RodadaEncerrada',
+      jogadores: [
+        { id: 0, mao: [], jogos: [] },
+        { id: 1, mao: iniciarPartida(7).jogadores[1].mao, jogos: [] },
+      ],
+      mortos: [
+        { ...iniciarPartida(7).mortos[0], cartas: [], reclamadoPor: 0 },
+        iniciarPartida(7).mortos[1],
+      ],
+    }
+    const nova = novaRodada(gasta, 8)
+
+    expect(nova.jogadores[0].mao).toHaveLength(11)
+    expect(nova.jogadores[1].mao).toHaveLength(11)
+    expect(nova.jogadores[0].jogos).toHaveLength(0)
+    expect(nova.mortos.map((morto) => morto.reclamadoPor)).toEqual([null, null])
+    expect(nova.mortos.map((morto) => morto.cartas.length)).toEqual([11, 11])
+    expect(nova.lixo).toHaveLength(0)
+  })
+
+  it('CA-S129-2 — o número da rodada avança e a fase volta a Compra', () => {
+    const segunda = novaRodada(encerradaCom([0, 0]), 8)
+
+    expect(segunda.numeroDaRodada).toBe(2)
+    expect(segunda.fase).toBe('Compra')
+    expect(novaRodada(segunda, 9).numeroDaRodada).toBe(3)
+  })
+
+  it('CA-S129-3 — o placar acumulado atravessa a rodada', () => {
+    expect(novaRodada(encerradaCom([430, -120]), 8).placar).toEqual([430, -120])
+  })
+
+  it('CA-S129-1 — a semente nova é a que redistribui', () => {
+    // A âncora da S130: a rodada nova é a partida da semente recebida, não uma
+    // repetição da anterior.
+    const comOito = novaRodada(encerradaCom([0, 0]), 8)
+    const comNove = novaRodada(encerradaCom([0, 0]), 9)
+
+    expect(comOito.semente).toBe(8)
+    expect(comOito.jogadores[0].mao).toEqual(iniciarPartida(8).jogadores[0].mao)
+    expect(comOito.jogadores[0].mao).not.toEqual(comNove.jogadores[0].mao)
+  })
+})
+
+describe('R12 — o fim da partida', () => {
+  it('CA-R12.1-1 — com 3010 contra 500 e a rodada encerrada, vence o 0', () => {
+    expect(vencedorDa(encerradaCom([3010, 500]))).toBe(0)
+    expect(vencedorDa(encerradaCom([500, 3010]))).toBe(1)
+  })
+
+  it('CA-R12.1-2 — com 2990 o maior ainda não chegou: a partida continua', () => {
+    expect(vencedorDa(encerradaCom([2990, 500]))).toBeNull()
+  })
+
+  it('CA-R12.2-1 — os dois acima de 3000: vence quem tem mais', () => {
+    expect(vencedorDa(encerradaCom([3200, 3100]))).toBe(0)
+    expect(vencedorDa(encerradaCom([3100, 3200]))).toBe(1)
+  })
+
+  it('CA-R12.2-2 — empate exato acima de 3000 joga mais uma rodada', () => {
+    // O `null` **é** a regra, não um caso não tratado.
+    expect(vencedorDa(encerradaCom([3100, 3100]))).toBeNull()
+  })
+
+  it('CA-S132-1 — a verificação é ao fim da rodada, nunca no meio', () => {
+    const emAndamento: Partida = { ...iniciarPartida(7), placar: [3010, 500] }
+
+    expect(emAndamento.fase).toBe('Compra')
+    expect(vencedorDa(emAndamento)).toBeNull()
+    // A âncora: o mesmo placar com a rodada encerrada decide.
+    expect(vencedorDa({ ...emAndamento, fase: 'RodadaEncerrada' })).toBe(0)
+  })
+
+  it('CA-S133-1 — partida decidida continua na fase RodadaEncerrada', () => {
+    const decidida = encerradaCom([3010, 500])
+
+    expect(vencedorDa(decidida)).toBe(0)
+    // Não existe quarto valor de fase: o fim da partida é rodada encerrada com
+    // vencedor, e não um estado próprio.
+    expect(decidida.fase).toBe('RodadaEncerrada')
+  })
+})
+
+describe('M9 — conservação na rodada nova', () => {
+  it('CA-M9-14 — a rodada nova tem as 104 cartas, sem id repetido', () => {
+    const nova = novaRodada(encerradaCom([100, 200]), 8)
+    const ids = [
+      ...nova.jogadores[0].mao,
+      ...nova.jogadores[1].mao,
+      ...nova.monte,
+      ...nova.lixo,
+      ...nova.mortos.flatMap((morto) => morto.cartas),
+    ].map((carta) => carta.id)
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
   })
 })

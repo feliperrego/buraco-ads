@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { aplicar, iniciarPartida } from '../engine/index.ts'
+import { aplicar, iniciarPartida, novaRodada } from '../engine/index.ts'
 import type { Comando, Partida } from '../engine/index.ts'
 
 /**
@@ -18,6 +18,9 @@ import type { Comando, Partida } from '../engine/index.ts'
 export type AcaoDaPartida =
   | { readonly tipo: 'iniciar'; readonly semente: number }
   | { readonly tipo: 'jogar'; readonly comando: Comando }
+  // S129/S130 — a rodada seguinte não é comando, e a semente dela vem daqui pelo
+  // mesmo caminho da primeira: o reducer precisa ser puro (S8).
+  | { readonly tipo: 'novaRodada'; readonly semente: number }
 
 export type EstadoDaPartida = {
   readonly partida: Partida | null
@@ -31,6 +34,11 @@ export function reduzir(estado: EstadoDaPartida, acao: AcaoDaPartida): EstadoDaP
       // Substituir uma partida em curso é a RF1.3, que exige confirmação e
       // chega na H16. Aqui iniciar sempre começa do zero.
       return { partida: iniciarPartida(acao.semente) }
+
+    case 'novaRodada':
+      return estado.partida === null
+        ? estado
+        : { partida: novaRodada(estado.partida, acao.semente) }
 
     case 'jogar': {
       if (estado.partida === null) {
@@ -57,6 +65,7 @@ export type ContextoDaPartida = {
   readonly partida: Partida | null
   readonly iniciar: () => void
   readonly jogar: (comando: Comando) => void
+  readonly seguirParaProximaRodada: () => void
 }
 
 export const Contexto = createContext<ContextoDaPartida | null>(null)

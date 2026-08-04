@@ -5,7 +5,7 @@
  * A spec 0001 §2 fixa o que a H1 acrescenta aqui: duas funções, e nada mais.
  * `movimentosValidos` entra na H2, junto com o primeiro comando.
  */
-export { iniciarPartida } from './dominio/partida.ts'
+export { PONTOS_PARA_VENCER, iniciarPartida, novaRodada, vencedorDa } from './dominio/partida.ts'
 export { categoriaDe, contaComoLimpa, criarJogo, ehCanastra, valorDa } from './dominio/jogo.ts'
 export { apurar, totalDe, valorDaCarta } from './dominio/pontuacao.ts'
 export type { Pontuacao } from './dominio/pontuacao.ts'

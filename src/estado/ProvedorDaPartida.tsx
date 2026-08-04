@@ -62,6 +62,11 @@ export default function ProvedorDaPartida({ children }: { children: ReactNode })
       jogar: (comando: Comando) => {
         despachar({ tipo: 'jogar', comando })
       },
+      // S130 — a semente da rodada nova sai daqui, como a da primeira: a A5
+      // proíbe a engine de sortear, e a S8 mantém o reducer puro.
+      seguirParaProximaRodada: () => {
+        despachar({ tipo: 'novaRodada', semente: sortearSemente() })
+      },
     }),
     [estado.partida],
   )

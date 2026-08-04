@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { movimentosValidos, visaoDe } from '../../engine/index.ts'
+import { movimentosValidos, vencedorDa, visaoDe } from '../../engine/index.ts'
 import { usePartidaEmCurso } from '../../estado/partida-em-curso.ts'
 import TelaPartida from '../telas/TelaPartida.tsx'
 
@@ -14,7 +14,7 @@ import TelaPartida from '../telas/TelaPartida.tsx'
  * navegação termina, não por qual mecanismo.
  */
 export default function RotaPartida() {
-  const { partida, jogar } = usePartidaEmCurso()
+  const { partida, jogar, seguirParaProximaRodada } = usePartidaEmCurso()
   const navegar = useNavigate()
 
   useEffect(() => {
@@ -31,5 +31,26 @@ export default function RotaPartida() {
   // recebe a lista de movimentos em vez de decidir o que é válido (T6).
   const visao = visaoDe(partida, 0)
 
-  return <TelaPartida visao={visao} movimentos={movimentosValidos(visao)} aoJogar={jogar} />
+  // S134 — o botão do painel de apuração tem dois destinos, e quem escolhe é o
+  // jogo, não o jogador: com vencedor a partida acabou e a `/fim` assume; sem
+  // vencedor, a rodada seguinte começa.
+  // `const`, e não `function`: a declaração é içada, e o TypeScript não estreita
+  // `partida` para dentro dela — o `tsc` reprovou a primeira escrita por isso.
+  const seguir = () => {
+    if (vencedorDa(partida) === null) {
+      seguirParaProximaRodada()
+      return
+    }
+
+    void navegar({ to: '/fim' })
+  }
+
+  return (
+    <TelaPartida
+      visao={visao}
+      movimentos={movimentosValidos(visao)}
+      aoJogar={jogar}
+      aoSeguir={seguir}
+    />
+  )
 }

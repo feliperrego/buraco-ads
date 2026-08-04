@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { categoriaDe, totalDe, valorDa } from '../../engine/index.ts'
+import { PONTOS_PARA_VENCER, categoriaDe, totalDe, valorDa } from '../../engine/index.ts'
 import type {
   Carta,
   CartaBaixada,
@@ -27,6 +27,12 @@ type Props = {
   readonly visao: VisaoDoJogador
   readonly movimentos: readonly Comando[]
   readonly aoJogar: (comando: Comando) => void
+  /**
+   * S134 — o que fazer depois de ler a apuração. A tela não sabe redistribuir
+   * nem navegar (T6): ela avisa, e `estado/` decide entre a rodada seguinte e a
+   * tela de fim.
+   */
+  readonly aoSeguir: () => void
 }
 
 function nomeDa(carta: Carta): string {
@@ -185,6 +191,18 @@ function estadoDaRodada(visao: VisaoDoJogador): string {
     case 'Acao':
       return `${nomeDaVez(visao)} — fase de ação`
   }
+}
+
+/**
+ * R12.1 — a tela precisa saber se a partida acabou para rotular o botão, e não
+ * pode ler a R12.2: quem a lê é `vencedorDa`, na engine (S132).
+ *
+ * Aqui basta a metade que a interface consegue afirmar sem regra — o placar
+ * chegou ao alvo. O desempate da R12.2 não muda o rótulo: em empate exato joga-se
+ * mais uma rodada, e é isso que o botão diria de qualquer forma.
+ */
+function haVencedor(placar: readonly [number, number]): boolean {
+  return Math.max(placar[0], placar[1]) >= PONTOS_PARA_VENCER && placar[0] !== placar[1]
 }
 
 function nomeDaVez(visao: VisaoDoJogador): string {
@@ -366,7 +384,7 @@ function contem(cartas: ReadonlySet<string>, ids: readonly string[]): boolean {
   return ids.every((id) => cartas.has(id))
 }
 
-export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
+export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir }: Props) {
   // T5 — a máquina de estados de seleção vive em `ui/`, separada do domínio. A
   // engine não sabe o que é "carta selecionada": para ela só existem comandos.
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
@@ -437,6 +455,13 @@ export default function TelaPartida({ visao, movimentos, aoJogar }: Props) {
               nome="Adversário"
             />
           </ul>
+
+          {/* S134 — **um** botão, com rótulo conforme haja vencedor. Não dois,
+              nem um que às vezes desaparece: qual caminho seguir é decisão do
+              jogo, e o jogador só confirma que viu a apuração. */}
+          <button type="button" onClick={aoSeguir}>
+            {haVencedor(visao.placar) ? 'Ver o resultado' : 'Próxima rodada'}
+          </button>
         </section>
       )}
 

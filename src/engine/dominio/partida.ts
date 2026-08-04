@@ -67,6 +67,18 @@ export type Partida = {
   readonly mortos: readonly [Morto, Morto]
   readonly jogadorDaVez: JogadorId
   readonly fase: FaseDaRodada
+  /**
+   * S131 — quem **começou** esta rodada, para a alternância da R2.6.
+   *
+   * Guardado, e não derivado, porque não sobra no estado: `jogadorDaVez` no fim
+   * da rodada diz onde ela parou, nunca onde começou. Depois de uma batida por
+   * descarte final ele aponta para o adversário do batedor (S113); depois de uma
+   * batida ao baixar, para o batedor.
+   *
+   * É o mesmo critério do `placar` (S122): derive o que o estado atual ainda
+   * contém, guarde o que a próxima rodada apagaria.
+   */
+  readonly iniciante: JogadorId
   readonly placar: readonly [number, number]
   readonly numeroDaRodada: number
 }
@@ -80,6 +92,9 @@ export type Partida = {
 export function iniciarPartida(semente: number): Partida {
   const aleatorio = mulberry32(semente)
   const baralho = embaralhar(baralhoCanonico(), aleatorio)
+  // S7 — a chamada **adicional** que decide quem começa, depois da distribuição.
+  // Movê-la para antes muda tudo o que vem depois.
+  const sorteado: JogadorId = Math.floor(aleatorio() * 2) === 0 ? 0 : 1
 
   // S5 — as faixas de índice são a especificação, não uma escolha de
   // implementação: "distribuir 11 cartas para cada" admitiria alternar entre
@@ -97,11 +112,70 @@ export function iniciarPartida(semente: number): Partida {
     ],
     monte: baralho.slice(44, 104),
     lixo: [],
-    // S7 — uma chamada **adicional**, depois da distribuição. Movê-la para antes
-    // muda tudo o que vem depois.
-    jogadorDaVez: Math.floor(aleatorio() * 2) === 0 ? 0 : 1,
+    jogadorDaVez: sorteado,
     fase: 'Compra',
+    // R2.6 — a primeira rodada é sorteada, e é este valor que a alternância da
+    // `novaRodada` inverte.
+    iniciante: sorteado,
     placar: [0, 0],
     numeroDaRodada: 1,
   }
 }
+
+/**
+ * R2.6 e R12 — a rodada seguinte da mesma partida.
+ *
+ * S129 — **função**, não um sétimo comando. Pegar o morto e bater não são
+ * comandos porque são automáticos (M3, M4); começar a rodada seguinte não é
+ * comando porque não é **jogada** — é ação de sessão, como iniciar a partida. A
+ * tabela de seis comandos do `domain.md` §6 continua fechada e
+ * `movimentosValidos` não muda.
+ *
+ * S130 — a semente vem de fora, pelo mesmo caminho da primeira rodada: a A5
+ * proíbe a engine de ser fonte de aleatoriedade, e a S8 põe `Math.random` em
+ * `estado/`.
+ *
+ * Só **duas** coisas atravessam a rodada — o placar acumulado e a alternância do
+ * iniciante. Os outros sete campos são exatamente o que `iniciarPartida` produz,
+ * e é por isso que ela é reusada em vez de reescrita.
+ */
+export function novaRodada(partida: Partida, semente: number): Partida {
+  const comeca: JogadorId = partida.iniciante === 0 ? 1 : 0
+
+  return {
+    ...iniciarPartida(semente),
+    jogadorDaVez: comeca,
+    iniciante: comeca,
+    placar: partida.placar,
+    numeroDaRodada: partida.numeroDaRodada + 1,
+  }
+}
+
+/**
+ * R12.1 e R12.2 — quem venceu a partida, ou `null` se ela continua.
+ *
+ * S132 — a R12.2 inteira cabe numa frase: **vence quem tem mais pontos, se o
+ * maior alcançou 3000 e não há empate**. Lida como três casos ela pediria três
+ * `if`; lida junto, nenhum.
+ *
+ * Confere: se só um passou de 3000, ele é necessariamente o de mais pontos, e o
+ * máximo já o escolhe. Se os dois passaram, o máximo é o que a R12.2 manda. E o
+ * empate exato devolve `null` — que é precisamente *"joga-se mais uma rodada"*,
+ * não um caso à parte.
+ *
+ * S133 — não existe fase `PartidaEncerrada`. A partida acabou quando a rodada
+ * está encerrada **e** esta função devolve alguém. A R12.2 verifica ao **fim** da
+ * rodada, nunca no meio, e é a fase que diz isso.
+ */
+export function vencedorDa(partida: Partida): JogadorId | null {
+  const [zero, um] = partida.placar
+
+  if (partida.fase !== 'RodadaEncerrada' || Math.max(zero, um) < PONTOS_PARA_VENCER) {
+    return null
+  }
+
+  return zero === um ? null : zero > um ? 0 : 1
+}
+
+/** R12.1 — o alvo da partida. */
+export const PONTOS_PARA_VENCER = 3000

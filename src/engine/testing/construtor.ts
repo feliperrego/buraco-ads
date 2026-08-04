@@ -112,6 +112,8 @@ export type DescricaoDaPartida = {
   readonly jogadorDaVez?: JogadorId
   readonly fase?: FaseDaRodada
   readonly semente?: number
+  readonly placar?: readonly [number, number]
+  readonly numeroDaRodada?: number
 }
 
 function montarJogos(dono: JogadorId, descritos: readonly (readonly Posicao[])[]): readonly Jogo[] {
@@ -199,8 +201,12 @@ export function construirPartida(descricao: DescricaoDaPartida): Partida {
     lixo,
     jogadorDaVez: descricao.jogadorDaVez ?? 0,
     fase: descricao.fase ?? 'Compra',
-    placar: [0, 0],
-    numeroDaRodada: 1,
+    // S131 — o estado construído descreve uma rodada em andamento, e quem a
+    // começou não é o que ela testa. `iniciante` acompanha o `jogadorDaVez`
+    // pedido, que é o valor certo no início e inofensivo depois.
+    iniciante: descricao.jogadorDaVez ?? 0,
+    placar: descricao.placar ?? [0, 0],
+    numeroDaRodada: descricao.numeroDaRodada ?? 1,
   }
 
   const todas = [

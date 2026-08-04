@@ -1,12 +1,13 @@
 import { createRootRoute, createRoute, createRouter } from '@tanstack/react-router'
 import type { RouterHistory } from '@tanstack/react-router'
 import App from '../App.tsx'
+import RotaFim from './RotaFim.tsx'
 import RotaInicial from './RotaInicial.tsx'
 import RotaPartida from './RotaPartida.tsx'
 
 /**
- * As quatro telas de docs/screens.md §1. A H1 preenche duas; `/fim` e `/regras`
- * seguem vazias, como a RD2 as criou.
+ * As quatro telas de docs/screens.md §1. A H1 preencheu duas e a H13 a terceira;
+ * `/regras` segue vazia, como a RD2 a criou, até a H17.
  *
  * Roteamento por código, e não por arquivos, pelo ADR-0009.
  *
@@ -30,7 +31,7 @@ const rotaPartida = createRoute({
 const rotaFim = createRoute({
   getParentRoute: () => rotaRaiz,
   path: '/fim',
-  component: () => <h1>Fim de partida</h1>,
+  component: RotaFim,
 })
 
 const rotaRegras = createRoute({
