@@ -1,6 +1,6 @@
 # Spec 0017 — H17: as regras dentro da aplicação
 
-> Status: **rascunho anotado** — 6 decisões, todas pendentes
+> Status: **confirmada** — 6 decisões, confirmadas em bloco em 2026-08-04
 > História: `H17` — _"Consulto as regras do jogo sem sair da aplicação"_
 > Fecha: ADR-0005, RNF3.2 (o 404 em português)
 
@@ -28,7 +28,7 @@ divergir do documento normativo?**
 | **B — texto próprio, escrito para o jogador** | prosa nova no componente | **diverge em silêncio** quando uma regra mudar, e o projeto não tem como saber |
 | **C — texto próprio, com as regras citadas** | prosa nova, cada trecho citando os `Rn` que resume | a divergência deixa de ser silenciosa: o `verificar-rastreabilidade.py` já sabe cobrar citação de regra, e passa a cobrar desta tela também |
 
-- `[P]` **S159** — Forma **C**. A tela tem texto próprio, escrito para quem vai jogar, e **cada
+- `[D]` **S159** — Forma **C**. A tela tem texto próprio, escrito para quem vai jogar, e **cada
   bloco cita os `Rn` que resume**. A citação entra no `rastreio.json`, e uma regra que nenhum
   bloco cite reprova o CI.
 
@@ -45,7 +45,7 @@ divergir do documento normativo?**
 
 ## 3. O que a citação obriga, e o que ela não obriga
 
-- `[P]` **S160** — A citação é de **cobertura**, não de fidelidade. O script prova que nenhuma
+- `[D]` **S160** — A citação é de **cobertura**, não de fidelidade. O script prova que nenhuma
   regra ficou de fora da tela; ele **não** prova que o texto ao lado da citação está certo. Essa
   parte continua sendo leitura humana, e a spec diz isso em vez de fingir o contrário.
 
@@ -64,12 +64,12 @@ Sobrevive, e por construção: o `ProvedorDaPartida` fica **acima** do `RouterPr
 (`Aplicacao.tsx`), então trocar de rota não desmonta o estado. Isso não foi decidido pela H17 —
 foi decidido na H1, ao descobrir que `beforeLoad` roda fora do React.
 
-- `[P]` **S161** — O acesso às regras é um **link de rota**, e ele existe nas três telas do jogo:
+- `[D]` **S161** — O acesso às regras é um **link de rota**, e ele existe nas três telas do jogo:
   inicial, partida e fim. Voltar é o botão do navegador **e** um link de volta na própria tela de
   regras, porque a RNF3.4 pede navegação por teclado e o botão do navegador não é conteúdo da
   página.
 
-- `[P]` **S162** — Sair para `/regras` e voltar **preserva a partida**, e isso ganha critério
+- `[D]` **S162** — Sair para `/regras` e voltar **preserva a partida**, e isso ganha critério
   próprio em vez de ficar implícito na arquitetura. É a propriedade que um refactor do
   `Aplicacao.tsx` quebraria sem que nenhum outro teste reclamasse.
 
@@ -89,7 +89,7 @@ O `roadmap.md` §3 guarda, com prazo neste marco:
 Ele nasceu na tarefa 0.7 e tem causa conhecida: o _rewrite_ de SPA do `vercel.json` faz a Vercel
 devolver **200 para qualquer caminho**, então **o roteador é o dono do 404**, não o servidor.
 
-- `[P]` **S163** — O gatilho fecha aqui, e não numa fatia própria. A tela de rota inexistente é a
+- `[D]` **S163** — O gatilho fecha aqui, e não numa fatia própria. A tela de rota inexistente é a
   mesma família da tela de regras — conteúdo estático, em português, com caminho de volta —, e
   separá-las custaria uma fatia para um `<h1>` e um link.
 
@@ -102,7 +102,7 @@ devolver **200 para qualquer caminho**, então **o roteador é o dono do 404**, 
 - **Biblioteca de markdown.** A forma **C** não precisa de uma: o texto é JSX.
 - **Estilo.** É a H19.
 
-- `[P]` **S164** — Nenhuma dependência nova entra nesta fatia. É a mesma pergunta que o ADR-0004
+- `[D]` **S164** — Nenhuma dependência nova entra nesta fatia. É a mesma pergunta que o ADR-0004
   fez ao remover o TanStack Query: a biblioteca resolve um problema que temos?
 
 ---
@@ -134,7 +134,7 @@ devolver **200 para qualquer caminho**, então **o roteador é o dono do 404**, 
 
 ## 8. Decisões
 
-Seis propostas. Nenhuma confirmada.
+Seis decisões, confirmadas em bloco em 2026-08-04.
 
 | # | Assunto | Proposta |
 |---|---|---|
@@ -144,6 +144,60 @@ Seis propostas. Nenhuma confirmada.
 | **S162** | Estado | Ir às regras e voltar **preserva a partida**, com critério próprio |
 | **S163** | Escopo | O 404 em português fecha aqui, junto — mesma família de tela |
 | **S164** | Escopo | Nenhuma dependência nova; o texto é JSX |
+
+---
+
+## 9. O que a fatia mediu
+
+Escrito depois da implementação.
+
+### 9.1 A S161 estava certa no propósito e errada no lugar
+
+A decisão dizia _"link nas três telas"_. Implementar assim **quebrou trinta testes de uma vez**:
+as telas são componentes puros, testados **sem roteador** (spec 0001 §4.2), e um `Link` exige o
+`RouterProvider` acima.
+
+Não foi acidente de teste — foi o teste dizendo o que a arquitetura já decidia. O link foi para a
+**moldura da rota raiz** (`App.tsx`), onde navegação global pertence, e de quebra deixou de estar
+escrita em três lugares. O critério não mudou: o jogador alcança as regras de qualquer tela, e é
+isso que a `CA-S161-1` mede.
+
+### 9.2 O navegador achou o defeito, pela sexta vez em nove fatias
+
+O link dizia _"Voltar ao início"_ e levava para `/partida`. Não estava errado no destino — a
+`RotaInicial` redireciona quando há partida, e voltar ao jogo é o que o jogador quer. Estava
+errado no **texto**.
+
+É o mesmo defeito da `CA-S84-1` na H7 — _"Pegar o lixo — 1 cartas"_ —, e a mesma causa: critério
+que confere o dado e não a frase. O conserto criou a `RotaRegras`, que passa `emPartida` para a
+tela, e o par ficou preso em teste: com partida o rótulo diz **jogo**, sem partida diz **início**.
+
+| Verificado no navegador | |
+|---|---|
+| doze seções, com títulos em português | sim |
+| identificador de regra ou marca `[D]` na tela | **nenhum** |
+| tamanho do texto | 6730 caracteres |
+| primeiro `Tab` foca o link de volta | sim (RNF3.4) |
+| ir às regras e voltar preserva a partida | mão e lixo idênticos |
+| rótulo com partida / sem partida | _"Voltar ao jogo"_ / _"Voltar ao início"_ |
+| 404 | _"Página não encontrada"_, sem _"Not Found"_ |
+| erros de console | nenhum |
+
+### 9.3 O verificador foi visto reprovando, e as mutações mordem
+
+A `CA-S160-1` cobrou o que prometia: descobrindo a `R8.6` de um bloco, o
+`verificar-rastreabilidade.py` reprova com `65 de 66`. A tela cita as **66**.
+
+Cinco mutações propositais, e a leitura de cada uma:
+
+- tirar o `defaultNotFoundComponent` → 2 reprovados (o _"Not Found"_ volta)
+- tirar o link da moldura → 2 reprovados
+- descer o provedor para dentro da rota raiz → **7 reprovados**, incluindo critérios de H1 e H3
+- vazar um `R1.4` para o texto → 1 reprovado
+- tirar **um** dos dois links de volta → **0 reprovados**, e está certo: os dois são redundância
+  proposital numa página longa. Tirando os **dois**, três testes reprovam.
+
+---
 
 ### Onde eu erraria, se errasse
 

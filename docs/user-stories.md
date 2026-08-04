@@ -172,6 +172,13 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 - `[D]` H19 (acabamento visual) fica **por último**, depois de a partida
   funcionar de ponta a ponta.
 
+> **H17 fechada em 2026-08-04.** A tela tem texto próprio, escrito para o jogador, e cada bloco
+> cita em comentário os `Rn` que resume — a tela cobre as **66** regras, verificado por script, e
+> o verificador foi visto reprovando com uma delas descoberta. O que a citação **não** prova é
+> que o resumo está certo: isso continua sendo leitura humana (S160).
+>
+> O 404 em português fechou junto, e o gatilho da tarefa 0.7 saiu da tabela.
+
 > **H16 fechada em 2026-08-04.** A RF1.3 é um `<dialog>` nativo, e a escolha se pagou no
 > navegador: foco preso e `Esc` funcionam sem uma linha nossa, e o `Esc` cai no **cancelar** —
 > sair sem escolher não descarta progresso. A RF1.4 avisa com partida em andamento e não avisa

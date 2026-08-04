@@ -86,7 +86,7 @@ testada, os testes passam a ser a especificação viva.
 | [0014-monte-esgotado.md](specs/0014-monte-esgotado.md) | H14 — o monte esgotado | **Implementada** — 15 novos e 5 herdados |
 | [0015-ia-por-heuristica.md](specs/0015-ia-por-heuristica.md) | H15 — o oponente por heurística | **Implementada** — 25 novos e 5 herdados |
 | [0016-abandonar-a-partida.md](specs/0016-abandonar-a-partida.md) | H16 — abandonar a partida | **Implementada** — 13 novos e 5 ajustados |
-| [0017-regras-na-aplicacao.md](specs/0017-regras-na-aplicacao.md) | H17 — as regras dentro da aplicação | Rascunho anotado — 6 decisões pendentes |
+| [0017-regras-na-aplicacao.md](specs/0017-regras-na-aplicacao.md) | H17 — as regras dentro da aplicação | **Implementada** — 13 novos e 3 ajustados |
 
 ## Verificação
 
@@ -147,6 +147,12 @@ python3 scripts/verificar-rastreabilidade.py
 A configuração fica em [`rastreio.json`](../rastreio.json) na raiz: qual arquivo define os
 itens numerados, com que padrão, e quais documentos os citam. O script é genérico — a mesma
 ferramenta serve para requisitos, endpoints ou qualquer conjunto de itens identificados.
+
+Desde a H17 ele cobra também um **arquivo de código**: a tela de regras
+(`src/ui/telas/TelaRegras.tsx`) cita, em comentário, os `Rn` que cada bloco resume, e uma regra
+que nenhum bloco cite reprova o CI. É o que impede a tela de ajuda de divergir do documento
+normativo em silêncio — e a citação prova **cobertura, não fidelidade** (S160): que o texto
+resuma a regra certa continua sendo leitura humana.
 
 ### Unicidade dos identificadores
 

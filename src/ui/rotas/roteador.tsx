@@ -4,10 +4,13 @@ import App from '../App.tsx'
 import RotaFim from './RotaFim.tsx'
 import RotaInicial from './RotaInicial.tsx'
 import RotaPartida from './RotaPartida.tsx'
+import TelaNaoEncontrada from '../telas/TelaNaoEncontrada.tsx'
+import RotaRegras from './RotaRegras.tsx'
 
 /**
  * As quatro telas de docs/screens.md §1. A H1 preencheu duas e a H13 a terceira;
- * `/regras` segue vazia, como a RD2 a criou, até a H17.
+ * A H17 preencheu a `/regras`, que era o último esqueleto da RD2, e deu ao
+ * roteador a tela de rota inexistente (S163).
  *
  * Roteamento por código, e não por arquivos, pelo ADR-0009.
  *
@@ -37,7 +40,7 @@ const rotaFim = createRoute({
 const rotaRegras = createRoute({
   getParentRoute: () => rotaRaiz,
   path: '/regras',
-  component: () => <h1>Regras</h1>,
+  component: RotaRegras,
 })
 
 const arvoreDeRotas = rotaRaiz.addChildren([rotaInicial, rotaPartida, rotaFim, rotaRegras])
@@ -47,7 +50,15 @@ const arvoreDeRotas = rotaRaiz.addChildren([rotaInicial, rotaPartida, rotaFim, r
  * histórico em memória sem depender da URL do navegador.
  */
 export function criarRoteador(history?: RouterHistory) {
-  return createRouter({ routeTree: arvoreDeRotas, history })
+  // S163 — o 404 é do **roteador**, não do servidor. O *rewrite* de SPA do
+  // `vercel.json` faz a Vercel devolver 200 para qualquer caminho (ADR-0008),
+  // então quem decide que a rota não existe é esta linha. Sem ela, o padrão do
+  // TanStack aparece: "Not Found", em inglês e sem `<h1>`, contra a RNF3.2.
+  return createRouter({
+    routeTree: arvoreDeRotas,
+    history,
+    defaultNotFoundComponent: TelaNaoEncontrada,
+  })
 }
 
 declare module '@tanstack/react-router' {

@@ -17,6 +17,19 @@
           "padrao_citacao": "\\bCA-(R\\d+(?:\\.\\d+)+)-\\d+"
         }
       ]
+    },
+    {
+      "nome": "regras na tela de ajuda",
+      "arquivo": "docs/rules.md",
+      "padrao_definicao": "^- \\*\\*(R[\\d.]+)\\*\\*",
+      "padrao_citacao": "\\bR\\d+(?:\\.\\d+)+",
+      "expandir_intervalos": false,
+      "consumidores": [
+        {
+          "arquivo": "src/ui/telas/TelaRegras.tsx",
+          "cobertura_obrigatoria": true
+        }
+      ]
     }
   ]
 }
