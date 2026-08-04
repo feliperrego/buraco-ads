@@ -78,7 +78,7 @@ function acoes(visao: VisaoDoJogador): readonly Comando[] {
   // a mão, e isso era falso em 58 de 200 partidas medidas. O descarte não muda
   // os jogos da mesa, então a pergunta da R10.1 é feita sobre `SEM_JOGO_NOVO`.
   const descartes =
-    visao.mao.length === 1 && !podeZerar(visao, SEM_JOGO_NOVO)
+    visao.mao.length === 1 && !podeZerar(visao, null, SEM_JOGO_NOVO)
       ? []
       : visao.mao.map((carta): Comando => ({ tipo: 'descartar', carta: carta.id }))
 
@@ -100,14 +100,46 @@ const SEM_JOGO_NOVO: readonly Posicao[] = []
  * A R10.1.2 não precisa de código: quando o adversário levou os dois mortos,
  * `meusMortos` é zero e a primeira condição já é falsa.
  */
-function podeZerar(visao: VisaoDoJogador, jogoResultante: readonly Posicao[]): boolean {
+function podeZerar(
+  visao: VisaoDoJogador,
+  comando: Comando | null,
+  jogoResultante: readonly Posicao[],
+): boolean {
   if (visao.mortosRestantes > 0) {
     return true
   }
 
   // S140 — a mesma função que `aplicar` chama. Duas expressões da R10.1 em
   // módulos diferentes discordariam na primeira ressalva que uma delas ganhasse.
-  return podeBater(visao, [...visao.meusJogos.map((jogo) => jogo.posicoes), jogoResultante])
+  return podeBater(visao, jogosDepois(visao, comando, jogoResultante))
+}
+
+/**
+ * Os jogos que o jogador terá **depois** do comando.
+ *
+ * O `aumentar` e o `regularizarCuringa` **substituem** um jogo; só o `baixar`
+ * acrescenta. Somar o resultado à lista atual sem tirar a versão antiga faz a
+ * guarda ler um jogo que deixou de existir — e isso não é sutileza: em 200
+ * partidas simuladas, uma travou porque o `aumentar` acrescentou um **curinga**
+ * à única canastra limpa do jogador, sujando-a (R10.2), enquanto a guarda ainda
+ * via a versão limpa e liberava a jogada.
+ *
+ * É a S115 levada a sério: "sobre o resultado" tem de ser o resultado inteiro.
+ */
+function jogosDepois(
+  visao: VisaoDoJogador,
+  comando: Comando | null,
+  jogoResultante: readonly Posicao[],
+): readonly (readonly Posicao[])[] {
+  const substituido =
+    comando !== null && (comando.tipo === 'aumentar' || comando.tipo === 'regularizarCuringa')
+      ? comando.jogo
+      : null
+
+  return [
+    ...visao.meusJogos.filter((jogo) => jogo.id !== substituido).map((jogo) => jogo.posicoes),
+    jogoResultante,
+  ]
 }
 
 /**
@@ -485,7 +517,7 @@ function adicionar(
   // Duas cartas de sobra bastam sempre: uma para o descarte da R7.1 e uma para
   // ficar. Abaixo disso, a jogada só é legal se a mão puder zerar (S115), e é
   // esse o único caso que paga a pergunta cara sobre o resultado.
-  if (visao.mao.length - comando.cartas.length < 2 && !podeZerar(visao, jogoResultante)) {
+  if (visao.mao.length - comando.cartas.length < 2 && !podeZerar(visao, comando, jogoResultante)) {
     return
   }
 

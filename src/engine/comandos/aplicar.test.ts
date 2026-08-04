@@ -1036,7 +1036,11 @@ describe('R10.1 e R10.3 — a batida encerra a rodada', () => {
     expect(depois.fase).toBe('RodadaEncerrada')
   })
 
-  it('CA-R10.4-1 — a batida pelo descarte final também encerra a rodada', () => {
+  it('CA-R10.4-1 — R7.3: a batida pelo descarte final também encerra a rodada', () => {
+    // R7.3 — o descarte é obrigatório **exceto na batida**, e a R10.4 diz que
+    // ela pode acontecer com ou sem ele. Este caso é o "com"; o "sem" é a
+    // CA-R10.4-2. As duas regras são a mesma decisão (P16), e a citação de R7.3
+    // vive aqui porque é aqui que ela é exercitada.
     const antes = comJogosEMortos(cartas('5♠'), [LIMPA], [0, 1])
     const depois = aplicado(antes, { tipo: 'descartar', carta: carta('ESPADAS', '5').id })
 

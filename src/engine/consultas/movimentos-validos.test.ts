@@ -1111,3 +1111,43 @@ describe('R10.3 e S112 — na rodada encerrada não há jogada', () => {
     expect(movimentosValidos(visaoDe({ ...emAcao, fase: 'RodadaEncerrada' }, 0))).toHaveLength(0)
   })
 })
+
+/**
+ * Critério de aceite da spec 0014 §8.3 — o jogo que a jogada substitui.
+ *
+ * Achado pela quarta rede: em 200 partidas simuladas com a H14, **uma** travou.
+ * O `aumentar` acrescentou um curinga à única canastra limpa do jogador,
+ * sujando-a (R10.2), e a guarda liberou a jogada porque ainda via a versão
+ * **limpa** na lista de `meusJogos`. A S115 diz "sobre o resultado", e o
+ * resultado inclui o jogo que deixou de existir.
+ */
+describe('S115 — o resultado substitui o jogo antigo, não se soma a ele', () => {
+  it('CA-S140-4 — o aumentar que suja a única canastra limpa não é oferecido', () => {
+    // Sem morto e com um `2` de outro naipe na mão: aumentar com ele sujaria a
+    // canastra, e sem canastra limpa a batida da R10.1 fica impossível.
+    const partida = comMortos(cartas('2♠ K♦'), [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')], [0, 1])
+    const aumentares = movimentosValidos(visaoDaVez(partida)).filter(
+      (comando) => comando.tipo === 'aumentar',
+    )
+
+    // O que sobra são os aumentos **naturais**, que não sujam nada.
+    for (const comando of aumentares) {
+      expect(comando.cartas.some((baixada) => baixada.representa !== undefined)).toBe(false)
+    }
+  })
+
+  it('CA-S140-4 — com uma carta a mais na mão, o mesmo aumentar volta a aparecer', () => {
+    // A âncora positiva: com folga na mão a guarda nem pergunta, e o aumentar
+    // com curinga é uma jogada legal como qualquer outra.
+    const folgado = comMortos(cartas('2♠ K♦ 9♣'), [posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')], [0, 1])
+    const aumentares = movimentosValidos(visaoDaVez(folgado)).filter(
+      (comando) => comando.tipo === 'aumentar',
+    )
+
+    expect(
+      aumentares.some((comando) =>
+        comando.cartas.some((baixada) => baixada.representa !== undefined),
+      ),
+    ).toBe(true)
+  })
+})

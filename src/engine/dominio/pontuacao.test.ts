@@ -116,7 +116,9 @@ describe('R11.4, R11.5 e R11.6 — bônus, penalidade e saldo negativo', () => {
     expect(dele.bonusDeBatida).toBe(0)
   })
 
-  it('CA-R11.5.2-1 — quem terminou sem morto leva -100', () => {
+  it('CA-R11.5.2-1 — R9.6: quem terminou sem morto leva -100', () => {
+    // R9.6 remete à R11.5, e é aqui que ela vira número: terminar a rodada sem
+    // ter pegado morto acarreta a penalidade.
     // R11.5.2 — o adversário levou os dois, e a penalidade se aplica normalmente.
     const [minha, dele] = apurar(comEstado(cartas('5♥'), [], [1, 1]))
 
