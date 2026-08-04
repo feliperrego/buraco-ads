@@ -233,6 +233,7 @@ nesta spec.
 | **CA-M9-14** | rodada nova | as 104 cartas se conservam, sem `id` repetido |
 | **CA-S131-1** | rodada nova | `iniciante` e `jogadorDaVez` **coincidem** no primeiro estado dela — o campo não é decorativo |
 | **CA-S131-2** | rodada encerrada por descarte final | `iniciante` **não** mudou durante a rodada, embora `jogadorDaVez` tenha passado para o adversário |
+| **CA-S131-3** | rodada encerrada com `jogadorDaVez` ≠ `iniciante` | a rodada nova alterna a partir do **iniciante**, e não de onde a rodada parou |
 
 ### 8.2 O fim da partida
 
@@ -272,6 +273,18 @@ Oito, confirmadas em bloco em 2026-08-04.
 | **S133** | Domínio | **Não** existe fase `PartidaEncerrada` — o fim é rodada encerrada com vencedor |
 | **S134** | Interface | **Um** botão no painel, com rótulo conforme haja vencedor |
 | **S135** | Interface | A `/fim` mostra vencedor, placar final e nova partida (RF1.5) |
+
+### O que a implementação acrescentou
+
+A **`CA-S131-3` nasceu de uma mutação que não mordeu**, e ela é o critério que justifica o campo
+inteiro. Trocar `partida.iniciante` por `partida.jogadorDaVez` dentro de `novaRodada` não
+reprovou **nenhum** dos 296 testes — porque em toda fixture os dois coincidem: `encerradaCom`
+parte de `iniciarPartida`, onde `iniciante === jogadorDaVez`, e a `CA-S131-2` monta um estado em
+que eles diferem mas nunca chama `novaRodada` nele.
+
+O resultado é que a §5 inteira — *"`jogadorDaVez` diz onde a rodada parou, nunca onde ela
+começou"* — estava argumentada e **não defendida**. É a terceira vez no projeto em que a mutação
+que passa ensina mais que as que falham, e a segunda em duas fatias.
 
 ### Onde eu erraria, se errasse
 

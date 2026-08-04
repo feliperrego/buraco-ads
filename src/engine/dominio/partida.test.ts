@@ -269,6 +269,25 @@ describe('R2.6 — o início alterna entre rodadas', () => {
     expect(segunda.jogadorDaVez).toBe(segunda.iniciante)
   })
 
+  it('CA-S131-3 — a alternância parte do iniciante, não de onde a rodada parou', () => {
+    // O critério que **justifica** o campo, e que faltava: numa rodada encerrada
+    // por descarte final a vez já passou para o adversário do batedor (S113).
+    // Alternar a partir dela daria o mesmo jogador de novo.
+    //
+    // Achado por mutação: trocar `partida.iniciante` por `partida.jogadorDaVez`
+    // em `novaRodada` não reprovava **nenhum** dos 296 testes, porque em todas as
+    // outras fixtures os dois coincidem.
+    const primeira = iniciarPartida(7)
+    const parouNoOutro: Partida = {
+      ...primeira,
+      fase: 'RodadaEncerrada',
+      jogadorDaVez: primeira.iniciante === 0 ? 1 : 0,
+    }
+
+    expect(parouNoOutro.jogadorDaVez).not.toBe(parouNoOutro.iniciante)
+    expect(novaRodada(parouNoOutro, 8).iniciante).not.toBe(primeira.iniciante)
+  })
+
   it('CA-S131-2 — durante a rodada, iniciante não acompanha a vez', () => {
     const primeira = iniciarPartida(7)
     const outro: JogadorId = primeira.jogadorDaVez === 0 ? 1 : 0

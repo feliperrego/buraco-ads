@@ -134,7 +134,7 @@ e qualquer conclusão sobre "o que está no ar" tirada do código local está er
 fechar a H5: quatro commits ficaram parados enquanto o deploy ainda mostrava a H4.
 
 As ondas de documentação (0 a 3) estão **completas e confirmadas**, e as specs da **H1** a
-**H12** estão fechadas e implementadas.
+**H13** estão fechadas e implementadas.
 
 **Os Marcos 0, I, II e III estão fechados, e o Marco IV é o próximo.** Existe um jogo em
 que dá para baixar sequências, com e sem curinga, aumentá-las depois, escolher entre comprar do
@@ -166,11 +166,17 @@ aconteceu; a resposta é **não precisamos** — o estado no fim da rodada já c
 itens da R11 pedem, e `apurar(partida)` é função pura dele. O que reabriria a pergunta é um item
 de pontuação que dependesse de **como** o jogo chegou ali, e a R11 não tem nenhum.
 
-**A próxima é a H13** — várias rodadas até 3000 (R2.6, R12.1, R12.2, RF1.5, RF4.1) —, e ela não
-tem spec. É ela que dá função ao botão de fechar o painel de apuração, que a H12 deixou de fora
-de propósito (S119).
+**A H13 transformou rodada em partida, e o `numeroDaRodada` deixou de ser sempre `1`.** Só duas
+coisas atravessam a rodada — o placar acumulado e a alternância do iniciante (R2.6) —, e os
+outros sete campos são o que `iniciarPartida` produz. A rota `/fim`, esqueleto desde a tarefa
+0.7, finalmente mostra alguma coisa.
 
-Treze coisas que valem saber antes de mexer no que estas nove fatias deixaram:
+**A próxima é a H14** — o monte esgotado (R4.6, R4.7, R4.8, R10.1.1, R11.5.1) —, e ela não tem
+spec. É a fatia que falta para uma partida **terminar**: medido na H13, em 200 partidas
+simuladas, **184 param na rodada 1**, 15 chegam à rodada 2, uma à rodada 3, e **nenhuma** alcança
+os 3000. O maior placar visto foi **2210**.
+
+Catorze coisas que valem saber antes de mexer no que estas dez fatias deixaram:
 
 - A decisão mais consequente do projeto até aqui é a **S51**: um conjunto de cartas **não
   determina um jogo**. `2♥ 3♥ 4♥` é `2-3-4` com o 2 natural ou `3-4-[5]` com o 2 de curinga, e
@@ -206,6 +212,11 @@ Treze coisas que valem saber antes de mexer no que estas nove fatias deixaram:
   (`mortosPegos`), S113 (quem bateu) —, e a S120 é a quinta. O contraexemplo é o `placar`, que
   **é** guardado porque sobrevive à rodada: quando a H13 redistribuir o baralho, os jogos e as
   mãos que produziram o saldo deixam de existir.
+- A **S131** é o campo mais fácil de "simplificar" errado: `iniciante` **não** é `jogadorDaVez`.
+  No fim da rodada a vez diz onde ela parou, não onde começou — depois de uma batida por descarte
+  final ela aponta para o adversário do batedor. Alternar a partir dela dá o mesmo jogador de
+  novo, e a `CA-S131-3` é o único teste que pega isso. Ela nasceu de uma mutação que **não**
+  mordeu.
 - A **S112** trocou `FaseDoTurno` por **`FaseDaRodada`**, com três valores. Todo lugar que
   enumera `fase` é `switch` exaustivo de propósito: `if (fase === 'Compra') … else` compila com
   três valores e cai no ramo errado. Não é hipótese — o ternário do `TelaPartida` mostrava
@@ -459,6 +470,27 @@ raciocinar antes:**
   app acha o que teste nenhum pegaria.
 - **O `pkill` num encadeamento engoliu uma escrita de arquivo, de novo.** Mesma lição da H10:
   comando destrutivo vai sozinho, porque o código de saída dele derruba o resto da linha.
+
+**A H13 repetiu o achado da H12, e a repetição é o dado:**
+
+- **A mutação que não morde apareceu em duas fatias seguidas, e as duas vezes no mesmo ponto
+  cego:** um campo cujo valor **coincide** com outro em todas as fixtures. Na H12 era "quem
+  bateu" (`mao vazia` vs `jogadorDaVez`); na H13 foi "quem começou" (`iniciante` vs
+  `jogadorDaVez`). Nos dois casos o argumento da spec dizia exatamente onde eles divergem, e
+  nenhum critério visitava esse estado. **Quando uma spec justifica um campo dizendo "X não
+  serve porque em tal situação ele difere", essa situação precisa virar critério** — senão a
+  justificativa fica argumentada e não defendida.
+- **A quarta rede mediu o que a fatia não fecha, de novo.** Em 200 partidas simuladas, **184
+  param na rodada 1**, 15 chegam à 2, uma à 3, e nenhuma alcança os 3000 — maior placar 2210. A
+  corrente de rodadas funciona; o que falta é a R4.6 da H14. A alternância da R2.6 foi conferida
+  sobre todas as rodadas que aconteceram, e vale em todas.
+- **O `tsc` pegou o que o Vitest não pega pela terceira vez.** A prop `aoSeguir` entrou como
+  obrigatória e **59 testes de interface continuaram verdes** — nenhum deles clicava o botão. Só
+  o `tsc` viu as 46 chamadas sem a prop.
+- **Um teste antigo quebrou por acoplamento, como na H7.** O `roteador.test.tsx` afirmava que
+  `/fim` renderiza *"Fim de partida"* — o texto do esqueleto da tarefa 0.7 —, quando o critério
+  dele fala de **registro de rota**. O sinal para reconhecer o caso continua o mesmo: o teste que
+  quebra não é sobre a fatia nova.
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando

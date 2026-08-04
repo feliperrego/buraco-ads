@@ -29,6 +29,10 @@ Pendências: `T1`…`Tn`. Marcação: `[D]` decidido, `[P]` proposto com `⚠️
   à tela de partida, que o jogador fecha para seguir para a próxima rodada. A partida
   continua atrás dele, e não há navegação envolvida.
 
+> **Fechado na H13 (S134).** O botão é **um**, e o rótulo é que muda: *"Próxima rodada"* enquanto
+> a partida continua, *"Ver o resultado"* quando o placar decidiu. Qual caminho seguir é decisão
+> do jogo, não do jogador — dois botões dariam a ele uma escolha que a R12.1 não oferece.
+
 ---
 
 ## 2. Layout da tela de partida
