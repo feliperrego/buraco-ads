@@ -348,6 +348,11 @@ function rotuloDoRegularizar(
   return reposta === undefined ? 'Limpar a canastra' : `Limpar a canastra com ${nomeDa(reposta)}`
 }
 
+/** S167 — jogadas de mesa primeiro; o descarte, que encerra o turno, por último. */
+function ordemDaJogada(jogada: Jogada): number {
+  return jogada.comando.tipo === 'descartar' ? 1 : 0
+}
+
 function jogadasDe(
   movimentos: readonly Comando[],
   mao: readonly Carta[],
@@ -447,8 +452,61 @@ function ConfirmarAbandono({
   )
 }
 
+/**
+ * S166 — os atalhos de zona da RNF3.4.
+ *
+ * A `screens.md` §7 previu navegação por **setas dentro de cinco zonas**, com
+ * `roving tabindex`. Escrita em julho, sem tela para medir. Com a mesa pronta dá
+ * para contar: quatro das cinco regiões têm de 1 a 4 elementos interativos, e o
+ * problema de "muitos `Tab`" é de **uma** — a mão. Cinco zonas de foco
+ * gerenciado para resolver uma é abstração sem caso concreto (invariante 3).
+ *
+ * O que entra é o nativo mais um salto direto: `Tab` e `Enter` continuam
+ * alcançando tudo, e a tecla leva o foco para dentro da região.
+ */
+const ATALHOS: readonly { readonly tecla: string; readonly regiao: string }[] = [
+  { tecla: '1', regiao: 'Minha mão' },
+  { tecla: '2', regiao: 'Meus jogos' },
+  { tecla: '3', regiao: 'Monte' },
+  { tecla: '4', regiao: 'Lixo' },
+  { tecla: '5', regiao: 'Jogos do adversário' },
+]
+
+function useAtalhosDeZona() {
+  useEffect(() => {
+    const aoTeclar = (evento: KeyboardEvent) => {
+      // Sem modificadores: `Ctrl+1` e `Alt+1` são do navegador, e roubá-los é
+      // pior que não ter atalho.
+      if (evento.ctrlKey || evento.altKey || evento.metaKey) {
+        return
+      }
+
+      const atalho = ATALHOS.find((candidato) => candidato.tecla === evento.key)
+
+      if (atalho === undefined) {
+        return
+      }
+
+      const regiao = document.querySelector(`[aria-label="${atalho.regiao}"]`)
+      const primeiro = regiao?.querySelector<HTMLElement>('button, a[href]')
+
+      // Sem elemento interativo — a mesa inerte da S18 —, o foco vai para a
+      // própria região, que é focável por `tabindex="-1"`.
+      ;(primeiro ?? (regiao as HTMLElement | null))?.focus()
+    }
+
+    document.addEventListener('keydown', aoTeclar)
+
+    return () => {
+      document.removeEventListener('keydown', aoTeclar)
+    }
+  }, [])
+}
+
 export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAbandonar }: Props) {
   const [confirmandoAbandono, setConfirmandoAbandono] = useState(false)
+
+  useAtalhosDeZona()
   // T5 — a máquina de estados de seleção vive em `ui/`, separada do domínio. A
   // engine não sabe o que é "carta selecionada": para ela só existem comandos.
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
@@ -479,8 +537,18 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
 
   // S48 — confirma quem casar **exatamente** com a seleção. Nenhum dos botões é
   // decidido pela interface: os dois saem deste mesmo filtro.
-  const confirmaveis =
+  //
+  // S167 — mas a **ordem** é decisão da tela, e não herança da ordem de
+  // `movimentosValidos`. O descarte vai por último porque ele **encerra o turno**
+  // (R7.1): oferecer a ação irreversível antes das reversíveis é ruim no mouse e
+  // pior no teclado, onde a primeira opção é a que o `Enter` alcança. Foi assim
+  // até a H18, e a H10 mediu o efeito — o roteiro do navegador clicava "o
+  // primeiro botão" e pegava sempre o descarte.
+  const confirmaveis = (
     selecao.length > 0 ? validas.filter((jogada) => jogada.cartas.size === selecao.length) : []
+  )
+    .slice()
+    .sort((uma, outra) => ordemDaJogada(uma) - ordemDaJogada(outra))
 
   function alternar(id: string) {
     setSelecionadas((antes) =>
@@ -496,6 +564,18 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
   return (
     <>
       <h1>Partida</h1>
+
+      {/* S166 — os atalhos são **conteúdo**, e não convenção escondida. Um
+          atalho que ninguém descobre cumpre a RNF3.4 no papel e não na mesa. */}
+      <section aria-label="Atalhos de teclado" tabIndex={-1}>
+        <ul>
+          {ATALHOS.map((atalho) => (
+            <li key={atalho.tecla}>
+              Tecla {atalho.tecla} — {atalho.regiao.toLowerCase()}
+            </li>
+          ))}
+        </ul>
+      </section>
 
       {/* S153 — RF1.3. Vive **só** aqui: na inicial não há o que abandonar, e na
           `/fim` a partida já acabou. */}
@@ -556,11 +636,11 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
       {/* RF3.5 — os jogos dos **dois** jogadores, com categoria. Até a H7 este
           painel renderizava um parágrafo vazio quando o adversário tinha jogos,
           e a IA baixa em toda partida: estava errado desde a H4 (S92). */}
-      <section aria-label="Jogos do adversário">
+      <section aria-label="Jogos do adversário" tabIndex={-1}>
         <ListaDeJogos jogos={visao.jogosDoAdversario} />
       </section>
 
-      <section aria-label="Monte">
+      <section aria-label="Monte" tabIndex={-1}>
         {podeComprar ? (
           <button
             type="button"
@@ -575,7 +655,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
         )}
       </section>
 
-      <section aria-label="Lixo">
+      <section aria-label="Lixo" tabIndex={-1}>
         {/* S83/S84 — o botão vem **ao lado** da listagem, nunca no lugar dela.
             Copiar o painel do monte seria o caminho de menor esforço e o erro:
             lá a contagem basta porque o monte é oculto (RF3.3), aqui ela
@@ -609,11 +689,11 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
         <p>{sobreOsMortos(visao)}</p>
       </section>
 
-      <section aria-label="Meus jogos">
+      <section aria-label="Meus jogos" tabIndex={-1}>
         <ListaDeJogos jogos={visao.meusJogos} />
       </section>
 
-      <section aria-label="Minha mão">
+      <section aria-label="Minha mão" tabIndex={-1}>
         <ul>
           {visao.mao.map((carta) => (
             <li key={carta.id}>

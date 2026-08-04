@@ -20,3 +20,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+
+# Playwright (S170) — relatórios e artefatos de execução
+/test-results/
+/playwright-report/

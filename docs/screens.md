@@ -201,6 +201,23 @@ saber **qual carta ele representa**.
 > se distribuir. E ela é o que torna os testes de interface legíveis — "vá para a zona da mão,
 > selecione três cartas, confirme" é uma descrição estável, independente de posição na tela.
 
+> **Nota de 2026-08-04, ao implementar a H18 (S166).** A navegação por **setas dentro da zona**
+> não foi implementada, e a decisão acima fica como está — mas com esta correção anexada, porque
+> ela foi escrita em 2026-07-30, **sem tela para medir**.
+>
+> Com a mesa pronta dá para contar: quatro das cinco regiões têm de 1 a 4 elementos interativos
+> cada. O problema que as setas resolveriam — muitos `Tab` para atravessar uma zona — é de
+> **uma** região, a mão. Cinco zonas de foco gerenciado para resolver uma é abstração sem caso
+> concreto (invariante 3), e `roving tabindex` é código que quebra em silêncio.
+>
+> O que entrou foi o nativo mais **atalho de zona**: as teclas 1 a 5 levam o foco direto para
+> dentro de cada região, e a lista delas é conteúdo da página — atalho que ninguém descobre
+> cumpre a RNF3.4 no papel e não na mesa. `Tab` e `Enter` continuam alcançando toda jogada, e
+> isso está preso em teste de Playwright.
+>
+> O resto da §7 se sustentou: `Espaço` e `Enter` vêm de graça dos elementos nativos, e o `Esc`
+> chegou com o `<dialog>` da H16.
+
 Acabamento visual, animações e responsividade fina ficam para H18 e H19.
 
 ---

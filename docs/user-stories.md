@@ -172,6 +172,15 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 - `[D]` H19 (acabamento visual) fica **por último**, depois de a partida
   funcionar de ponta a ponta.
 
+> **H18 fechada em 2026-08-04, e duas decisões precisaram de conserto — as duas de medição.** A
+> `CA-S170-1` pedia a partida completa no Playwright: medido, custa **~17 minutos de relógio**,
+> porque a RF5.3 põe 700 ms entre os comandos da IA. Ficou em 20 turnos, que rodam em 18 s. E a
+> `CA-S169-1` dizia "todos os elementos visíveis", o que reprovaria qualquer página longa — o
+> defeito que a fatia teme é **transbordo horizontal**, e é isso que ela mede agora.
+>
+> A `screens.md` §7 recebeu nota: a navegação por setas dentro de cinco zonas não entrou, porque
+> quatro delas têm de 1 a 4 elementos interativos. O que entrou foi atalho de zona nas teclas 1 a 5.
+
 > **H17 fechada em 2026-08-04.** A tela tem texto próprio, escrito para o jogador, e cada bloco
 > cita em comentário os `Rn` que resume — a tela cobre as **66** regras, verificado por script, e
 > o verificador foi visto reprovando com uma delas descoberta. O que a citação **não** prova é

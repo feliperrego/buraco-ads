@@ -87,7 +87,7 @@ testada, os testes passam a ser a especificação viva.
 | [0015-ia-por-heuristica.md](specs/0015-ia-por-heuristica.md) | H15 — o oponente por heurística | **Implementada** — 25 novos e 5 herdados |
 | [0016-abandonar-a-partida.md](specs/0016-abandonar-a-partida.md) | H16 — abandonar a partida | **Implementada** — 13 novos e 5 ajustados |
 | [0017-regras-na-aplicacao.md](specs/0017-regras-na-aplicacao.md) | H17 — as regras dentro da aplicação | **Implementada** — 13 novos e 3 ajustados |
-| [0018-celular-e-teclado.md](specs/0018-celular-e-teclado.md) | H18 — celular e teclado | Rascunho anotado — 6 decisões pendentes |
+| [0018-celular-e-teclado.md](specs/0018-celular-e-teclado.md) | H18 — celular e teclado | **Implementada** — 5 novos, 1 de ponta a ponta |
 
 ## Verificação
 
@@ -189,6 +189,19 @@ era o critério errado: ele nasceu com o cabeçalho dizendo dez propostas e a ta
 mesmo defeito, num documento de fundação. O que decide se um arquivo entra na checagem é **ter a
 contagem repetida em três lugares**, não onde ele mora. Os três ramos foram vistos reprovando
 contra ele também.
+
+### O teste de ponta a ponta
+
+```bash
+npm run e2e
+```
+
+Um teste, e é de propósito (S170): vinte turnos jogados **só com teclado**, em viewport de
+celular. Fica **fora** do `npm run verificar` porque exige servidor e navegador.
+
+Ele **não** substitui rodar o app à mão. A partida completa levaria ~17 minutos de relógio — a
+RF5.3 põe 700 ms entre os comandos da IA —, e os roteiros exploratórios acharam defeito em seis
+das nove últimas fatias, nenhum deles procurando o que achou.
 
 ### O que fica de fora
 

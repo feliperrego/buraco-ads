@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import TelaPartida from './TelaPartida.tsx'
-import type { Carta, Comando, Pontuacao, VisaoDoJogador } from '../../engine/index.ts'
+import type { Carta, Comando, Jogo, Pontuacao, VisaoDoJogador } from '../../engine/index.ts'
 
 /**
  * Critérios de interface das specs 0001 §6 e 0002 §6, nível 4 da
@@ -1516,5 +1516,126 @@ describe('S153 e S154 — abandonar a partida, com confirmação', () => {
 
     // E a mesa continua jogável: o diálogo não deixou resto.
     expect(screen.getByRole('button', { name: /comprar do monte/i })).toBeDefined()
+  })
+})
+
+/**
+ * Critérios de interface da spec 0018 §6 — a H18.
+ *
+ * S167 — a ordem dos botões passa a ser **decisão da tela**, e não herança da
+ * ordem de `movimentosValidos`. O gatilho da H10 fecha aqui.
+ */
+describe('S167 — a ordem dos botões de jogada', () => {
+  const JOGO: Jogo = {
+    id: 'jogo-copas-5-7',
+    dono: 0,
+    naipe: 'COPAS',
+    posicoes: [
+      { tipo: 'Natural', carta: carta('COPAS', '5') },
+      { tipo: 'Natural', carta: carta('COPAS', '6') },
+      { tipo: 'Natural', carta: carta('COPAS', '7') },
+    ],
+  }
+
+  const QUATRO = carta('COPAS', '4')
+
+  const AUMENTAR: Comando = {
+    tipo: 'aumentar',
+    jogo: JOGO.id,
+    cartas: [{ carta: QUATRO.id }],
+  }
+
+  function visaoComJogo(): VisaoDoJogador {
+    return visaoInicial({
+      fase: 'Acao',
+      mao: [QUATRO, carta('OUROS', 'K')],
+      meusJogos: [JOGO],
+    })
+  }
+
+  function ordemDosBotoes(movimentos: readonly Comando[]): readonly string[] {
+    const visao = visaoComJogo()
+
+    cleanup()
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={movimentos}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
+
+    // Uma carta só: é a seleção que faz o descarte e a jogada de mesa
+    // aparecerem juntos (S48), e foi ela que a H10 mediu no navegador.
+    fireEvent.click(screen.getByRole('button', { name: /^4 de copas$/i }))
+
+    return screen
+      .getAllByRole('button')
+      .map((botao) => botao.textContent)
+      .filter((texto) => /^(descartar|aumentar)/i.test(texto))
+  }
+
+  it('CA-S167-1 — a jogada de mesa vem antes do descarte', () => {
+    const rotulos = ordemDosBotoes([...descartesDe(visaoComJogo()), AUMENTAR])
+
+    expect(rotulos).toHaveLength(2)
+    expect(rotulos[0]).toMatch(/^aumentar/i)
+    expect(rotulos.at(-1)).toMatch(/^descartar$/i)
+  })
+
+  it('CA-S167-2 — embaralhar movimentosValidos não muda a ordem dos botões', () => {
+    // O par que prova que a tela **ordena**, e não herda: a lista chega ao
+    // contrário e os botões saem iguais. Antes da H18 a ordem vinha do `return`
+    // de `movimentosValidos`, e este teste teria reprovado.
+    const visao = visaoComJogo()
+
+    expect(ordemDosBotoes([AUMENTAR, ...descartesDe(visao)])).toEqual(
+      ordemDosBotoes([...descartesDe(visao), AUMENTAR]),
+    )
+  })
+})
+
+describe('S166 — o teclado alcança tudo', () => {
+  it('CA-S166-3 — nenhum elemento interativo fica fora da ordem de tabulação', () => {
+    const visao = visaoInicial({ fase: 'Acao' })
+
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={descartesDe(visao)}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
+
+    const interativos = screen.getAllByRole('button')
+
+    // Âncora positiva: há o que conferir.
+    expect(interativos.length).toBeGreaterThan(5)
+
+    for (const elemento of interativos) {
+      expect(elemento.getAttribute('tabindex'), elemento.textContent).not.toBe('-1')
+    }
+  })
+
+  it('CA-S166-2 — cada região do jogo tem atalho de teclado anunciado', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'Acao' })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
+
+    // A lista de atalhos é conteúdo da página: um atalho que ninguém descobre
+    // não cumpre a RNF3.4, só a satisfaz no papel.
+    const atalhos = screen.getByRole('region', { name: /atalhos de teclado/i })
+
+    expect(within(atalhos).getAllByRole('listitem').length).toBeGreaterThanOrEqual(4)
   })
 })
