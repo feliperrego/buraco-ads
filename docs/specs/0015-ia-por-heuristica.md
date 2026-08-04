@@ -219,6 +219,11 @@ As outras três propriedades da E6 continuam sendo teste:
   **e** mão do jogador vazia
 - `CA-S145-4` — `bateCom` é `false` para comando que encerra a rodada pelo **monte esgotado**
   (R4.8) e não pela batida — é o caso que a `CA-S145-3` distingue por olhar a mão
+- `CA-S145-5` — o `aumentar` que suja a única canastra limpa **não** bate, mesmo zerando a mão.
+  Acrescentado depois da implementação: a mutação que soma o jogo resultante sem tirar a versão
+  antiga — o defeito da `CA-S140-4` — passou nos 284 testes, porque em 30 partidas sorteadas
+  nenhum `aumentar` que zere a mão chega perto de uma canastra limpa. A `CA-S145-3` era a defesa
+  inteira da S145 e **não** cobria o caso que a S145 mais temia
 
 **S146 — a nota**
 
@@ -247,6 +252,10 @@ As outras três propriedades da E6 continuam sendo teste:
 - `CA-S149-1` — carta do lixo com irmã de mesmo naipe a uma e a duas casas encaixa
 - `CA-S149-2` — a três casas, não encaixa
 - `CA-S149-3` — mesma casa, naipe diferente, não encaixa
+- `CA-S149-3` — a **cópia idêntica** não encaixa. A S149 diz "distância ≤ 2", e ao pé da letra
+  isso inclui o zero; duas cartas iguais não entram na mesma sequência (I1), e o argumento que a
+  própria S149 dá — sequência mínima de três, um buraco admite curinga — exclui o zero. É leitura
+  minha do texto confirmado, e sem este critério a mutação `>= 1` → `>= 0` passa em silêncio
 
 **S150 — empate**
 
@@ -284,12 +293,106 @@ Nove decisões, confirmadas em bloco em 2026-08-04.
 > escolhe que o orçamento de tempo vira teste em vez de medição avulsa, e obriga a remedição da
 > T7.
 
+---
+
+## 10. O que a fatia mediu
+
+Escrito depois da implementação. Os números são de execução, não de estimativa.
+
+### 10.1 A força relativa passa, e com folga
+
+| | |
+|---|---|
+| partidas | **600**, o `N` que a IA11 fixou antes de medir |
+| decididas | 600 de 600 |
+| força relativa | **97,8%** — intervalo de 95%: **96,7% a 99,0%** |
+| rodadas por partida | 3,3 na média, contra 6,1 da linha de base |
+| custo | ~140 ms por partida |
+
+A E6 pede 70% e a IA11 exige que o **limite inferior** passe: 96,7% > 70%. Cumprida.
+
+**O arnês foi conferido contra si mesmo**, porque um número desses merece desconfiança: trocando
+a heurística por uma segunda aleatória, ele devolveu **53,7%**, intervalo de 95% entre 48,0% e
+59,3% — contendo os 50%. O arnês não é enviesado a favor de quem ele chama de "heurística".
+
+### 10.2 O custo, e a T7
+
+`decidir` no pior caso construível da T7 — 1738 comandos enumerados **e pontuados** — leva
+**12,89 ms**, contra os 5,95 ms da enumeração sozinha medida na H11. A E6 pede menos de 100 ms.
+O limiar de ~2000 comandos da T7 **não se move**: `movimentosValidos` não mudou nesta fatia, e o
+que a S145 acrescentou é uma pergunta por comando, não um comando novo.
+
+A pergunta cara da S145 quase nunca é feita, e isso é decisão de ordem: `bateCom` responde
+`mortosRestantes > 0` e `zeraAMao` **antes** de construir qualquer jogo. Com a mão grande, a
+segunda já responde não.
+
+### 10.3 As mutações, e as três que passam
+
+Onze mutações propositais, uma por decisão de comportamento. **Oito mordem**; as três que passam
+valem mais que as oito, e cada uma diz uma coisa diferente:
+
+- **`DOBRO_DA_MESA = 1` não reprova nada, e não é buraco de teste.** O fator multiplica a **única**
+  família positiva de parcelas — `baixar` e `aumentar` —, e as duas só competem entre si dentro da
+  fase de ação. Nenhuma comparação do jogo atual inverte quando ele muda. A IA5 está certa sobre a
+  R11.3 e é **inerte na decisão**; ela só passa a pesar quando existir parcela positiva fora
+  daquela família competindo na mesma fase.
+- **A ponta do desempate não importa**, e a S150 já dizia isso: trocar `<` por `>` mantém a
+  escolha estável sob embaralhamento, que é a propriedade escrita. A mutação que passa aqui
+  confirma a decisão em vez de acusá-la.
+- **Duas passavam por motivo que importava, e viraram critério.** A `CA-S147-2` passava com o
+  bônus do curinga **zerado**: a fixture tinha sequência de copas e curinga alternativo de
+  espadas, e o desempate alfabético da S150 escolhia copas sozinho. A `CA-S145-5` nasceu do caso
+  descrito acima.
+
+### 10.4 O defeito que só o navegador achou: a trava do lixo
+
+A partida inteira rodou no navegador — 3 rodadas, 374 ações do humano, zero erro de console, mesa
+do adversário chegando a **14 jogos** com canastra suja, limpa e **de 500**, e a rodada 3
+terminando em *"O adversário bateu"*. A H15 aparece na tela.
+
+E a tela mostrou o que a suíte e as 600 partidas não mostraram: **o lixo com 55 cartas e o monte
+com 3**. Medido depois, contra o humano guloso do roteiro — compra do monte e descarta, nunca
+baixa:
+
+| Tamanho do lixo | Saldo médio da IA9 |
+|---|---|
+| 0 a 9 | **+11** |
+| 10 a 19 | −11 |
+| 30 a 39 | −82 |
+| 60 a 69 | **−140** |
+
+O saldo da IA9 é **ilimitado por baixo no tamanho do lixo**: cada carta que não encaixa subtrai o
+valor dela, e nada limita o total. Passado o ponto em que o saldo vira negativo, o lixo só cresce
+— e quanto mais cresce, mais negativo fica. É uma trava que se realimenta, e ela chegou a **70
+cartas** na simulação.
+
+**Por que as 600 partidas não a viram.** Contra a aleatória, o lixo nunca passou de **16 cartas**:
+a aleatória o pega em metade das compras, e a heurística em 74,3% delas. O lixo só cresce contra
+um adversário que **não** o pega — e é exatamente esse o comportamento do roteiro do navegador. É
+a lição da H14 outra vez, com outro nome: **simulação que prevê o app precisa copiar o app**, e o
+que o meu arnês não copiava desta vez não era a semeadura, era o **oponente**.
+
+A trava **não** é corrigida nesta fatia, e a razão é de processo: a IA9 é decisão confirmada, a
+S147 diz que parcela nova só entra se a medição reprovar, e a medição passou com 96,7% de limite
+inferior. A correção entra como gatilho no `roadmap.md` §3, com o número medido junto.
+
+---
+
 ### Onde eu erraria, se errasse
 
 **Os pesos da §5 são a parte fraca, e eu sei disso antes de medir.** Cinco dos oito números
 saíram de regra escrita; o `+50` da IA6 e o `+200` da IA8 saíram de argumento meu, e a distância
 ≤ 2 da S149 também. Se a força relativa não sair, a ordem de revisão é essa: S149, depois os dois
 pesos, depois a IA9 e a IA10 da `ia-strategy.md`.
+
+> **Escrito antes de medir, e a ordem estava errada.** A força relativa saiu com folga, então a
+> revisão não foi acionada por ela — e mesmo assim há um item a corrigir, e é a **IA9**, que eu
+> pus em quarto lugar. A trava do lixo (§10.4) não é peso mal escolhido: é a **forma** da parcela,
+> que não tem piso. Nenhum dos números da lista acima teria consertado isso.
+>
+> A calibragem do acordo acertou o alvo — a única de mesa entre as que eu marquei —, e errou o
+> caminho: eu esperava que a medição de força apontasse o defeito, e ela não aponta. Quem apontou
+> foi **rodar o app**.
 
 **A S145 é a decisão que mais pode dar errado em silêncio.** Ela aceita duas construções do mesmo
 jogo resultante, e a defesa inteira é um teste. Se a `CA-S145-3` for enfraquecida — menos

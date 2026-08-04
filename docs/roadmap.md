@@ -138,7 +138,7 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 | **II** ✅ | H4–H7 | Dá para baixar sequências, com e sem curinga, e pegar o lixo |
 | **III** ✅ | H8–H12 | Uma rodada completa termina em batida e pontuação apurada |
 | **IV** ✅ | H13–H14 | Uma partida completa chega a 3000, inclusive com monte esgotado |
-| **V** | H15 | O oponente joga por heurística, não por sorteio |
+| **V** ✅ | H15 | O oponente joga por heurística, não por sorteio |
 | **VI** | H16–H19 | Produto: abandono, regras, celular, acabamento |
 
 - `[D]` **Uma história por vez**, sem iteração de tamanho fixo. Cada história
@@ -159,7 +159,7 @@ As decisões que adiamos, cada uma com o momento em que voltamos a olhá-la. Sem
 | Decisão adiada | Gatilho | Origem |
 |---|---|---|
 | Ordem dos botões de jogada na **interface** | **No Marco VI (acabamento)** — a IA3 tirou a `ia/` daquela ordem, e sobrou a tela: com uma carta selecionada aparecem "Descartar" **e** a jogada de mesa, nessa ordem, porque os descartes vêm primeiro no `return`. É decisão de interface, e a ordem da engine não deve significar nada | IA4 |
-| Limiar de 70% na força relativa da IA | **Ao terminar H15** — com o número real medido, contra a IA aleatória da H3 como linha de base (E7) | E6, S28 |
+| Forma da parcela do lixo (IA9) | **Na primeira fatia que revisar a IA** — o saldo não tem piso, então o lixo grande nunca é pego e só cresce. Medido: saldo médio de **+11** com lixo de 0 a 9 cartas e de **−140** com 60 a 69, contra o humano que não pega o lixo. As 600 partidas não veem, porque contra a aleatória o lixo não passa de 16 | H15, IA9 |
 | `useReducer` + Context vs Zustand | **Se houver re-render perceptível** durante Marco VI | A6 |
 | Teste de mutação | **Se aparecer bug em regra que tinha teste passando** | E8 |
 | Playwright | **Início do Marco VI** — quando existir partida completa | ADR-0006 |
@@ -194,6 +194,7 @@ gatilho que some sem deixar rastro é indistinguível de um gatilho esquecido.
 | Custo da enumeração **com a guarda da batida** | H11, 2026-08-03 | **Medido: 1738 comandos em 5,95 ms** — o mesmo pior caso construível da H7, mesmo número, mesmo tempo. A pergunta cara da S115 não aparece ali: com 52 cartas na mão, nenhum comando a zera, porque a maior sequência tem 14 posições. O limiar de ~2000 continua a 13% |
 | `ia-strategy.md` como documento próprio | Antes da H15, 2026-08-04 | **Sim, documento próprio.** Não por tamanho — por tipo. O `README.md` declara a spec **descartável** porque, pronta a história, os testes viram a especificação viva; isso vale para **regra**, que tem resposta certa, e não para **heurística**, que é política com custo. Um teste prende *"prefere baixar a descartar"* e não prende **por quê**, e é o porquê que a medição vai rever. Onze decisões, `IA1` a `IA11`, confirmadas em bloco |
 | Ordem em que `movimentosValidos` devolve os comandos | H15, 2026-08-04 | **Não vira contrato.** A engine **enumera**, a `ia/` **pontua** (IA2), e o empate sai de **chave estável do comando** — tipo e cartas ordenados —, nunca da posição na lista (IA3). Usar a posição devolveria o contrato pela porta dos fundos e amarraria a engine a um consumidor. A dependência da **interface** naquela ordem é real e continua aberta, agora como decisão de interface com prazo no Marco VI (IA4) |
+| Limiar de 70% na força relativa da IA | H15, 2026-08-04 | **Medido: 97,8%, intervalo de 95% entre 96,7% e 99,0%, em 600 partidas.** A E6 passa pelo limite inferior (IA11) com 26,7 pontos de folga, e o arnês foi conferido contra si mesmo — aleatória contra aleatória dá 53,7%, intervalo contendo os 50%. O limiar **era baixo demais para separar políticas**: um número que 97,8% cumpre não distingue esta heurística da próxima. Quando houver uma segunda, a comparação útil é contra ela |
 | Custo com a mão **inchada pelo lixo** | H7, 2026-08-02 | **Medido: 1738 comandos — 932 `baixar`, 754 `aumentar`, 52 `descartar` — em ~6 ms**, no pior caso construível. Passa do limiar de ~2000? **Não**, e por 13%. É a medição mais próxima que o projeto já teve, e a `validar` continua fechada |
 
 > O número da T7 merece a conta ao lado, porque a diferença entre o medo e o fato é de quatro

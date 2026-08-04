@@ -149,6 +149,17 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 > do Buraco Aberto (quando pegar o lixo, qual 2 usar como curinga, quando correr para o
 > morto) merecem especificação, não improviso.
 
+> **Fechada em 2026-08-04, e as três previsões acima se confirmaram.** O `ia-strategy.md` virou
+> documento próprio (IA1–IA11), a aleatória continua exportada como `porSorteio` e é a linha de
+> base da medição, e as três heurísticas citadas viraram IA9, IA6 e IA8 — nessa ordem.
+>
+> Medido em 600 partidas: força relativa de **97,8%**, intervalo de 95% entre **96,7% e 99,0%**.
+> A E6 pede 70% e a IA11 exige o limite inferior; passa por 26,7 pontos.
+>
+> O que a história **não** previu está na spec 0015 §10.4: a parcela do lixo não tem piso, e
+> contra um oponente que não pega o lixo ele cresce até nunca mais ser pego. As 600 partidas não
+> veem isso, porque contra a aleatória o lixo não passa de 16 cartas. Quem viu foi rodar o app.
+
 ### Marco VI — Produto
 
 | # | História | Fecha |
