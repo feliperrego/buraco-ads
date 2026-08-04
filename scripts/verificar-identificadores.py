@@ -17,6 +17,16 @@ Cobre as duas familias que atravessam arquivos:
 Regras (R, RF, RNF, M, A, T, E, RD) vivem cada uma num arquivo so, e o
 verificar-rastreabilidade.py ja cuida das citacoes delas.
 
+SEGUNDA CHECAGEM, de 2026-08-03: a contagem de decisoes de cada spec aparece em
+TRES lugares -- o cabecalho, a frase de abertura da secao final e as linhas da
+tabela -- e uma decisao acrescentada no meio da fatia nao chegava aos tres.
+Medido: a spec 0008 tinha a S94 marcada no corpo e ausente da tabela; a 0010
+tinha oito decisoes e um cabecalho dizendo sete. As duas sao o mesmo erro, e o
+CLAUDE.md ja registrava dois casos anteriores dele.
+
+A tabela e a fonte: e ela que se le para revisar. O cabecalho e a frase precisam
+concordar com ela, e nada marcado [P] ou [D] no corpo pode faltar nela.
+
 Uso: python3 scripts/verificar-identificadores.py
 """
 
@@ -62,6 +72,82 @@ def definicoes(padrao_id):
     return encontrados
 
 
+# A contagem aparece por extenso a partir da spec 0006 e em algarismo antes
+# dela. As duas formas valem; o que nao vale e divergirem.
+POR_EXTENSO = {
+    "uma": 1, "duas": 2, "tres": 3, "quatro": 4, "cinco": 5, "seis": 6,
+    "sete": 7, "oito": 8, "nove": 9, "dez": 10, "onze": 11, "doze": 12,
+    "treze": 13, "catorze": 14, "quatorze": 14, "quinze": 15, "dezesseis": 16,
+    "dezessete": 17, "dezoito": 18, "dezenove": 19, "vinte": 20,
+}
+
+SEM_ACENTO = str.maketrans("áàâãéêíóôõúç", "aaaaeeiooouc")
+
+
+def contagem(texto):
+    """Quantas decisoes o texto declara, em algarismo ou por extenso.
+
+    Duas formas em uso, e a ordem em que sao tentadas importa. "Treze,
+    confirmadas em bloco em 2026-08-02" abre com a palavra e nao repete o
+    substantivo; "As 16 decisoes foram confirmadas em 2026-07-31" usa algarismo
+    e traz o substantivo junto. Procurar algarismo primeiro acharia o **ano** na
+    primeira forma -- foi o que a primeira versao desta funcao fez, e ela
+    acusou dez specs incoerentes por causa disso.
+    """
+    primeira = re.match(r"\**([A-Za-zÀ-ÿ]+)", texto.strip())
+    if primeira:
+        valor = POR_EXTENSO.get(primeira.group(1).lower().translate(SEM_ACENTO))
+        if valor is not None:
+            return valor
+
+    achado = re.search(r"(\d+)\s+(?:decis|propost)", texto)
+    return int(achado.group(1)) if achado else None
+
+
+def coerencia_das_specs():
+    """Cabecalho, frase de abertura e tabela precisam contar a mesma coisa."""
+    problemas = []
+
+    for spec in sorted((DOCS / "specs").glob("*.md")):
+        texto = spec.read_text(encoding="utf-8")
+        nome = spec.name
+
+        cabecalho = re.search(r"^> Status:.*$", texto, re.M)
+        secao = re.search(
+            r"^## \d+\. (?:Decis|Pend)\S*\s*\n\s*\n(.+)$", texto, re.M
+        )
+        tabela = set(re.findall(r"^\|\s*\*\*(S\d+)\*\*", texto, re.M))
+        corpo = set(re.findall(r"^- `\[[PD]\]`\s*\*\*(S\d+)\*\*", texto, re.M))
+
+        if cabecalho is None or secao is None:
+            problemas.append(f"{nome}: sem cabecalho de status ou sem secao de decisoes")
+            continue
+
+        # O cabecalho traz numero da spec e numero de decisoes; o segundo e o
+        # que vem depois do travessao.
+        depois = cabecalho.group(0).split("—")[-1]
+        no_cabecalho = contagem(depois)
+        na_frase = contagem(secao.group(1))
+
+        if no_cabecalho != len(tabela):
+            problemas.append(
+                f"{nome}: cabecalho diz {no_cabecalho}, tabela tem {len(tabela)}"
+            )
+
+        if na_frase != len(tabela):
+            problemas.append(
+                f"{nome}: abertura da secao diz {na_frase}, tabela tem {len(tabela)}"
+            )
+
+        faltando = sorted(corpo - tabela, key=lambda i: int(i[1:]))
+        if faltando:
+            problemas.append(
+                f"{nome}: marcadas no corpo e ausentes da tabela: {', '.join(faltando)}"
+            )
+
+    return problemas
+
+
 def main():
     falhas = []
 
@@ -84,6 +170,17 @@ def main():
         return 1
 
     print("\nOK: nenhum identificador definido em dois lugares.")
+
+    incoerentes = coerencia_das_specs()
+
+    if incoerentes:
+        print(f"\n{len(incoerentes)} spec(s) com contagem incoerente:")
+        for problema in incoerentes:
+            print(f"  {problema}")
+        print("\nA tabela e a fonte. Cabecalho e abertura acompanham ela.")
+        return 1
+
+    print(f"OK: as {len(list((DOCS / 'specs').glob('*.md')))} specs contam suas decisoes de forma coerente.")
     return 0
 
 

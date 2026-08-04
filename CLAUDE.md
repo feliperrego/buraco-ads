@@ -106,7 +106,8 @@ próprios:
   já destruiu trabalho não commitado uma vez
 - `scripts/verificar-rastreabilidade.py` — prova que nenhuma regra ficou órfã de história
 - `scripts/verificar-identificadores.py` — prova que nenhum `CA-` ou `S` foi definido em
-  dois lugares. Nasceu de uma colisão real: um `grep` de padrão incompleto declarou
+  dois lugares, **e** que cada spec conta suas decisões de forma coerente nos três lugares em
+  que a contagem aparece. Nasceu de uma colisão real: um `grep` de padrão incompleto declarou
   "sem conflito" e deixou passar um ID duplicado
 
 ## Git
@@ -231,10 +232,16 @@ Treze coisas que valem saber antes de mexer no que estas nove fatias deixaram:
   `verificar-fronteiras.py` prova isso a cada execução. Use **`outrasCartas`** para a mão do
   adversário: escrevê-la à mão colidiu com fixture três vezes na H5.
 
-> **Duas correções de contagem, e as duas do mesmo tipo.** Esta seção já disse "os 20 critérios"
-> da spec 0004 quando são **24**, e o rascunho da spec 0005 disse "onze propostas" quando eram
-> **12**. As duas saíram de contagem à mão. Hoje os números daqui vêm de script: a 0004 tem 24
-> critérios e a 0005 tem 19, e é assim que devem nascer.
+> **Quatro correções de contagem, todas do mesmo tipo, e a quarta virou verificador.** Esta
+> seção já disse "os 20 critérios" da spec 0004 quando são **24**, e o rascunho da spec 0005
+> disse "onze propostas" quando eram **12**. Depois vieram as specs 0008 e 0010: a `S94` e a
+> `S109` foram acrescentadas **no meio da fatia** e não chegaram aos três lugares onde a
+> contagem vive — cabeçalho, frase de abertura e tabela.
+>
+> As quatro saíram de contagem à mão, e as duas últimas mostraram o padrão: o erro não é contar
+> errado, é **acrescentar uma decisão depois** e atualizar só o lugar que estava aberto na tela.
+> Desde 2026-08-03 o `verificar-identificadores.py` compara os três, com os três ramos vistos
+> reprovando. Números em documento vivo nascem de script — inclusive os desta seção.
 
 **As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
 hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),

@@ -274,7 +274,8 @@ forma da consulta e a interface.
 
 ## 10. Decisões
 
-Nove, confirmadas em bloco em 2026-08-02.
+Dez: nove confirmadas em bloco em 2026-08-02, e a **S94** confirmada em separado durante a
+implementação — a ponta que o Ás ocupa quando as duas cabem.
 
 | # | Assunto | Decisão confirmada |
 |---|---|---|
@@ -287,6 +288,7 @@ Nove, confirmadas em bloco em 2026-08-02.
 | **S91** | Escopo | A R8.5 é honrada **estruturalmente** aqui e **provada** na H9 |
 | **S92** | Interface | Os jogos do adversário passam a ser desenhados — hoje não são |
 | **S93** | Interface | Rótulo de categoria em português; jogo abaixo de sete não ganha rótulo |
+| **S94** | **`rules.md`** | O Ás resolve pela ponta **baixa** quando as duas cabem: `2…K-A` não é representável, e a R8.6 ganha nota dizendo isso |
 
 ### Onde eu erraria, se errasse
 

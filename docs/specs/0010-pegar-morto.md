@@ -1,6 +1,6 @@
 # Spec 0010 — Pegar o morto
 
-> Status: **confirmado** — 7 decisões, nenhuma pendência
+> Status: **confirmado** — 8 decisões, nenhuma pendência
 > História: **H10** — "Fico sem cartas na mão e recebo um morto automaticamente"
 > Fecha: R2.3, R9.1, R9.2, R9.3, R9.4, M3
 > Última atualização: 2026-08-02
@@ -279,7 +279,7 @@ Ao todo: **16 critérios novos** nas tabelas abaixo, mais a `CA-R9.3-1` herdada.
 
 ## 9. Decisões
 
-Sete, confirmadas em bloco em 2026-08-02, mais a **S109**, que nasceu da medição depois de
+Oito: sete confirmadas em bloco em 2026-08-02, e a **S109**, que nasceu da medição depois de
 implementar e foi confirmada em separado.
 
 | # | Assunto | Decisão confirmada |

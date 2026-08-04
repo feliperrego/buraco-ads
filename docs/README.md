@@ -147,6 +147,16 @@ no repositório junto com o teste.
 A lição está na regra do `CLAUDE.md`: afirmação de completude precisa de script, não de
 atenção — e um `grep` escrito na hora é atenção disfarçada de script.
 
+Desde 2026-08-03 ele faz uma **segunda** checagem, e ela nasceu do mesmo jeito. A contagem de
+decisões de cada spec aparece em três lugares — o cabeçalho, a frase que abre a seção final e as
+linhas da tabela —, e uma decisão acrescentada no meio da fatia não chegava aos três. Medido: a
+spec 0008 tinha a `S94` marcada no corpo e **ausente da tabela**; a 0010 tinha oito decisões e um
+cabeçalho dizendo sete.
+
+A tabela é a fonte, porque é ela que se lê para revisar. O cabeçalho e a frase precisam concordar
+com ela, e nada marcado `[P]` ou `[D]` no corpo pode faltar nela. Os três ramos foram vistos
+reprovando contra specs corretas antes de o script ser aceito.
+
 ### O que fica de fora
 
 Uma coisa **não** é coberta por `npm run verificar`, e vale saber qual: o *rewrite* de SPA do
