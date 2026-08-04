@@ -30,6 +30,17 @@ O TanStack Router **permanece** na stack.
 - **É a decisão menos reversível das três de stack.** Adicionar roteador depois obriga a
   reescrever a navegação; remover depois é apagar arquivos.
 
+> **Nota de 2026-08-04, ao fechar a H16.** O segundo argumento positivo acima **não se
+> realizou**, e vale registrar em vez de deixar passar: a RF1.3 e a RF1.4 foram implementadas
+> **sem** *blocker* de rota. A confirmação é um `<dialog>` na tela de partida (S154) e o aviso é
+> um ouvinte de `beforeunload` em `estado/` (S156) — nenhum dos dois passa pelo roteador, e os
+> "dois lugares com risco de divergirem" que a ADR temia não apareceram.
+>
+> A decisão **não muda**: o primeiro argumento — são quatro telas, e a de regras é conteúdo de
+> verdade — se sustentou e é o que a H17 fecha. O que esta nota corrige é a força atribuída ao
+> segundo, escrito antes de existir tela para medi-lo. A ADR é *append-only*, então o texto
+> acima fica como estava.
+
 **Negativas**
 
 - É a justificativa mais fraca da stack. Quatro telas estáticas podem ser servidas por um
