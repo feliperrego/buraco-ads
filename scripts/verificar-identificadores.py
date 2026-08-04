@@ -104,20 +104,33 @@ def contagem(texto):
     return int(achado.group(1)) if achado else None
 
 
+def documentos_contaveis():
+    """Quais arquivos tem contagem em tres lugares, e com que familia de ID.
+
+    As specs foram o caso original. O ia-strategy.md entrou depois, com a mesma
+    estrutura e a mesma falha: nasceu com o cabecalho dizendo 10 e a tabela com
+    11 linhas. Documento de fundacao nao e spec, mas conta do mesmo jeito -- e o
+    que decide se ele entra aqui e ter a contagem repetida, nao a pasta.
+    """
+    for spec in sorted((DOCS / "specs").glob("*.md")):
+        yield spec, r"S\d+"
+    yield DOCS / "ia-strategy.md", r"IA\d+"
+
+
 def coerencia_das_specs():
     """Cabecalho, frase de abertura e tabela precisam contar a mesma coisa."""
     problemas = []
 
-    for spec in sorted((DOCS / "specs").glob("*.md")):
-        texto = spec.read_text(encoding="utf-8")
-        nome = spec.name
+    for documento, padrao_id in documentos_contaveis():
+        texto = documento.read_text(encoding="utf-8")
+        nome = documento.name
 
         cabecalho = re.search(r"^> Status:.*$", texto, re.M)
         secao = re.search(
             r"^## \d+\. (?:Decis|Pend)\S*\s*\n\s*\n(.+)$", texto, re.M
         )
-        tabela = set(re.findall(r"^\|\s*\*\*(S\d+)\*\*", texto, re.M))
-        corpo = set(re.findall(r"^- `\[[PD]\]`\s*\*\*(S\d+)\*\*", texto, re.M))
+        tabela = set(re.findall(rf"^\|\s*\*\*({padrao_id})\*\*", texto, re.M))
+        corpo = set(re.findall(rf"^- `\[[PD]\]`\s*\*\*({padrao_id})\*\*", texto, re.M))
 
         if cabecalho is None or secao is None:
             problemas.append(f"{nome}: sem cabecalho de status ou sem secao de decisoes")
@@ -139,7 +152,9 @@ def coerencia_das_specs():
                 f"{nome}: abertura da secao diz {na_frase}, tabela tem {len(tabela)}"
             )
 
-        faltando = sorted(corpo - tabela, key=lambda i: int(i[1:]))
+        # A ordenacao tira os digitos por regex em vez de cortar o primeiro
+        # caractere: o prefixo tem uma letra em `S12` e duas em `IA3`.
+        faltando = sorted(corpo - tabela, key=lambda i: int(re.sub(r"\D", "", i)))
         if faltando:
             problemas.append(
                 f"{nome}: marcadas no corpo e ausentes da tabela: {', '.join(faltando)}"
@@ -174,13 +189,13 @@ def main():
     incoerentes = coerencia_das_specs()
 
     if incoerentes:
-        print(f"\n{len(incoerentes)} spec(s) com contagem incoerente:")
+        print(f"\n{len(incoerentes)} documento(s) com contagem incoerente:")
         for problema in incoerentes:
             print(f"  {problema}")
         print("\nA tabela e a fonte. Cabecalho e abertura acompanham ela.")
         return 1
 
-    print(f"OK: as {len(list((DOCS / 'specs').glob('*.md')))} specs contam suas decisoes de forma coerente.")
+    print(f"OK: os {len(list(documentos_contaveis()))} documentos contam suas decisoes de forma coerente.")
     return 0
 
 

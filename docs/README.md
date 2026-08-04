@@ -45,6 +45,21 @@ estar aprovada.
 | [testing-strategy.md](testing-strategy.md) | O que testar, em que nível, e por quê | Confirmado |
 | [roadmap.md](roadmap.md) | Ordem de entrega e marcos | Confirmado |
 
+### Fundação tardia
+
+Um documento de fundação nasceu fora das ondas, e o motivo vale registrar: ele não era
+necessário até a fatia que o consome existir.
+
+| Documento | Propósito | Status |
+|---|---|---|
+| [ia-strategy.md](ia-strategy.md) | A política do oponente: forma da decisão, heurísticas e como medi-las | Rascunho anotado |
+
+Ele existe separado da spec da H15 por uma razão de tipo, não de tamanho. Uma spec é
+**descartável** — pronta a história, os testes viram a especificação viva. Isso vale para
+**regra**, que tem resposta certa; não vale para **heurística**, que é política com custo. Um
+teste prende *"prefere baixar a descartar"* e não prende **por quê**, e é o porquê que a medição
+vai rever.
+
 ## Specs de fatia
 
 [`specs/`](specs/) é onde o ciclo SDD roda por funcionalidade em vez de por documento. Uma
@@ -158,6 +173,12 @@ cabeçalho dizendo sete.
 A tabela é a fonte, porque é ela que se lê para revisar. O cabeçalho e a frase precisam concordar
 com ela, e nada marcado `[P]` ou `[D]` no corpo pode faltar nela. Os três ramos foram vistos
 reprovando contra specs corretas antes de o script ser aceito.
+
+A checagem cobria só [`specs/`](specs/), e o [ia-strategy.md](ia-strategy.md) mostrou que a pasta
+era o critério errado: ele nasceu com o cabeçalho dizendo dez propostas e a tabela com onze — o
+mesmo defeito, num documento de fundação. O que decide se um arquivo entra na checagem é **ter a
+contagem repetida em três lugares**, não onde ele mora. Os três ramos foram vistos reprovando
+contra ele também.
 
 ### O que fica de fora
 
