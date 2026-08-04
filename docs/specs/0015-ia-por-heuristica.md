@@ -1,6 +1,6 @@
 # Spec 0015 — H15: o oponente por heurística
 
-> Status: **rascunho anotado** — 9 decisões, todas pendentes
+> Status: **confirmada** — 9 decisões, confirmadas em bloco em 2026-08-04
 > História: `H15` — *"Jogo contra um oponente que toma decisões razoáveis, não aleatórias"*
 > Fecha: RF5.1, RF5.2, RF5.3
 > Deriva de: [ia-strategy.md](../ia-strategy.md) `IA1`–`IA11`, confirmadas em bloco
@@ -35,7 +35,7 @@ resolveu o empate por chave estável justamente para não precisar dele. Três s
 | **B** | `Politica = (visao) => Comando \| null`, e a aleatória vira `porSorteio(aleatorio): Politica` | `estado/` muda: deixa de criar gerador para a IA |
 | **C** | duas assinaturas diferentes, sem tipo comum | o arnês de medição não consegue tratar as duas como intercambiáveis, que é a única coisa que a E7 pede |
 
-- `[P]` **S144** — Forma **B**. `Politica = (visao: VisaoDoJogador) => Comando | null`. A
+- `[D]` **S144** — Forma **B**. `Politica = (visao: VisaoDoJogador) => Comando | null`. A
   heurística é `decidir`, e a aleatória vira `porSorteio(aleatorio)`, uma fábrica que fecha sobre
   o gerador. `estado/turno-da-ia.ts` para de receber `Aleatorio`, e o `ProvedorDaPartida` para de
   criar o gerador da IA.
@@ -67,7 +67,7 @@ Três saídas:
 | **B** | `movimentosValidos` devolve `{ comando, bate }[]` | muda o contrato que `ui/`, `estado/` e ~40 testes usam, para servir a um consumidor só |
 | **C** | a `ia/` recalcula | é a S140 de volta, e ela custou uma partida travada em 200 |
 
-- `[P]` **S145** — Forma **A**. `bateCom` entra em `engine/consultas/`, e o que ela **reusa** é o
+- `[D]` **S145** — Forma **A**. `bateCom` entra em `engine/consultas/`, e o que ela **reusa** é o
   `podeBater` de `dominio/batida.ts` — a expressão única da R10.1 desde a S140. O que ela não
   reusa é a construção do jogo resultante, e essa duplicação é aceita **sob medição**, não sob
   argumento: a `CA-S145-3` confere, comando a comando ao longo de partidas inteiras, que
@@ -92,7 +92,7 @@ demonstrável hoje (a mão tem teto, e o valor da carta tem teto), e é exatamen
 propriedade que se perde em silêncio quando alguém acrescenta uma parcela. O projeto já tem nome
 para isso: peso que precisa dominar é peso que pode deixar de dominar.
 
-- `[P]` **S146** — A nota é `{ bate: boolean; valor: number }`, comparada em ordem: primeiro
+- `[D]` **S146** — A nota é `{ bate: boolean; valor: number }`, comparada em ordem: primeiro
   `bate`, depois `valor`. A separação da IA10 vira **estrutural** em vez de aritmética, e nenhuma
   parcela nova pode furá-la.
 
@@ -120,7 +120,7 @@ estão aqui para serem revistos pela medição, não defendidos.
 | `descartar` | o que a carta entrega | `− valorDaCarta` | IA7 — argmax sobre `−valor` escolhe a **menor**, que é o que a IA7 pede |
 | `descartar` | a carta estende jogo visível do adversário | `−100` | IA7 — a R4.2 manda o lixo **inteiro** a quem o pegar, e a R4.3 o deixa visível |
 
-- `[P]` **S147** — Estas oito parcelas, com estes pesos, e nenhuma outra. Parcela nova na H15 só
+- `[D]` **S147** — Estas oito parcelas, com estes pesos, e nenhuma outra. Parcela nova na H15 só
   se a medição da S150 reprovar.
 
 Duas notas sobre a tabela, e a segunda é uma correção à IA7:
@@ -136,7 +136,7 @@ excluiu memória com o argumento de que o lixo (R4.3) já carrega a informação
 certos e não cabem juntos: o lixo diz o que foi **descartado**, não o que foi **pego** — e
 "mostrou interesse" é sobre o que ele pegou.
 
-- `[P]` **S148** — Só a metade visível da IA7 entra: a carta que estende um jogo **da mesa** do
+- `[D]` **S148** — Só a metade visível da IA7 entra: a carta que estende um jogo **da mesa** do
   adversário. A metade do interesse fica fora da H15, com o registro de que ela exige memória e
   a §5 a excluiu. Se a medição pedir, é a §5 que se reabre, não a IA7 que se contorna.
 
@@ -146,7 +146,7 @@ A IA9 fala em cartas do lixo que *"encaixam"* nos meus jogos ou na minha mão, e
 definição operacional o peso não existe. A definição precisa ser barata: o lixo chega a dezenas
 de cartas, e isto roda por comando.
 
-- `[P]` **S149** — Uma carta do lixo **encaixa** quando existe, na minha mão ou nos meus jogos,
+- `[D]` **S149** — Uma carta do lixo **encaixa** quando existe, na minha mão ou nos meus jogos,
   outra carta do **mesmo naipe** a **distância ≤ 2 casas** dela (S41). Duas casas porque a
   sequência mínima é de três (R5.2) e um buraco admite curinga (R5.5) — mais que isso não é
   encaixe, é esperança.
@@ -155,7 +155,7 @@ de cartas, e isto roda por comando.
 
 ## 6. O empate
 
-- `[P]` **S150** — Empate de nota é resolvido pela **chave estável** do comando (IA3): o tipo
+- `[D]` **S150** — Empate de nota é resolvido pela **chave estável** do comando (IA3): o tipo
   seguido dos identificadores citados, em ordem, comparados como texto. A posição em
   `movimentosValidos` não entra em lugar nenhum da `ia/`, e é isso que mantém a ordem da engine
   livre — foi assim que o gatilho da H10 fechou.
@@ -176,7 +176,7 @@ segundos e roda antes de cada commit.
 | **B** | teste do Vitest com 600 partidas | ~5 min em todo commit e em todo CI, para uma resposta que muda quando os pesos mudam |
 | **C** | teste com N pequeno no CI, script com 600 à parte | dois números com o mesmo nome, e o pequeno tem intervalo largo demais para significar algo |
 
-- `[P]` **S151** — Forma **A**. O arnês é `scripts/medir-forca-da-ia.ts`, rodado por
+- `[D]` **S151** — Forma **A**. O arnês é `scripts/medir-forca-da-ia.ts`, rodado por
   `node scripts/medir-forca-da-ia.ts` — o Node 22 executa TypeScript direto, sem dependência
   nova. Ele alterna as posições entre as partidas e imprime o intervalo. Fica **fora** do
   `npm run verificar`, e o número medido entra na `ia-strategy.md` §6.
@@ -189,7 +189,7 @@ segundos e roda antes de cada commit.
 
 As outras três propriedades da E6 continuam sendo teste:
 
-- `[P]` **S152** — Legalidade e determinismo passam a valer para **as duas** políticas, na mesma
+- `[D]` **S152** — Legalidade e determinismo passam a valer para **as duas** políticas, na mesma
   tabela de casos. O tempo da E6 (<100 ms por decisão) vira teste no pior caso construível da T7,
   e a **T7 é remedida** — a S145 acrescenta uma pergunta por comando, e a tabela de gatilhos diz
   que fatia que multiplique o custo da enumeração remede em vez de herdar o "não precisa
@@ -264,7 +264,7 @@ As outras três propriedades da E6 continuam sendo teste:
 
 ## 9. Decisões
 
-Nove propostas. Nenhuma confirmada.
+Nove decisões, confirmadas em bloco em 2026-08-04.
 
 | # | Assunto | Proposta |
 |---|---|---|

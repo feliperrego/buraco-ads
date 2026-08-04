@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useReducer, useRef } from 'react'
+import { useEffect, useMemo, useReducer } from 'react'
 import type { ReactNode } from 'react'
-import { criarAleatorio } from '../engine/index.ts'
-import type { Aleatorio, Comando } from '../engine/index.ts'
+import type { Comando } from '../engine/index.ts'
 import { Contexto, INICIAL, reduzir, sortearSemente } from './partida-em-curso.ts'
 import type { ContextoDaPartida } from './partida-em-curso.ts'
 import { IA, PAUSA_DA_IA_MS, comandoDaIa } from './turno-da-ia.ts'
@@ -17,11 +16,14 @@ import { IA, PAUSA_DA_IA_MS, comandoDaIa } from './turno-da-ia.ts'
 export default function ProvedorDaPartida({ children }: { children: ReactNode }) {
   const [estado, despachar] = useReducer(reduzir, INICIAL)
 
-  // S34 — o `Aleatorio` da IA é de vida longa: um por partida, não um por turno.
-  // Recriá-lo a cada jogada faria a IA repetir a escolha sempre que a visão se
-  // repetisse, e a E7 precisa de partidas comparáveis para medir força relativa.
-  const gerador = useRef<{ semente: number; aleatorio: Aleatorio } | null>(null)
-
+  // S144 — o segundo gerador saiu daqui. A heurística não sorteia: o empate dela
+  // vem de chave estável do comando (IA3/S150), e o `useRef` com
+  // `criarAleatorio(semente + 1)` que a S34 mantinha não tem mais o que semear.
+  //
+  // A S130 não muda com isso: a reprodutibilidade da RNF1.3 vale **por entrada**,
+  // e a semente que sobra é a do embaralhamento, que continua saindo daqui. O que
+  // some junto é a armadilha da H14 — o arnês de simulação errou por não copiar a
+  // semeadura por rodada deste `useRef`, e agora não há o que copiar.
   const partida = estado.partida
 
   useEffect(() => {
@@ -30,15 +32,7 @@ export default function ProvedorDaPartida({ children }: { children: ReactNode })
     }
 
     const temporizador = setTimeout(() => {
-      if (gerador.current?.semente !== partida.semente) {
-        // Deslocamento de 1 para não reusar a sequência que embaralhou o baralho.
-        gerador.current = {
-          semente: partida.semente,
-          aleatorio: criarAleatorio(partida.semente + 1),
-        }
-      }
-
-      const comando = comandoDaIa(partida, gerador.current.aleatorio)
+      const comando = comandoDaIa(partida)
 
       if (comando !== null) {
         despachar({ tipo: 'jogar', comando })

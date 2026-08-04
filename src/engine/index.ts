@@ -6,11 +6,21 @@
  * `movimentosValidos` entra na H2, junto com o primeiro comando.
  */
 export { PONTOS_PARA_VENCER, iniciarPartida, novaRodada, vencedorDa } from './dominio/partida.ts'
-export { categoriaDe, contaComoLimpa, criarJogo, ehCanastra, valorDa } from './dominio/jogo.ts'
+export {
+  CASAS,
+  casasDe,
+  categoriaDe,
+  contaComoLimpa,
+  criarJogo,
+  ehCanastra,
+  janelaDe,
+  valorDa,
+} from './dominio/jogo.ts'
 export { apurar, totalDe, valorDaCarta } from './dominio/pontuacao.ts'
 export type { Pontuacao } from './dominio/pontuacao.ts'
 export { visaoDe } from './consultas/visao-de.ts'
 export { movimentosValidos } from './consultas/movimentos-validos.ts'
+export { bateCom, zeraAMao } from './consultas/bate-com.ts'
 export { aplicar } from './comandos/aplicar.ts'
 export { criarAleatorio } from './aleatorio/criar-aleatorio.ts'
 
@@ -23,6 +33,7 @@ export type { FaseDaRodada, Jogador, JogadorId, Morto, Partida } from './dominio
 
 export type {
   CategoriaCanastra,
+  Janela,
   Invariante,
   Jogo,
   Posicao,

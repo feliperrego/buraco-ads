@@ -84,7 +84,7 @@ testada, os testes passam a ser a especificação viva.
 | [0012-apuracao-da-rodada.md](specs/0012-apuracao-da-rodada.md) | H12 — a apuração da rodada | **Implementada** — 17 novos e 2 herdados |
 | [0013-varias-rodadas.md](specs/0013-varias-rodadas.md) | H13 — várias rodadas até 3000 | **Implementada** — 20 critérios verdes |
 | [0014-monte-esgotado.md](specs/0014-monte-esgotado.md) | H14 — o monte esgotado | **Implementada** — 15 novos e 5 herdados |
-| [0015-ia-por-heuristica.md](specs/0015-ia-por-heuristica.md) | H15 — o oponente por heurística | Rascunho anotado — 9 decisões pendentes |
+| [0015-ia-por-heuristica.md](specs/0015-ia-por-heuristica.md) | H15 — o oponente por heurística | **Em implementação** — 9 decisões confirmadas |
 
 ## Verificação
 

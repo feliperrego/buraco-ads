@@ -8,16 +8,24 @@ import {
 } from '../engine/index.ts'
 import type { Comando, Partida, VisaoDoJogador } from '../engine/index.ts'
 import { decidir } from './decidir.ts'
+import { porSorteio } from './por-sorteio.ts'
+import type { Politica } from './politica.ts'
 
 /**
- * Critérios de aceite da spec 0003 §6, nível 3 da testing-strategy.md.
+ * Critérios de aceite das specs 0003 §6 e 0015 §8, nível 3 da testing-strategy.md.
  *
- * A E6 lista quatro propriedades da IA. Duas cabem aqui — legalidade e
- * determinismo. Força relativa e orçamento de 100 ms precisam de duas IAs para
- * comparar, e ficam na H15.
+ * S152 — a legalidade e o determinismo da E6 passam a valer para **as duas**
+ * políticas, na mesma tabela de casos. A E7 mantém a aleatória viva como linha
+ * de base, e uma linha de base que não é testada não serve de referência.
  */
 
 const SEMENTE = 7
+
+/** As duas políticas da S144, para os critérios que valem para ambas. */
+const POLITICAS: readonly (readonly [string, Politica])[] = [
+  ['heurística', decidir],
+  ['sorteio', porSorteio(criarAleatorio(SEMENTE))],
+]
 
 function visaoDaVez(partida: Partida): VisaoDoJogador {
   return visaoDe(partida, partida.jogadorDaVez)
@@ -35,25 +43,78 @@ function emAcao(semente = SEMENTE): Partida {
 }
 
 describe('RF5.1 — a IA joga sozinha, dentro das regras', () => {
-  it('CA-RF5.1-1 — a escolha da IA está sempre em movimentosValidos', () => {
-    for (let semente = 1; semente <= 30; semente += 1) {
-      const partida = emAcao(semente)
-      const visao = visaoDaVez(partida)
-      const escolha = decidir(visao, criarAleatorio(semente))
+  it.each(POLITICAS)(
+    'CA-S152-1 — a escolha da política %s está sempre em movimentosValidos',
+    (_nome, politica) => {
+      for (let semente = 1; semente <= 30; semente += 1) {
+        const partida = emAcao(semente)
+        const visao = visaoDaVez(partida)
+        const escolha = politica(visao)
 
-      expect(movimentosValidos(visao)).toContainEqual(escolha)
-    }
+        expect(movimentosValidos(visao)).toContainEqual(escolha)
+      }
+    },
+  )
+
+  it.each(POLITICAS)(
+    'CA-S144-4 — sem movimento algum, a política %s devolve null',
+    (_nome, politica) => {
+      const partida = emAcao()
+
+      // A visão de quem NÃO é da vez tem lista vazia (S20).
+      const visaoDoOutro = visaoDe(partida, partida.jogadorDaVez === 0 ? 1 : 0)
+
+      expect(movimentosValidos(visaoDoOutro)).toHaveLength(0)
+      expect(politica(visaoDoOutro)).toBeNull()
+    },
+  )
+
+  it('CA-RF5.1-2 — decidir devolve Comando ou null, nunca lança em estado legal', () => {
+    const escolha: Comando | null = decidir(visaoDaVez(emAcao()))
+
+    expect(escolha).not.toBeNull()
+  })
+})
+
+describe('S144 — as duas políticas e suas assinaturas', () => {
+  it('CA-S144-1 — decidir não recebe gerador, e repetir a chamada repete a escolha', () => {
+    const visao = visaoDaVez(emAcao())
+
+    // A heurística é determinística **sem semente**: o empate sai de chave
+    // estável do comando (IA3/S150), não de sorteio. É o que dispensa o
+    // `Aleatorio` da assinatura da `Politica`.
+    expect(decidir).toHaveLength(1)
+    expect(decidir(visao)).toEqual(decidir(visao))
   })
 
-  it('CA-RF5.1-2 — sem movimento algum, decidir devolve null', () => {
-    const partida = emAcao()
+  it('CA-S144-2 — porSorteio devolve uma Politica, e a mesma semente repete a sequência', () => {
+    const visao = visaoDaVez(emAcao())
+    const uma = porSorteio(criarAleatorio(123))
+    const outra = porSorteio(criarAleatorio(123))
 
-    // A visão de quem NÃO é da vez tem lista vazia (S20). É o único jeito de
-    // chegar nesse estado antes da H14, onde o monte esgota.
-    const visaoDoOutro = visaoDe(partida, partida.jogadorDaVez === 0 ? 1 : 0)
+    const sequenciaDe = (politica: Politica) =>
+      Array.from({ length: 5 }, () => JSON.stringify(politica(visao)))
 
-    expect(movimentosValidos(visaoDoOutro)).toHaveLength(0)
-    expect(decidir(visaoDoOutro, criarAleatorio(1))).toBeNull()
+    const primeira = sequenciaDe(uma)
+
+    expect(primeira).toEqual(sequenciaDe(outra))
+
+    // Âncora positiva: sem isto, "a mesma semente repete" passaria com uma
+    // política que devolvesse sempre o mesmo comando — que é justamente o que a
+    // heurística faz, e o que a aleatória não pode fazer.
+    expect(new Set(primeira).size).toBeGreaterThan(1)
+  })
+
+  it('CA-S144-2 — sementes diferentes produzem escolhas diferentes', () => {
+    const visao = visaoDaVez(emAcao())
+
+    const escolhas = new Set(
+      Array.from({ length: 30 }, (_, i) =>
+        JSON.stringify(porSorteio(criarAleatorio(i + 1))(visao)),
+      ),
+    )
+
+    expect(escolhas.size).toBeGreaterThan(1)
   })
 })
 
@@ -62,14 +123,13 @@ describe('RF5.2 e M11 — a IA não pode trapacear', () => {
     const partida = emAcao()
     const deCabecaParaBaixo: Partida = { ...partida, monte: [...partida.monte].reverse() }
 
-    const original = decidir(visaoDaVez(partida), criarAleatorio(99))
-    const embaralhada = decidir(visaoDaVez(deCabecaParaBaixo), criarAleatorio(99))
+    const original = decidir(visaoDaVez(partida))
 
-    expect(original).toEqual(embaralhada)
+    expect(original).toEqual(decidir(visaoDaVez(deCabecaParaBaixo)))
 
-    // Âncora positiva, e é ela que dá sentido ao resto: uma IA que devolvesse
-    // sempre a mesma coisa passaria na asserção acima. O par prova que a escolha
-    // **é** sensível ao que a visão mostra, e insensível ao que ela esconde.
+    // Âncora positiva: uma IA que devolvesse sempre a mesma coisa passaria na
+    // asserção acima. O par prova que a escolha **é** sensível ao que a visão
+    // mostra, e insensível ao que ela esconde.
     const maoMenor: Partida = {
       ...partida,
       jogadores:
@@ -85,7 +145,7 @@ describe('RF5.2 e M11 — a IA não pode trapacear', () => {
     }
 
     expect(movimentosValidos(visaoDaVez(maoMenor))).toHaveLength(2)
-    expect(decidir(visaoDaVez(maoMenor), criarAleatorio(99))).not.toEqual(original)
+    expect(decidir(visaoDaVez(maoMenor))).not.toEqual(original)
   })
 
   it('CA-M11-1 — a visão da IA não contém a mão do adversário, o monte nem os mortos', () => {
@@ -101,7 +161,6 @@ describe('RF5.2 e M11 — a IA não pode trapacear', () => {
       ...partida.mortos[1].cartas,
     ]
 
-    // Âncora: a visão precisa conter alguma coisa antes de a ausência valer.
     expect(serializada).toContain(partida.jogadores[ia].mao[0]?.id ?? 'sem-mao')
 
     for (const carta of ocultas) {
@@ -112,48 +171,12 @@ describe('RF5.2 e M11 — a IA não pode trapacear', () => {
   })
 })
 
-describe('M12 — o determinismo da escolha', () => {
-  it('CA-M12-1 — a mesma visão e a mesma semente produzem a mesma escolha', () => {
-    const visao = visaoDaVez(emAcao())
-
-    expect(decidir(visao, criarAleatorio(123))).toEqual(decidir(visao, criarAleatorio(123)))
-  })
-
-  it('CA-M12-2 — a mesma visão com sementes diferentes produz escolhas diferentes', () => {
-    const visao = visaoDaVez(emAcao())
-
-    const escolhas = new Set(
-      Array.from({ length: 30 }, (_, i) => JSON.stringify(decidir(visao, criarAleatorio(i + 1)))),
-    )
-
-    // Sem isto, "sorteia uniformemente" seria indistinguível de "devolve sempre
-    // o primeiro" — que passaria em todos os outros critérios desta fatia.
-    expect(escolhas.size).toBeGreaterThan(1)
-  })
-})
-
-describe('S31 — a assinatura aguenta o caso da H14', () => {
-  it('CA-RF5.1-2 — decidir devolve Comando ou null, nunca lança em estado legal', () => {
-    const partida = emAcao()
-    const escolha: Comando | null = decidir(visaoDaVez(partida), criarAleatorio(5))
-
-    expect(escolha).not.toBeNull()
-  })
-})
-
 /**
- * Critério de aceite da spec 0007 §6.2 — o custo da IA depois da H7.
- *
- * S82 — a partir da H7 a IA sorteia entre **duas** compras (R4.1), então ela
- * pega o lixo em cerca de metade das vezes em que ele estiver disponível, e a
- * mão dela incha. Isso **não** é defeito: uma IA que acumula lixo e não desce
- * nada é exatamente o adversário fraco contra o qual a heurística da H15 precisa
- * medir ganho (E7). O que a H7 acrescenta é um critério de **custo**.
+ * Critério de aceite das specs 0007 §6.2 e 0015 §8 — o custo da decisão.
  *
  * O estado é montado jogando de verdade, e não com o construtor da C4 — que a
  * regra de dependência proíbe `ia/` de importar, e com razão. O efeito colateral
- * é bom: este cenário é **alcançável** por construção, que é o outro lado do
- * argumento da C5.
+ * é bom: este cenário é **alcançável** por construção.
  */
 function aplicado(partida: Partida, comando: Comando): Partida {
   const resultado = aplicar(partida, comando)
@@ -184,22 +207,33 @@ function comMaoInchada(voltas: number): Partida {
   return aplicado(partida, { tipo: 'pegarLixo' })
 }
 
-describe('S82 — o custo da IA com a mão inchada pelo lixo', () => {
-  it('CA-S82-1 — com a mão inchada por um pegarLixo, decidir responde dentro do teto', () => {
+describe('S152 — o orçamento de tempo da E6', () => {
+  it('CA-S152-2 — uma decisão da heurística no pior caso fica abaixo de 100 ms', () => {
     const partida = comMaoInchada(40)
     const visao = visaoDaVez(partida)
 
     // A âncora: sem ela, um cenário que não inchasse a mão tornaria a medição
-    // abaixo indistinguível da CA-RF5.1-1, que já roda com 12 cartas.
+    // abaixo indistinguível da CA-S152-1, que já roda com 12 cartas.
     expect(visao.mao.length).toBeGreaterThan(40)
 
     const inicio = performance.now()
-    const escolha = decidir(visao, criarAleatorio(SEMENTE))
+    const escolha = decidir(visao)
     const decorrido = performance.now() - inicio
 
     console.log(
-      `CA-S82-1: decidir com mão de ${String(visao.mao.length)} em ${decorrido.toFixed(2)} ms`,
+      `CA-S152-2: decidir com mão de ${String(visao.mao.length)} em ${decorrido.toFixed(2)} ms`,
     )
+
+    expect(decorrido).toBeLessThan(100)
+    expect(movimentosValidos(visao)).toContainEqual(escolha)
+  })
+
+  it('CA-S82-1 — a política aleatória continua dentro do teto antigo', () => {
+    const visao = visaoDaVez(comMaoInchada(40))
+
+    const inicio = performance.now()
+    const escolha = porSorteio(criarAleatorio(SEMENTE))(visao)
+    const decorrido = performance.now() - inicio
 
     expect(decorrido).toBeLessThan(50)
     expect(movimentosValidos(visao)).toContainEqual(escolha)

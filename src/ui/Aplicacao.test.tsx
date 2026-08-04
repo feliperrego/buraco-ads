@@ -70,10 +70,19 @@ describe('S37 — a partida continua depois do turno da IA', () => {
       )
       expect(screen.queryAllByRole('button')).toHaveLength(0)
 
-      // Duas pausas, avançadas **uma por vez**. A S33 aplica um comando por
+      // As pausas são avançadas **uma por vez**. A S33 aplica um comando por
       // passagem, e o temporizador seguinte só é agendado depois de o React
-      // re-renderizar com o estado novo — um avanço único pularia o segundo.
-      for (let passagem = 0; passagem < 2; passagem += 1) {
+      // re-renderizar com o estado novo — um avanço único pularia o resto.
+      //
+      // Eram duas voltas fixas até a H15, e o número era o turno da IA aleatória,
+      // que quase nunca baixava. Com a heurística o turno passou a ter jogadas
+      // de mesa no meio (R3.3), e o que este critério prova não é quantas: é que
+      // o ciclo fecha e a mesa volta ao humano.
+      for (let passagem = 0; passagem < 40; passagem += 1) {
+        if (/sua vez/i.test(screen.getByRole('region', { name: /vez e fase/i }).textContent)) {
+          break
+        }
+
         await act(async () => {
           await vi.advanceTimersByTimeAsync(PAUSA_DA_IA_MS + 10)
         })

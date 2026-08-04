@@ -1,5 +1,5 @@
 import { visaoDe } from '../engine/index.ts'
-import type { Aleatorio, Comando, JogadorId, Partida } from '../engine/index.ts'
+import type { Comando, JogadorId, Partida } from '../engine/index.ts'
 import { decidir } from '../ia/decidir.ts'
 
 /** S11 — o humano é sempre `0`, então a IA é sempre `1`. */
@@ -24,12 +24,12 @@ export const PAUSA_DA_IA_MS = 700
  * A alternativa — executar o turno completo numa chamada — quebraria na H4, onde
  * o turno tem quantas descidas o jogador quiser (R3.3).
  */
-export function comandoDaIa(partida: Partida, aleatorio: Aleatorio): Comando | null {
+export function comandoDaIa(partida: Partida): Comando | null {
   if (partida.jogadorDaVez !== IA) {
     return null
   }
 
   // A IA recebe a projeção, nunca a `Partida` (S29, M11). Esta linha é a
   // fronteira da RF5.2, e é a única do projeto onde ela pode ser furada.
-  return decidir(visaoDe(partida, IA), aleatorio)
+  return decidir(visaoDe(partida, IA))
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { aplicar, criarAleatorio, iniciarPartida } from '../engine/index.ts'
-import type { Aleatorio, Carta, Comando, Partida } from '../engine/index.ts'
+import { aplicar, iniciarPartida } from '../engine/index.ts'
+import type { Carta, Comando, Partida } from '../engine/index.ts'
 import { IA, comandoDaIa } from './turno-da-ia.ts'
 
 /**
@@ -56,14 +56,15 @@ function turnoDoHumano(partida: Partida): Partida {
 }
 
 /** Percorre o turno da IA como o efeito faz: um comando por passagem. */
-function turnoDaIa(partida: Partida, aleatorio: Aleatorio) {
+function turnoDaIa(partida: Partida) {
   const comandos: Comando[] = []
   let atual = partida
 
   // O limite existe para o teste falhar em vez de travar se o turno não
-  // terminar. Um turno da H3 tem dois comandos.
-  for (let passagem = 0; passagem < 10; passagem += 1) {
-    const comando = comandoDaIa(atual, aleatorio)
+  // terminar. Com a heurística da H15 o turno passou a ter jogadas de mesa no
+  // meio (R3.3), então ele deixou de ter tamanho fixo.
+  for (let passagem = 0; passagem < 60; passagem += 1) {
+    const comando = comandoDaIa(atual)
 
     if (comando === null) {
       break
@@ -77,32 +78,51 @@ function turnoDaIa(partida: Partida, aleatorio: Aleatorio) {
 }
 
 describe('S33 — o turno da IA, um comando por vez', () => {
-  it('CA-S33-1 — o turno da IA são exatamente dois comandos: compra e depois descarte', () => {
+  it('CA-S33-1 — o turno da IA abre com uma compra e fecha com um descarte', () => {
     const aposHumano = turnoDoHumano(iniciarPartida(SEMENTE_HUMANO_COMECA))
 
     // Âncora: só faz sentido contar os comandos da IA se for mesmo a vez dela.
     expect(aposHumano.jogadorDaVez).toBe(IA)
 
-    const { comandos } = turnoDaIa(aposHumano, criarAleatorio(1))
+    const { comandos } = turnoDaIa(aposHumano)
 
-    // A H7 acrescentou a segunda opção de compra (R4.1), e a IA sorteia entre
-    // as duas. O que a S33 decide é a **forma** do turno — uma compra, depois um
-    // descarte —, não qual das duas compras sai. Até aqui as duas coisas eram
-    // indistinguíveis porque só existia uma compra.
-    expect(comandos).toHaveLength(2)
+    // A asserção era `toHaveLength(2)`, e ela morreu na H15 pelo mesmo motivo
+    // que três testes morreram na H7: **assertiva mais específica que o
+    // critério**. O que a S33 decide é a forma do turno — uma compra na
+    // abertura, um descarte no fim, quantas jogadas de mesa o jogador quiser no
+    // meio (R3.3) —, e o número dois era um acidente da IA aleatória, que quase
+    // nunca baixava nada. O sinal continua o mesmo: o teste que quebra não é
+    // sobre a fatia nova.
+    expect(comandos.length).toBeGreaterThanOrEqual(2)
     expect(['comprarDoMonte', 'pegarLixo']).toContain(comandos[0]?.tipo)
-    expect(comandos[1]?.tipo).toBe('descartar')
+    expect(comandos.at(-1)?.tipo).toBe('descartar')
+
+    // E nada de compra nem de descarte no meio: a R4.1 é uma compra por turno e
+    // a R7.1 encerra no descarte.
+    for (const comando of comandos.slice(1, -1)) {
+      expect(['baixar', 'aumentar', 'regularizarCuringa']).toContain(comando.tipo)
+    }
   })
 
   it('CA-RF5.1-3 — depois do turno da IA a vez volta ao humano, na fase de compra', () => {
     const aposHumano = turnoDoHumano(iniciarPartida(SEMENTE_HUMANO_COMECA))
-    const { partida, comandos } = turnoDaIa(aposHumano, criarAleatorio(1))
+    const { partida, comandos } = turnoDaIa(aposHumano)
 
     expect(partida.jogadorDaVez).toBe(0)
     expect(partida.fase).toBe('Compra')
-    // A IA levou uma carta e descartou uma: a mão dela volta ao tamanho de
-    // antes. Vale para as duas compras, porque o lixo aqui tem uma carta só.
-    expect(partida.jogadores[IA].mao).toHaveLength(11)
+
+    // A IA levou uma carta e descartou uma, e agora também pode baixar no meio.
+    // O tamanho da mão é 11 menos o que foi para a mesa — escrever `11` fixo era
+    // a mesma especificidade a mais da CA-S33-1.
+    const paraAMesa = comandos.reduce(
+      (soma, comando) =>
+        comando.tipo === 'baixar' || comando.tipo === 'aumentar'
+          ? soma + comando.cartas.length
+          : soma,
+      0,
+    )
+
+    expect(partida.jogadores[IA].mao).toHaveLength(11 - paraAMesa)
 
     // O tamanho do lixo, esse **depende** de qual compra saiu, e as duas são
     // legais: comprando do monte ele cresce para dois, pegando o lixo ele
@@ -114,7 +134,7 @@ describe('S33 — o turno da IA, um comando por vez', () => {
 describe('M9 — conservação através do turno da IA', () => {
   it('CA-M9-6 — após o turno completo da IA, as 104 cartas se conservam', () => {
     const aposHumano = turnoDoHumano(iniciarPartida(SEMENTE_HUMANO_COMECA))
-    const { partida } = turnoDaIa(aposHumano, criarAleatorio(1))
+    const { partida } = turnoDaIa(aposHumano)
     const ids = todasAsCartas(partida).map((carta) => carta.id)
 
     expect(ids).toHaveLength(104)
@@ -128,6 +148,6 @@ describe('S33 — fora da vez da IA não há comando', () => {
 
     // Âncora: a vez precisa ser mesmo do humano para a ausência significar algo.
     expect(partida.jogadorDaVez).toBe(0)
-    expect(comandoDaIa(partida, criarAleatorio(1))).toBeNull()
+    expect(comandoDaIa(partida)).toBeNull()
   })
 })
