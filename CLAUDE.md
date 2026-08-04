@@ -521,6 +521,12 @@ raciocinar antes:**
   a ordem de `comFimDeMao` e `comFimDeMonte` passou nos 314 testes. A `CA-S139-1` estava
   **escrita na spec** e nunca virou teste — igual à `CA-S131-3` na H13 e à `CA-S113-2` na H12.
   Três fatias, três vezes o mesmo: **critério que a spec argumenta e o teste não visita**.
+- **O arnês de simulação não reproduzia o app, e só o navegador mostrou.** O
+  `ProvedorDaPartida` **recria** o gerador da IA a cada rodada (`partida.semente + 1` muda com o
+  `novaRodada`), e o arnês usava um gerador para a partida inteira. A previsão de "semente 64
+  decide em 2 rodadas" não transferiu, e a divergência só apareceu ao rodar. Remedido com a
+  semeadura do app: **200/200 continuam decidindo**, mediana 6 rodadas. **Simulação que prevê o
+  app precisa copiar o app, não a engine.**
 
 > **O padrão da S63 apareceu pela terceira vez, e vale procurá-lo em vez de esperar.** Uma
 > escolha registrada só em ordem de array atravessa fatias sem incomodar e vira decisão quando
