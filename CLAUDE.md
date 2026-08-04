@@ -521,6 +521,12 @@ raciocinar antes:**
   a ordem de `comFimDeMao` e `comFimDeMonte` passou nos 314 testes. A `CA-S139-1` estava
   **escrita na spec** e nunca virou teste — igual à `CA-S131-3` na H13 e à `CA-S113-2` na H12.
   Três fatias, três vezes o mesmo: **critério que a spec argumenta e o teste não visita**.
+- **Uma partida inteira foi jogada no navegador, do início ao `/fim`.** Cinco rodadas, 527 ações,
+  zero erro de console, e as cinco terminaram por *"Rodada encerrada — o monte acabou"* — a R4.8
+  no app, que é o que a S142 previu que a tela mentiria sem o terceiro caso. O limiar da R12.1
+  apareceu de graça: na rodada 4, com o placar em **2975**, o botão dizia *"Próxima rodada"*; na
+  5, com **4250**, dizia *"Ver o resultado"*. A `/fim` mostrou *"O adversário venceu"*, o placar
+  final e o botão de nova partida.
 - **O arnês de simulação não reproduzia o app, e só o navegador mostrou.** O
   `ProvedorDaPartida` **recria** o gerador da IA a cada rodada (`partida.semente + 1` muda com o
   `novaRodada`), e o arnês usava um gerador para a partida inteira. A previsão de "semente 64
