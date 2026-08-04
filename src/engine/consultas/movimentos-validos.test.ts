@@ -904,8 +904,8 @@ function semMortos(mao: readonly Carta[], meus: readonly (readonly Posicao[])[] 
   return {
     ...base,
     mortos: [
-      { ...base.mortos[0], cartas: [], reclamadoPor: 1 },
-      { ...base.mortos[1], cartas: [], reclamadoPor: 1 },
+      { ...base.mortos[0], cartas: [], destino: 1 },
+      { ...base.mortos[1], cartas: [], destino: 1 },
     ],
     jogadores: [
       base.jogadores[0],
@@ -1032,7 +1032,7 @@ function comMortos(
   // As cartas do morto reclamado voltam para o monte: a M9 exige que as 104
   // continuem existindo, e a mão de quem pegou já foi jogada.
   const reclamar = (morto: Morto, dono: JogadorId | null): Morto =>
-    dono === null ? morto : { ...morto, cartas: [], reclamadoPor: dono }
+    dono === null ? morto : { ...morto, cartas: [], destino: dono }
 
   return {
     ...base,

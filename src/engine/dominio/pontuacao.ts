@@ -96,7 +96,7 @@ export function totalDe(pontuacao: Pontuacao): number {
  * S120 — a apuração é **derivada do estado**, e foi esta a resposta ao gatilho
  * do `eventos[]` no `roadmap.md` §3: o estado no fim da rodada já contém tudo.
  * Os jogos estão na mesa com suas posições, as mãos estão como ficaram,
- * `reclamadoPor` diz quem pegou morto, e a mão vazia diz quem bateu (S113).
+ * `destino` diz quem pegou morto, e a mão vazia diz quem bateu (S113).
  * Nenhum item da R11 pede informação que só um histórico teria.
  *
  * Mora em `dominio/` e não em `consultas/` por uma razão de módulo, não de
@@ -105,6 +105,10 @@ export function totalDe(pontuacao: Pontuacao): number {
  */
 export function apurar(partida: Partida): readonly [Pontuacao, Pontuacao] {
   return [pontuacaoDe(partida, 0), pontuacaoDe(partida, 1)]
+}
+
+function semPenalidade(partida: Partida, quem: JogadorId): boolean {
+  return partida.mortos.some((morto) => morto.destino === quem || morto.destino === 'Monte')
 }
 
 function pontuacaoDe(partida: Partida, quem: JogadorId): Pontuacao {
@@ -148,11 +152,13 @@ function pontuacaoDe(partida: Partida, quem: JogadorId): Pontuacao {
     // R11.4 e S113 — quem bateu é quem está sem cartas na mão. Ler `jogadorDaVez`
     // daria a resposta trocada na batida por descarte final.
     bonusDeBatida: jogador.mao.length === 0 ? BONUS_DE_BATIDA : 0,
-    // R11.5.2 — a penalidade vale para quem ficou sem morto porque o adversário
-    // levou os dois. A R11.5.1, que a dispensa quando um morto virou monte,
-    // depende da R4.6 e é da H14 (S119).
-    penalidadeDeMorto: partida.mortos.some((morto) => morto.reclamadoPor === quem)
-      ? 0
-      : PENALIDADE_SEM_MORTO,
+    // R11.5, R11.5.1 e R11.5.2 — a penalidade e as duas razões de ficar sem morto.
+    //
+    // S141 — a mesma derivação da R10.1.1, pelo outro lado: quem ficou sem morto
+    // porque um virou monte (R4.6) **não** é punido, porque não teve chance; quem
+    // ficou sem porque o adversário levou os dois (R9.3) é, porque houve disputa
+    // e ele perdeu. A R11.5.2 não precisa de ramo próprio — é o caso em que
+    // nenhuma das duas condições vale.
+    penalidadeDeMorto: semPenalidade(partida, quem) ? 0 : PENALIDADE_SEM_MORTO,
   }
 }

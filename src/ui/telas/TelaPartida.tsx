@@ -67,6 +67,19 @@ function quantosMortos(quantos: number): string {
 }
 
 /**
+ * S143 — *"nenhum morto por pegar"* cobria dois estados muito diferentes.
+ *
+ * Para quem está decidindo se dá para bater, a diferença é a regra inteira: com
+ * um morto convertido em monte (R4.6), a **R10.1.1** dispensa a exigência de ter
+ * pegado morto; sem conversão, a R10.1.2 a mantém.
+ */
+function sobreOsMortos(visao: VisaoDoJogador): string {
+  const contagem = quantosMortos(visao.mortosRestantes)
+
+  return visao.algumMortoVirouMonte ? `${contagem} — um deles virou monte` : contagem
+}
+
+/**
  * O nome de uma posição na mesa, com o papel visível.
  *
  * Sem isto, o jogo baixado com curinga é indistinguível do mesmo conjunto de
@@ -183,6 +196,15 @@ function ListaDeJogos({ jogos }: { readonly jogos: readonly Jogo[] }) {
 function estadoDaRodada(visao: VisaoDoJogador): string {
   switch (visao.fase) {
     case 'RodadaEncerrada':
+      // S142 — a rodada tem **duas** saídas desde a H14, e a segunda não tem
+      // batedor (R4.8). Ler a mão vazia sem perguntar antes se houve batida
+      // fazia a tela dizer "O adversário bateu" numa rodada em que ninguém
+      // bateu — e as CA-S117-1/2 continuavam verdes.
+      if (visao.mao.length > 0 && visao.cartasNaMaoDoAdversario > 0) {
+        return 'Rodada encerrada — o monte acabou'
+      }
+
+      // S113 — entre os dois batedores, quem bateu é a mão vazia.
       return visao.mao.length === 0
         ? 'Você bateu — rodada encerrada'
         : 'O adversário bateu — rodada encerrada'
@@ -522,7 +544,7 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir }: Pr
       </section>
 
       <section aria-label="Mortos">
-        <p>{quantosMortos(visao.mortosRestantes)}</p>
+        <p>{sobreOsMortos(visao)}</p>
       </section>
 
       <section aria-label="Meus jogos">

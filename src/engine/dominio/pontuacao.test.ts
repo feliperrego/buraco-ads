@@ -35,7 +35,7 @@ function comEstado(
   })
 
   const reclamar = (morto: Morto, dono: JogadorId | null): Morto =>
-    dono === null ? morto : { ...morto, cartas: [], reclamadoPor: dono }
+    dono === null ? morto : { ...morto, cartas: [], destino: dono }
 
   return {
     ...base,
@@ -173,5 +173,27 @@ describe('R8.5 — a categoria é recalculada, e a apuração acompanha', () => 
 
     expect(limpa.canastras.LIMPA).toBe(1)
     expect(limpa.pontosDeCanastra).toBe(200)
+  })
+})
+
+/**
+ * Critério de aceite da spec 0014 §8.3 — a R11.5.1.
+ *
+ * S141 — a mesma derivação da R10.1.1, pelo outro lado. Quem ficou sem morto
+ * porque um virou monte não é punido; quem ficou sem porque o adversário levou
+ * os dois é, e a `CA-R11.5.2-1` acima é a âncora que separa os dois casos.
+ */
+describe('R11.5.1 — sem penalidade para quem não teve chance de pegar morto', () => {
+  it('CA-S141-1 — com um morto convertido em monte, não há penalidade', () => {
+    const base = comEstado(cartas('5♥'), [], [1, 1])
+    const comConversao: Partida = {
+      ...base,
+      mortos: [{ ...base.mortos[0], destino: 'Monte' }, base.mortos[1]],
+    }
+    const [minha] = apurar(comConversao)
+
+    expect(minha.penalidadeDeMorto).toBe(0)
+    // A âncora, no mesmo estado sem a conversão: a R11.5.2 continua punindo.
+    expect(apurar(base)[0].penalidadeDeMorto).toBe(-100)
   })
 })

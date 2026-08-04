@@ -28,9 +28,9 @@ export type FaseDaRodada = 'Compra' | 'Acao' | 'RodadaEncerrada'
 /**
  * S105 — **não** existe campo `mortosPegos`.
  *
- * O `domain.md` §3 previa um, e a H10 o removeu: `Morto.reclamadoPor` já diz a
+ * O `domain.md` §3 previa um, e a H10 o removeu: `Morto.destino` já diz a
  * mesma coisa, e dois lugares para a mesma verdade divergem. Quantos mortos um
- * jogador pegou é `mortos.filter((morto) => morto.reclamadoPor === quem).length`
+ * jogador pegou é `mortos.filter((morto) => morto.destino === quem).length`
  * — derivado, como a janela da S71 e a categoria da S85.
  *
  * A R9.3 continua garantida sem contador: o limite de dois é o número de mortos
@@ -43,13 +43,26 @@ export type Jogador = {
 }
 
 /**
- * R2.3 — os mortos **não têm dono**. `reclamadoPor` é nulo até alguém pegar.
- * Os identificadores `A` e `B` são posicionais, não de propriedade.
+ * R2.3 — os mortos **não têm dono**. Os identificadores `A` e `B` são
+ * posicionais, não de propriedade.
+ *
+ * S137 — um morto tem **três** destinos, e até a H13 o tipo representava dois. O
+ * terceiro é a conversão em monte (R4.6), e sem ele a R10.1.1 e a R11.5.1 não
+ * têm como distinguir "ficou sem morto porque o adversário levou os dois" de
+ * "ficou sem morto porque um virou monte".
+ *
+ * O campo mudou de nome junto — era `destino` —, porque `destino:
+ * 'Monte'` seria uma mentira: o monte não reclama nada. É a mesma razão da S112.
+ *
+ * Vale a distinção, porque ela volta: **"derive, não guarde" nunca foi sobre não
+ * ter campos.** É sobre não ter dois campos dizendo a mesma coisa. Um destino
+ * que o tipo não sabe exprimir não é histórico — é buraco no modelo, e o gatilho
+ * do `eventos[]` continua fechado (S120).
  */
 export type Morto = {
   readonly id: 'A' | 'B'
   readonly cartas: readonly Carta[]
-  readonly reclamadoPor: JogadorId | null
+  readonly destino: JogadorId | 'Monte' | null
 }
 
 /**
@@ -107,8 +120,8 @@ export function iniciarPartida(semente: number): Partida {
       { id: 1, mao: baralho.slice(11, 22), jogos: [] },
     ],
     mortos: [
-      { id: 'A', cartas: baralho.slice(22, 33), reclamadoPor: null },
-      { id: 'B', cartas: baralho.slice(33, 44), reclamadoPor: null },
+      { id: 'A', cartas: baralho.slice(22, 33), destino: null },
+      { id: 'B', cartas: baralho.slice(33, 44), destino: null },
     ],
     monte: baralho.slice(44, 104),
     lixo: [],

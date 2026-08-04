@@ -194,8 +194,8 @@ export function construirPartida(descricao: DescricaoDaPartida): Partida {
     semente: descricao.semente ?? 0,
     jogadores: [jogador(0), jogador(1)],
     mortos: [
-      { id: 'A', cartas: restantes.slice(0, 11), reclamadoPor: null },
-      { id: 'B', cartas: restantes.slice(11, 22), reclamadoPor: null },
+      { id: 'A', cartas: restantes.slice(0, 11), destino: null },
+      { id: 'B', cartas: restantes.slice(11, 22), destino: null },
     ],
     monte: restantes.slice(22),
     lixo,

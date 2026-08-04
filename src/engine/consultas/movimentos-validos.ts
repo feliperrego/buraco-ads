@@ -1,11 +1,11 @@
 import type { CartaBaixada, Comando } from '../comandos/comando.ts'
 import { NAIPES } from '../dominio/carta.ts'
 import type { Carta, Naipe } from '../dominio/carta.ts'
+import { podeBater } from '../dominio/batida.ts'
 import {
   CASAS,
   CASA_DO_DOIS,
   casasDe,
-  contaComoLimpa,
   janelaDe,
   regularizarJogo,
   valorDaCasa,
@@ -105,11 +105,9 @@ function podeZerar(visao: VisaoDoJogador, jogoResultante: readonly Posicao[]): b
     return true
   }
 
-  return (
-    visao.meusMortos > 0 &&
-    (visao.meusJogos.some((jogo) => contaComoLimpa(jogo.posicoes)) ||
-      contaComoLimpa(jogoResultante))
-  )
+  // S140 — a mesma função que `aplicar` chama. Duas expressões da R10.1 em
+  // módulos diferentes discordariam na primeira ressalva que uma delas ganhasse.
+  return podeBater(visao, [...visao.meusJogos.map((jogo) => jogo.posicoes), jogoResultante])
 }
 
 /**

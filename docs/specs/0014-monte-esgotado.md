@@ -1,6 +1,6 @@
 # Spec 0014 — H14: o monte esgotado
 
-> Status: **rascunho anotado** — 8 propostas, nenhuma confirmada
+> Status: **confirmada** — 8 decisões, nenhuma pendência
 > História: `H14` — *"O monte acaba, um morto vira o novo monte e a partida continua"*
 > Fecha: R4.6, R4.7, R4.8, R10.1.1, R11.5.1, R11.5.2
 > Deriva de: [rules.md](../rules.md) · [domain.md](../domain.md) · [user-stories.md](../user-stories.md)
@@ -49,7 +49,7 @@ O `user-stories.md` precisa dessa correção junto com a fatia.
 - Nada é adiado desta vez. A H14 fecha as duas pendências que a **S110** (H11) e a **S119**
   (H12) deixaram marcadas para ela, e com isso o `rules.md` fica **inteiramente implementado**.
 
-- `[P]` **S136** — A H14 fecha a R4.6–R4.8 **e** as duas exceções que dependiam delas. Ao fim
+- `[D]` **S136** — A H14 fecha a R4.6–R4.8 **e** as duas exceções que dependiam delas. Ao fim
   desta fatia não resta regra do documento normativo sem código.
 
 ---
@@ -76,7 +76,7 @@ três destinos possíveis, e o tipo só representa dois:
 | pego por um jogador | `reclamadoPor: 0 \| 1` | ✅ |
 | **convertido em monte** | *não representável* | ❌ |
 
-- `[P]` **S137** — `Morto.reclamadoPor` vira **`Morto.destino: JogadorId | 'Monte' | null`**. Um
+- `[D]` **S137** — `Morto.reclamadoPor` vira **`Morto.destino: JogadorId | 'Monte' | null`**. Um
   campo, três valores, e as duas exceções passam a ser **derivação do estado**, não leitura de
   histórico. O gatilho do `eventos[]` **continua fechado**.
 
@@ -102,7 +102,7 @@ A H11 escreveu, ao pôr a batida junto do morto no fim de `aplicar`:
 diferente, momento diferente. Pendurá-la no mesmo `comFimDeMao` seria ignorar um aviso que nós
 mesmos escrevemos.
 
-- `[P]` **S139** — O fim de `aplicar` deixa de ser uma função e vira uma **sequência nomeada de
+- `[D]` **S139** — O fim de `aplicar` deixa de ser uma função e vira uma **sequência nomeada de
   efeitos automáticos**, cada um com sua pergunta e sua guarda:
 
 ```
@@ -137,7 +137,7 @@ R4.1 ainda oferece `pegarLixo`: o jogador leva o lixo inteiro, joga, descarta um
 faz o mesmo, para sempre. Não é hipótese: é exatamente o estado em que **184 de 200 partidas**
 simuladas estão presas hoje, e a razão de nenhuma delas alcançar os 3000.
 
-- `[P]` **S138** — Leitura **A**. Quando o monte esgota e não há morto para converter, a rodada
+- `[D]` **S138** — Leitura **A**. Quando o monte esgota e não há morto para converter, a rodada
   encerra, independentemente do que houver no lixo.
 
 > **Esta é a proposta de domínio desta spec, e é onde a calibragem diz que eu erro.** O argumento
@@ -164,14 +164,14 @@ jogador simplesmente nunca veria a batida que a regra lhe dá.
 É a **duplicação de intenção** que a H9 mediu como decisão sem rede, e desta vez ela está
 espalhada por dois módulos.
 
-- `[P]` **S140** — A condição da R10.1 passa a ter **um lugar só**, em `dominio/`, recebendo os
+- `[D]` **S140** — A condição da R10.1 passa a ter **um lugar só**, em `dominio/`, recebendo os
   três dados que ela precisa — quantos mortos são meus, se algum virou monte, e os meus jogos. Os
   dois chamadores passam a chamá-la, e a `VisaoDoJogador` ganha **`algumMortoVirouMonte:
   boolean`** para conseguir.
 
 E a apuração faz a mesma pergunta pelo outro lado:
 
-- `[P]` **S141** — A **R11.5.1** é a mesma derivação na `Pontuacao`: a penalidade de −100 só se
+- `[D]` **S141** — A **R11.5.1** é a mesma derivação na `Pontuacao`: a penalidade de −100 só se
   aplica a quem terminou sem morto **e** sem conversão. A R11.5.2 continua sendo o caso normal, e
   a `CA-R11.5.2-1` que a H12 já cobre não muda.
 
@@ -199,7 +199,7 @@ rodada em que ninguém bateu.
 
 Não é hipótese: é o que acontece na primeira rodada que a H14 fizer terminar por esgotamento.
 
-- `[P]` **S142** — O painel ganha o terceiro caso: **"Rodada encerrada — o monte acabou"**. A
+- `[D]` **S142** — O painel ganha o terceiro caso: **"Rodada encerrada — o monte acabou"**. A
   leitura da mão vazia continua distinguindo os dois batedores, e passa a ser consultada só
   **depois** de haver batida.
 
@@ -209,7 +209,7 @@ Não é hipótese: é o que acontece na primeira rodada que a H14 fizer terminar
 
 E o painel dos mortos tem o mesmo problema, mais brando:
 
-- `[P]` **S143** — O painel de mortos distingue **convertido** de **pego**. Hoje ele conta só os
+- `[D]` **S143** — O painel de mortos distingue **convertido** de **pego**. Hoje ele conta só os
   não reclamados, e *"nenhum morto por pegar"* cobre dois estados muito diferentes para quem está
   decidindo se dá para bater — com conversão, a R10.1.1 dispensa a exigência; sem ela, não.
 
@@ -259,11 +259,11 @@ esperavam esta fatia.
 
 ---
 
-## 9. Pendências
+## 9. Decisões
 
-Oito propostas. Nenhuma confirmada.
+Oito, confirmadas em bloco em 2026-08-04.
 
-| # | Assunto | Proposta |
+| # | Assunto | Decisão confirmada |
 |---|---|---|
 | **S136** | Escopo | A H14 fecha a R4.6–R4.8 **e** as duas exceções adiadas; nada fica para depois |
 | **S137** | Domínio | `reclamadoPor` vira **`destino: JogadorId \| 'Monte' \| null`** — três destinos, um campo |

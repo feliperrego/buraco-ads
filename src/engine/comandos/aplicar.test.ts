@@ -792,14 +792,11 @@ function comMaoDe(quantas: number, mortosReclamados = 0): Partida {
   // Reclamar um morto **sem** mover as cartas seria estado impossível (M9). O
   // jeito honesto é o mesmo do jogo: as cartas vão para a mão de quem pegou.
   const [primeiro, segundo] = base.mortos
-  const reclamado = { ...primeiro, cartas: [], reclamadoPor: 1 as const }
+  const reclamado = { ...primeiro, cartas: [], destino: 1 as const }
 
   return {
     ...base,
-    mortos: [
-      reclamado,
-      mortosReclamados > 1 ? { ...segundo, cartas: [], reclamadoPor: 1 } : segundo,
-    ],
+    mortos: [reclamado, mortosReclamados > 1 ? { ...segundo, cartas: [], destino: 1 } : segundo],
     jogadores: [
       base.jogadores[0],
       {
@@ -815,7 +812,7 @@ function comMaoDe(quantas: number, mortosReclamados = 0): Partida {
 }
 
 function mortosRestantesDe(partida: Partida): number {
-  return partida.mortos.filter((morto) => morto.reclamadoPor === null).length
+  return partida.mortos.filter((morto) => morto.destino === null).length
 }
 
 describe('R9.2 e R9.4 — o morto chega sozinho quando a mão zera', () => {
@@ -893,8 +890,8 @@ describe('R9.3 e S104 — qual morto, e o que fica registrado', () => {
       carta: antes.jogadores[0].mao[0]?.id ?? '',
     })
 
-    expect(depois.mortos[0].reclamadoPor).toBe(0)
-    expect(depois.mortos[1].reclamadoPor).toBeNull()
+    expect(depois.mortos[0].destino).toBe(0)
+    expect(depois.mortos[1].destino).toBeNull()
     // S23/S77 — a engine não reordena: as onze entram na ordem em que estavam.
     expect(depois.jogadores[0].mao.map((uma) => uma.id)).toEqual(
       primeiro.cartas.map((uma) => uma.id),
@@ -920,7 +917,7 @@ describe('R9.3 e S104 — qual morto, e o que fica registrado', () => {
     })
 
     expect(mortosRestantesDe(primeiro)).toBe(1)
-    expect(primeiro.mortos[0].reclamadoPor).toBe(0)
+    expect(primeiro.mortos[0].destino).toBe(0)
   })
 
   it('CA-S105-1 — o registro fica em `mortos`, e não existe contador a divergir', () => {
@@ -933,7 +930,7 @@ describe('R9.3 e S104 — qual morto, e o que fica registrado', () => {
     // S105 — `mortosPegos` saiu do `Jogador`. Quantos alguém pegou é derivado,
     // como a janela da S71 e a categoria da S85.
     expect(Object.keys(depois.jogadores[0]).sort()).toEqual(['id', 'jogos', 'mao'])
-    expect(depois.mortos.filter((morto) => morto.reclamadoPor === 0)).toHaveLength(1)
+    expect(depois.mortos.filter((morto) => morto.destino === 0)).toHaveLength(1)
   })
 
   it('CA-R9.2-1 — sem morto disponível, a mão zerada continua zerada', () => {
@@ -1001,7 +998,7 @@ function comJogosEMortos(
   })
 
   const reclamar = (morto: Morto, dono: JogadorId | null): Morto =>
-    dono === null ? morto : { ...morto, cartas: [], reclamadoPor: dono }
+    dono === null ? morto : { ...morto, cartas: [], destino: dono }
 
   return {
     ...base,
@@ -1160,5 +1157,157 @@ describe('S113 e R11.4 — o bônus vai para quem bateu, não para quem é da ve
     expect(minha.bonusDeBatida).toBe(100)
     expect(dele.bonusDeBatida).toBe(0)
     expect(depois.placar[0]).toBeGreaterThan(depois.placar[1])
+  })
+})
+
+/**
+ * Critérios de aceite da spec 0014 §8.1, §8.2 e §8.3 — o monte esgotado.
+ *
+ * Esta não é a história de borda que o user-stories.md descreveu: medido em 200
+ * rodadas simuladas, o monte esgota em **200** delas, e nas 200 há morto por
+ * converter no instante do esgotamento. A R4.6 é a regra mais frequente do jogo.
+ */
+
+/** Uma partida em fase de compra com o monte no tamanho pedido. */
+function comMonteDe(
+  cartasNoMonte: number,
+  donos: readonly [JogadorId | 'Monte' | null, JogadorId | 'Monte' | null] = [null, null],
+  meus: readonly (readonly Posicao[])[] = [],
+): Partida {
+  const naMesa = meus.flat().map((posicao) => posicao.carta)
+  const base = construirPartida({
+    maos: [outrasCartas(naMesa, 11), outrasCartas([...naMesa, ...outrasCartas(naMesa, 11)], 11)],
+    jogos: [meus, []],
+    jogadorDaVez: 0,
+    fase: 'Compra',
+  })
+
+  const comDestino = (morto: Morto, destino: JogadorId | 'Monte' | null): Morto =>
+    destino === null ? morto : { ...morto, cartas: [], destino }
+
+  // O que sai do monte e dos mortos reclamados vai para o lixo, que a R4.3 deixa
+  // crescer sem limite — é o único lugar que aceita cartas sem violar a M9.
+  const sobra = [
+    ...base.monte.slice(cartasNoMonte),
+    ...base.mortos.flatMap((morto, i) => (donos[i] === null ? [] : morto.cartas)),
+  ]
+
+  return {
+    ...base,
+    monte: base.monte.slice(0, cartasNoMonte),
+    lixo: [...base.lixo, ...sobra],
+    mortos: [comDestino(base.mortos[0], donos[0]), comDestino(base.mortos[1], donos[1])],
+  }
+}
+
+describe('R4.6 e R4.7 — o morto vira o novo monte', () => {
+  it('CA-R4.7-1 — com os dois mortos intactos, o primeiro vira monte e o segundo fica', () => {
+    // O monte com uma carta: comprá-la o esgota.
+    const antes = comMonteDe(1)
+    const depois = aplicado(antes, { tipo: 'comprarDoMonte' })
+
+    expect(depois.monte).toHaveLength(11)
+    expect(depois.mortos[0].destino).toBe('Monte')
+    expect(depois.mortos[1].destino).toBeNull()
+    expect(depois.fase).toBe('Acao')
+  })
+
+  it('CA-S137-1 — o morto convertido não conta como reclamado por jogador nenhum', () => {
+    const depois = aplicado(comMonteDe(1), { tipo: 'comprarDoMonte' })
+
+    expect(depois.mortos.filter((morto) => morto.destino === 0)).toHaveLength(0)
+    expect(depois.mortos.filter((morto) => morto.destino === 1)).toHaveLength(0)
+    expect(depois.mortos.filter((morto) => morto.destino === null)).toHaveLength(1)
+  })
+
+  it('CA-S139-2 — quem compra a última carta termina o turno normalmente', () => {
+    const depois = aplicado(comMonteDe(1), { tipo: 'comprarDoMonte' })
+
+    // A conversão não interrompe a jogada: a fase é a de ação, e a vez é de quem
+    // comprou. A saída da R4.8 parte de `Compra` (domain.md §1.3), não daqui.
+    expect(depois.jogadorDaVez).toBe(0)
+    expect(depois.jogadores[0].mao).toHaveLength(12)
+  })
+
+  it('CA-M9-15 — após a conversão, as 104 cartas se conservam', () => {
+    const ids = todasAsCartas(aplicado(comMonteDe(1), { tipo: 'comprarDoMonte' })).map(
+      (uma) => uma.id,
+    )
+
+    expect(ids).toHaveLength(104)
+    expect(new Set(ids).size).toBe(104)
+  })
+})
+
+describe('R4.8 — o monte esgota sem morto e a rodada acaba', () => {
+  it('CA-S138-1 — com o lixo cheio, a rodada encerra do mesmo jeito', () => {
+    // A leitura literal da R4.8. A alternativa — esperar o lixo esvaziar —
+    // deixaria 184 de 200 partidas rodando para sempre.
+    const antes = comMonteDe(1, [1, 1])
+    const depois = aplicado(antes, { tipo: 'comprarDoMonte' })
+
+    expect(antes.lixo.length).toBeGreaterThan(0)
+    expect(depois.fase).toBe('RodadaEncerrada')
+  })
+
+  it('CA-S138-2 — ninguém bateu, então ninguém recebe o bônus da R11.4', () => {
+    const depois = aplicado(comMonteDe(1, [1, 1]), { tipo: 'comprarDoMonte' })
+    const [minha, dele] = apurar(depois)
+
+    expect(depois.jogadores[0].mao.length).toBeGreaterThan(0)
+    expect(depois.jogadores[1].mao.length).toBeGreaterThan(0)
+    expect(minha.bonusDeBatida).toBe(0)
+    expect(dele.bonusDeBatida).toBe(0)
+  })
+
+  it('CA-S138-3 — o placar é somado normalmente (R4.8 remete à R11)', () => {
+    const antes = comMonteDe(1, [1, 1])
+    const depois = aplicado(antes, { tipo: 'comprarDoMonte' })
+    const [minha, dele] = apurar(depois)
+
+    expect(antes.placar).toEqual([0, 0])
+    expect(depois.placar).toEqual([totalDe(minha), totalDe(dele)])
+  })
+
+  it('CA-R4.8-1 — com morto por converter, a rodada NÃO encerra', () => {
+    // A âncora: sem ela, encerrar sempre passaria nos três critérios acima.
+    expect(aplicado(comMonteDe(1), { tipo: 'comprarDoMonte' }).fase).toBe('Acao')
+  })
+})
+
+describe('R10.1.1 — a exigência do morto cai para quem não teve chance', () => {
+  const LIMPA_DE_COPAS = posicoes('5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥')
+
+  it('CA-S140-1 — com morto convertido, a canastra limpa basta para bater', () => {
+    const comJogo = construirPartida({
+      maos: [cartas('5♠ 6♠ 7♠'), outrasCartas(cartas('5♠ 6♠ 7♠ 5♥ 6♥ 7♥ 8♥ 9♥ 10♥ J♥'), 11)],
+      jogos: [[LIMPA_DE_COPAS], []],
+      jogadorDaVez: 0,
+      fase: 'Acao',
+    })
+    const semChance: Partida = {
+      ...comJogo,
+      mortos: [
+        { ...comJogo.mortos[0], cartas: [], destino: 'Monte' },
+        { ...comJogo.mortos[1], cartas: [], destino: 1 },
+      ],
+      monte: [...comJogo.monte, ...comJogo.mortos[0].cartas, ...comJogo.mortos[1].cartas],
+    }
+
+    // Sem morto próprio: um virou monte (R4.6) e o outro foi do adversário.
+    expect(semChance.mortos.filter((morto) => morto.destino === 0)).toHaveLength(0)
+    expect(semChance.mortos[0].destino).toBe('Monte')
+
+    const depois = aplicado(semChance, BAIXAR_TRES)
+
+    expect(depois.jogadores[0].mao).toHaveLength(0)
+    expect(depois.fase).toBe('RodadaEncerrada')
+  })
+
+  it('CA-R10.1.2-1 — com os dois mortos pegos pelo adversário, continua sem poder bater', () => {
+    // A R10.1.2 sobrevive à mudança: a âncora que separa as duas exceções.
+    const depois = aplicado(comJogosEMortos(cartas('5♠ 6♠ 7♠'), [LIMPA], [1, 1]), BAIXAR_TRES)
+
+    expect(depois.fase).toBe('Acao')
   })
 })

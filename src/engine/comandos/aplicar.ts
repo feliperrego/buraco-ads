@@ -1,5 +1,6 @@
 import type { Carta } from '../dominio/carta.ts'
-import { aumentarJogo, contaComoLimpa, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
+import { podeBater } from '../dominio/batida.ts'
+import { aumentarJogo, criarJogo, regularizarJogo } from '../dominio/jogo.ts'
 import type { Posicao } from '../dominio/jogo.ts'
 import { apurar, totalDe } from '../dominio/pontuacao.ts'
 import type { Jogador, JogadorId, Morto, Partida } from '../dominio/partida.ts'
@@ -19,9 +20,53 @@ export function aplicar(partida: Partida, comando: Comando): Resultado {
   const quem = partida.jogadorDaVez
   const resultado = executar(partida, comando)
 
-  return resultado.tipo === 'sucesso'
-    ? { tipo: 'sucesso', partida: comFimDeMao(resultado.partida, quem) }
-    : resultado
+  if (resultado.tipo !== 'sucesso') {
+    return resultado
+  }
+
+  // S139 — os efeitos automáticos são uma **sequência nomeada**, e não um bloco.
+  // A H11 avisou que este lugar acabaria quando alguém pendurasse nele algo que
+  // responde a outra pergunta, e é o caso: a conversão da R4.6 responde a "o
+  // monte esgotou?", não a "a mão zerou?".
+  //
+  // A ordem não é livre. Quem zera a mão pega o morto **antes** de o monte poder
+  // convertê-lo — a R9.2 não tem ressalva, e é o mesmo argumento da S111.
+  return { tipo: 'sucesso', partida: comFimDeMonte(comFimDeMao(resultado.partida, quem)) }
+}
+
+/**
+ * R4.6, R4.7 e R4.8 — "o monte esgotou?", a segunda pergunta automática.
+ *
+ * S139 — mora aqui, e não dentro de `comFimDeMao`, porque o gatilho é outro. E
+ * roda **depois** dele: o morto que acabou de ser entregue a um jogador não está
+ * mais disponível para virar monte.
+ */
+function comFimDeMonte(partida: Partida): Partida {
+  if (partida.monte.length > 0) {
+    return partida
+  }
+
+  const indice = partida.mortos.findIndex((morto) => morto.destino === null)
+  const morto = partida.mortos[indice]
+
+  if (morto === undefined) {
+    // R4.8 — sem monte e sem morto, a rodada acaba **sem batida**, e o lixo não
+    // conta (S138). A leitura alternativa — esperar o lixo esvaziar — não
+    // termina: com uma carta no lixo o `pegarLixo` continua sendo oferecido, e
+    // 184 de 200 partidas simuladas ficaram presas exatamente aí.
+    return encerrar(partida)
+  }
+
+  // R4.7 — qual morto é indiferente, porque eles não têm dono (R2.3). O primeiro
+  // não reclamado, como na S104, e pelo mesmo motivo: a escolha é livre e o
+  // critério registra qual foi feita.
+  const convertido: Morto = { ...morto, cartas: [], destino: 'Monte' }
+
+  return {
+    ...partida,
+    monte: morto.cartas,
+    mortos: indice === 0 ? [convertido, partida.mortos[1]] : [partida.mortos[0], convertido],
+  }
 }
 
 /**
@@ -42,14 +87,14 @@ function comFimDeMao(partida: Partida, quem: JogadorId): Partida {
     return partida
   }
 
-  const indice = partida.mortos.findIndex((morto) => morto.reclamadoPor === null)
+  const indice = partida.mortos.findIndex((morto) => morto.destino === null)
   const morto = partida.mortos[indice]
 
   if (morto !== undefined) {
     return comMorto(partida, quem, indice, morto)
   }
 
-  return podeBater(partida, quem) ? encerrar(partida) : partida
+  return podeBaterNaPartida(partida, quem) ? encerrar(partida) : partida
 }
 
 /**
@@ -74,22 +119,14 @@ function encerrar(partida: Partida): Partida {
   }
 }
 
-/**
- * R10.1 — as duas condições da batida, e nada além delas.
- *
- * A primeira é a R9.5: só bate quem já pegou morto. A R10.1.2 é o caso em que
- * ela morde — o adversário levou os dois — e **não** precisa de código: a
- * condição simplesmente é falsa. A R10.1.1, que a suspende quando um morto virou
- * monte, depende da R4.6 e é da H14 (S110).
- *
- * A segunda é a R10.2, e ela mora inteira em `contaComoLimpa` (S114).
- *
- * A mão vazia não aparece aqui porque quem chama já a garantiu.
- */
-function podeBater(partida: Partida, quem: JogadorId): boolean {
-  return (
-    partida.mortos.some((morto) => morto.reclamadoPor === quem) &&
-    partida.jogadores[quem].jogos.some((jogo) => contaComoLimpa(jogo.posicoes))
+/** A R10.1 lida sobre a `Partida`. A regra em si mora em `batida.ts` (S140). */
+function podeBaterNaPartida(partida: Partida, quem: JogadorId): boolean {
+  return podeBater(
+    {
+      meusMortos: partida.mortos.filter((morto) => morto.destino === quem).length,
+      algumMortoVirouMonte: partida.mortos.some((morto) => morto.destino === 'Monte'),
+    },
+    partida.jogadores[quem].jogos.map((jogo) => jogo.posicoes),
   )
 }
 
@@ -115,7 +152,7 @@ function comMorto(partida: Partida, quem: JogadorId, indice: number, morto: Mort
   //
   // O morto reclamado fica **sem cartas**: elas foram para a mão, e mantê-las
   // aqui as faria existir duas vezes (M9).
-  const reclamado = { ...morto, cartas: [], reclamadoPor: quem }
+  const reclamado = { ...morto, cartas: [], destino: quem }
 
   return {
     ...partida,

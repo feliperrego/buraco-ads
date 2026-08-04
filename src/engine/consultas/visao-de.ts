@@ -32,6 +32,11 @@ export type VisaoDoJogador = {
    * RF5.2 é mais barata de manter quando o campo não existe.
    */
   readonly meusMortos: number
+  /**
+   * S140 — R4.6. Sem isto, `movimentosValidos` não teria como aplicar a ressalva
+   * da R10.1.1, e passaria a discordar de `aplicar` sobre quem pode bater.
+   */
+  readonly algumMortoVirouMonte: boolean
   /** Índice = `JogadorId` (RF4.1). */
   readonly placar: readonly [number, number]
   readonly jogadorDaVez: JogadorId
@@ -64,8 +69,9 @@ export function visaoDe(partida: Partida, jogador: JogadorId): VisaoDoJogador {
     // RF5.2 — que aqui é garantia estrutural, não política.
     cartasNoMonte: partida.monte.length,
     cartasNaMaoDoAdversario: adversario.mao.length,
-    mortosRestantes: partida.mortos.filter((morto) => morto.reclamadoPor === null).length,
-    meusMortos: partida.mortos.filter((morto) => morto.reclamadoPor === jogador).length,
+    mortosRestantes: partida.mortos.filter((morto) => morto.destino === null).length,
+    meusMortos: partida.mortos.filter((morto) => morto.destino === jogador).length,
+    algumMortoVirouMonte: partida.mortos.some((morto) => morto.destino === 'Monte'),
     placar: partida.placar,
     jogadorDaVez: partida.jogadorDaVez,
     fase: partida.fase,

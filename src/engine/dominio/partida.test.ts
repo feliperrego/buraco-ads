@@ -83,14 +83,14 @@ describe('R2 — preparação da rodada', () => {
     expect(partida.jogadores[1].mao).toHaveLength(11)
   })
 
-  it('CA-R2.3-1 — há dois mortos de 11 cartas, ambos com reclamadoPor nulo', () => {
+  it('CA-R2.3-1 — há dois mortos de 11 cartas, ambos com destino nulo', () => {
     const partida = iniciarPartida(SEMENTE_QUALQUER)
 
     expect(partida.mortos).toHaveLength(2)
     expect(partida.mortos[0].cartas).toHaveLength(11)
     expect(partida.mortos[1].cartas).toHaveLength(11)
-    expect(partida.mortos[0].reclamadoPor).toBeNull()
-    expect(partida.mortos[1].reclamadoPor).toBeNull()
+    expect(partida.mortos[0].destino).toBeNull()
+    expect(partida.mortos[1].destino).toBeNull()
   })
 
   it('CA-R2.4-1 — o lixo começa vazio', () => {
@@ -310,7 +310,7 @@ describe('S129 — o que a rodada nova preserva e o que ela refaz', () => {
         { id: 1, mao: iniciarPartida(7).jogadores[1].mao, jogos: [] },
       ],
       mortos: [
-        { ...iniciarPartida(7).mortos[0], cartas: [], reclamadoPor: 0 },
+        { ...iniciarPartida(7).mortos[0], cartas: [], destino: 0 },
         iniciarPartida(7).mortos[1],
       ],
     }
@@ -319,7 +319,7 @@ describe('S129 — o que a rodada nova preserva e o que ela refaz', () => {
     expect(nova.jogadores[0].mao).toHaveLength(11)
     expect(nova.jogadores[1].mao).toHaveLength(11)
     expect(nova.jogadores[0].jogos).toHaveLength(0)
-    expect(nova.mortos.map((morto) => morto.reclamadoPor)).toEqual([null, null])
+    expect(nova.mortos.map((morto) => morto.destino)).toEqual([null, null])
     expect(nova.mortos.map((morto) => morto.cartas.length)).toEqual([11, 11])
     expect(nova.lixo).toHaveLength(0)
   })

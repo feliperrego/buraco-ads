@@ -44,6 +44,7 @@ function visaoInicial(ajustes: Partial<VisaoDoJogador> = {}): VisaoDoJogador {
     cartasNaMaoDoAdversario: 11,
     mortosRestantes: 2,
     meusMortos: 0,
+    algumMortoVirouMonte: false,
     apuracao: null,
     placar: [0, 0],
     jogadorDaVez: 0,
@@ -1256,5 +1257,83 @@ describe('S134 — o botão do painel de apuração', () => {
     fireEvent.click(screen.getByRole('button', { name: /próxima rodada/i }))
 
     expect(aoSeguir).toHaveBeenCalledTimes(1)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0014 §8.4 — a rodada que acaba sem batida.
+ *
+ * S142 — a S117 decidiu o texto do painel quando **toda** rodada encerrada era
+ * uma batida. A R4.8 acrescenta a segunda saída, e nela ninguém tem a mão vazia:
+ * sem este caso a tela diria "O adversário bateu" numa rodada em que ninguém
+ * bateu, e as CA-S117-1/2 continuariam verdes.
+ */
+describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
+  it('CA-S142-1 — sem batedor, o painel diz que o monte acabou', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({
+          fase: 'RodadaEncerrada',
+          cartasNaMaoDoAdversario: 7,
+          mortosRestantes: 0,
+          algumMortoVirouMonte: true,
+        })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /vez e fase/i })
+
+    expect(painel.textContent).toMatch(/monte acabou/i)
+    expect(painel.textContent).not.toMatch(/bateu/i)
+  })
+
+  it('CA-S142-2 — com batedor, o painel continua dizendo quem foi', () => {
+    // A âncora que a S117 já tinha, e que este critério não pode derrubar.
+    render(
+      <TelaPartida
+        visao={visaoInicial({ fase: 'RodadaEncerrada', mao: [] })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('region', { name: /vez e fase/i }).textContent).toMatch(/você bateu/i)
+  })
+
+  it('CA-S143-1 — o painel de mortos distingue convertido de pego', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ mortosRestantes: 0, algumMortoVirouMonte: true })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /mortos/i })
+
+    // Para quem decide se dá para bater, os dois estados são muito diferentes:
+    // com conversão a R10.1.1 dispensa a exigência do morto, sem ela não.
+    expect(painel.textContent).toMatch(/virou monte/i)
+  })
+
+  it('CA-S143-1 — sem conversão, o painel continua contando só os que restam', () => {
+    render(
+      <TelaPartida
+        visao={visaoInicial({ mortosRestantes: 0 })}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+      />,
+    )
+
+    const painel = screen.getByRole('region', { name: /mortos/i })
+
+    expect(painel.textContent).toMatch(/nenhum morto/i)
+    expect(painel.textContent).not.toMatch(/virou monte/i)
   })
 })
