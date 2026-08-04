@@ -87,6 +87,7 @@ testada, os testes passam a ser a especificação viva.
 | [0015-ia-por-heuristica.md](specs/0015-ia-por-heuristica.md) | H15 — o oponente por heurística | **Implementada** — 25 novos e 5 herdados |
 | [0016-abandonar-a-partida.md](specs/0016-abandonar-a-partida.md) | H16 — abandonar a partida | **Implementada** — 13 novos e 5 ajustados |
 | [0017-regras-na-aplicacao.md](specs/0017-regras-na-aplicacao.md) | H17 — as regras dentro da aplicação | **Implementada** — 13 novos e 3 ajustados |
+| [0018-celular-e-teclado.md](specs/0018-celular-e-teclado.md) | H18 — celular e teclado | Rascunho anotado — 6 decisões pendentes |
 
 ## Verificação
 
