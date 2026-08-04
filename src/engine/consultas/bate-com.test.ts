@@ -169,6 +169,36 @@ describe('S145 — a duplicação da construção vive sob medição', () => {
     expect(daBatida.batidas).toBeGreaterThan(0)
   })
 
+  it('CA-S145-5 — o aumentar que suja a única canastra limpa não bate', () => {
+    // O defeito da `CA-S140-4` visto do lado da consulta: somar o jogo
+    // resultante sem tirar a versão antiga faz a pergunta ser feita sobre um
+    // jogo que deixou de existir. Aqui o `2♠` entra como curinga na única
+    // canastra limpa e a suja (R10.2) — a mão zera e mesmo assim não há batida.
+    //
+    // A `CA-S145-3` **não** pega isto: em 30 partidas sorteadas, nenhum
+    // `aumentar` que zere a mão chega perto de uma canastra limpa. A mutação que
+    // troca o `filter` por `map` passou nos 284 testes antes deste critério
+    // existir, e a S145 apostava justamente nessa concordância.
+    const partida = comMortos(cartas('2♠'), [LIMPA_NA_MESA], [0, 1])
+    const visao = visaoDaVez(partida)
+    const jogo = visao.meusJogos[0]
+
+    expect(jogo).toBeDefined()
+
+    const sujando: Comando = {
+      tipo: 'aumentar',
+      jogo: jogo?.id ?? '',
+      cartas: [{ carta: 'ESPADAS-2-1', representa: '4' }],
+    }
+
+    // Âncora positiva: o comando **é** legal e zera a mão. Sem isto, um comando
+    // recusado por outro motivo daria o mesmo `false`.
+    expect(visao.mao).toHaveLength(1)
+    expect(aplicar(partida, sujando).tipo).toBe('sucesso')
+
+    expect(bateCom(visao, sujando)).toBe(false)
+  })
+
   it('CA-S145-4 — a rodada encerrada pelo monte esgotado (R4.8) não é batida', () => {
     const mao = cartas('5♠ 6♠ K♦')
     const base = comMortos(mao, [LIMPA_NA_MESA], [0, 1])

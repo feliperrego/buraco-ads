@@ -200,7 +200,13 @@ describe('S147 — as parcelas da pontuação', () => {
   })
 
   it('CA-S147-2 — entre dois curingas, a IA usa o 2 do naipe da sequência', () => {
-    const partida = mesa({ mao: cartas('5♥ 6♥ 2♥ 2♠ 3♣ 9♦') })
+    // A sequência é de **espadas**, e o curinga do outro naipe é de **copas**,
+    // de propósito: sem o bônus da IA6 os dois candidatos empatam, e o desempate
+    // por chave (S150) escolheria `COPAS` pela ordem alfabética. Com a fixture
+    // ao contrário — sequência de copas — o teste passava com o bônus zerado,
+    // pelo motivo errado. É a lição da H12: contar quantos testes uma mutação
+    // reprova não basta; vale conferir se ela reprova por onde deveria.
+    const partida = mesa({ mao: cartas('5♠ 6♠ 2♠ 2♥ 3♣ 9♦') })
     const escolha = decidir(visaoDaVez(partida))
 
     expect(escolha?.tipo).toBe('baixar')
@@ -208,7 +214,7 @@ describe('S147 — as parcelas da pontuação', () => {
     const curinga =
       escolha?.tipo === 'baixar' ? escolha.cartas.find((uma) => uma.representa !== undefined) : null
 
-    expect(curinga?.carta).toBe(cartaDe('COPAS', '2').id)
+    expect(curinga?.carta).toBe(cartaDe('ESPADAS', '2').id)
   })
 
   it('CA-S147-3 — zerar a mão com morto por pegar vale 200 a mais', () => {
@@ -321,6 +327,16 @@ describe('S149 — o que "encaixa" quer dizer', () => {
   it('CA-S149-3 — mesma casa e naipe diferente não encaixa', () => {
     expect(encaixa(visao, cartaDe('OUROS', '7'))).toBe(false)
     expect(encaixa(visao, cartaDe('OUROS', '8'))).toBe(false)
+  })
+
+  it('CA-S149-3 — a cópia idêntica não encaixa: distância zero não constrói nada', () => {
+    // A S149 diz "distância ≤ 2", e ler isso ao pé da letra inclui o **zero** —
+    // a segunda cópia da mesma carta. Duas cartas iguais não entram na mesma
+    // sequência (I1), então a distância mínima é **um**. É leitura minha do
+    // texto confirmado, apoiada no argumento que a própria S149 dá, e sem este
+    // critério a mutação que troca `>= 1` por `>= 0` passa em silêncio.
+    expect(encaixa(visao, cartaDe('COPAS', '7', 2))).toBe(false)
+    expect(encaixa(visao, cartaDe('ESPADAS', '8', 2))).toBe(false)
   })
 
   it('CA-S149-1 — o encaixe também olha os meus jogos, não só a mão', () => {
