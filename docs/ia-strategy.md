@@ -1,6 +1,6 @@
 # Estratégia da IA
 
-> Status: **rascunho anotado** — 11 propostas, nenhuma confirmada
+> Status: **confirmado** — 11 decisões, confirmadas em bloco em 2026-08-04
 > Deriva de: [rules.md](rules.md) · [requirements.md](requirements.md) RF5 · [testing-strategy.md](testing-strategy.md) E6, E7
 > Fecha o gatilho *"`ia-strategy.md` como documento próprio"* do [roadmap.md](roadmap.md) §3 (U2)
 
@@ -36,7 +36,7 @@ E o que ela **não** precisa ser: boa de Buraco. O alvo da E6 é ganhar de quem 
 bem. Isso importa porque define o teto do esforço — a fatia acaba quando o número aparece, não
 quando a estratégia fica elegante.
 
-- `[P]` **IA1** — A H15 entrega **uma** política heurística, medida contra a aleatória. Nada de
+- `[D]` **IA1** — A H15 entrega **uma** política heurística, medida contra a aleatória. Nada de
   níveis, perfis ou parâmetros ajustáveis: a RF5.1 diz nível único, e um parâmetro sem seletor é
   configuração que ninguém muda.
 
@@ -52,7 +52,7 @@ Três formas, e a escolha condiciona tudo o que vem depois:
 | **B — cascata de regras** | *"se puder bater, bata; senão se puder pegar o morto…"* | lê como as regras, e a ordem dos `if` vira decisão implícita que ninguém registrou |
 | **C — busca** | simular jogadas à frente | fora de escopo: a E6 pede <100 ms e a RF5.1 pede um nível só |
 
-- `[P]` **IA2** — Forma **A**. `decidir` vira `argmax` de `pontuar`, e cada heurística deste
+- `[D]` **IA2** — Forma **A**. `decidir` vira `argmax` de `pontuar`, e cada heurística deste
   documento vira uma parcela da pontuação.
 
 > A **B** é tentadora porque as regras do Buraco já são uma cascata, e por isso mesmo ela engana:
@@ -74,10 +74,10 @@ não vira contrato, e é isso que a mantém livre para mudar.
 Falta o empate. Dois comandos com a mesma pontuação precisam de desempate, e usar a ordem de
 enumeração devolveria o contrato pela porta dos fundos.
 
-- `[P]` **IA3** — Empate é resolvido por **chave estável do comando** — tipo e cartas citadas,
+- `[D]` **IA3** — Empate é resolvido por **chave estável do comando** — tipo e cartas citadas,
   ordenados —, nunca pela posição na lista. Assim a `ia/` é determinística (E6) sem que a ordem
   da engine signifique nada.
-- `[P]` **IA4** — A dependência da **interface** naquela ordem **não** é resolvida aqui. Ela é
+- `[D]` **IA4** — A dependência da **interface** naquela ordem **não** é resolvida aqui. Ela é
   real — a H10 mediu que com uma carta selecionada aparecem *"Descartar"* e a jogada de mesa,
   nessa ordem — mas é decisão de interface, e vai para o Marco VI com gatilho próprio.
 
@@ -93,7 +93,7 @@ diz que minhas propostas acertam.
 A **R11.3** conta as cartas baixadas como **positivo** e as da mão como **negativo**. Um `K`
 baixado e um `K` na mão diferem em **20 pontos**, não em 10.
 
-- `[P]` **IA5** — Baixar e aumentar pontuam **positivo pelo dobro** do valor das cartas movidas.
+- `[D]` **IA5** — Baixar e aumentar pontuam **positivo pelo dobro** do valor das cartas movidas.
   Não é preferência por agressividade: é a assimetria que a R11.3 escreveu.
 
 ### 3.2 O curinga do próprio naipe é o único que pode ser limpo
@@ -101,7 +101,7 @@ baixado e um `K` na mão diferem em **20 pontos**, não em 10.
 A **R6.5** exige que o curinga seja o `2` **do naipe da sequência** para ser regularizado. Um `2`
 de outro naipe deixa a canastra **permanentemente suja** — 100 em vez de 200 (R8.2).
 
-- `[P]` **IA6** — Entre dois curingas possíveis, a IA prefere **o `2` do próprio naipe**. A
+- `[D]` **IA6** — Entre dois curingas possíveis, a IA prefere **o `2` do próprio naipe**. A
   diferença é de 100 pontos por canastra, e ela já está no `rules.md`.
 
 ### 3.3 Descartar é o comando mais perigoso do Buraco Aberto
@@ -109,7 +109,7 @@ de outro naipe deixa a canastra **permanentemente suja** — 100 em vez de 200 (
 A **R4.2** manda o lixo **inteiro** para quem o pegar, e a **R4.3** o deixa **visível o tempo
 todo**. Descartar não é descartar: é oferecer, e o adversário vê a oferta crescer.
 
-- `[P]` **IA7** — O descarte é pontuado pelo que **entrega**: carta que estende um jogo visível
+- `[D]` **IA7** — O descarte é pontuado pelo que **entrega**: carta que estende um jogo visível
   do adversário (RF3.5) vale bem menos, e carta que ele acabou de mostrar interesse por, também.
   Entre descartes equivalentes, a IA solta a de **menor valor** (R11.2).
 
@@ -122,7 +122,7 @@ todo**. Descartar não é descartar: é oferecer, e o adversário vê a oferta c
 A **R9.2** entrega 11 cartas a quem zera a mão, e a **R10.1** faz do morto pré-requisito da
 batida. Chegar lá é ganho material e habilitação, ao mesmo tempo.
 
-- `[P]` **IA8** — Zerar a mão vale um bônus grande enquanto houver morto por pegar, e **zero**
+- `[D]` **IA8** — Zerar a mão vale um bônus grande enquanto houver morto por pegar, e **zero**
   depois que não houver. A guarda da S109/S115 já impede a jogada ilegal; isto é sobre preferir a
   legal.
 
@@ -138,7 +138,7 @@ abaixo não caem de nenhuma regra, e são as que você precisa julgar.
 Pegar o lixo dá material de uma vez, e infla a mão — o que afasta o morto e a batida, e aumenta o
 negativo da R11.3 se a rodada acabar antes de baixar.
 
-- `[P]` **IA9** — A IA pega o lixo quando as cartas dele que **encaixam** nos seus jogos ou na
+- `[D]` **IA9** — A IA pega o lixo quando as cartas dele que **encaixam** nos seus jogos ou na
   sua mão valem mais que o peso das que **não** encaixam. Um limiar, não uma regra: pegar sempre
   e nunca pegar são os dois extremos ruins.
 
@@ -151,7 +151,7 @@ negativo da R11.3 se a rodada acabar antes de baixar.
 A batida dá **+100** (R11.4), congela a mão do adversário como negativo, e **encerra a rodada**
 (R10.3) — inclusive as canastras que ele fecharia.
 
-- `[P]` **IA10** — A IA bate **assim que pode**. Não é obviamente certo: com poucos pontos na
+- `[D]` **IA10** — A IA bate **assim que pode**. Não é obviamente certo: com poucos pontos na
   mesa, encerrar cedo pode travar uma rodada que ela venceria continuando. Mas a alternativa
   — segurar a batida para acumular — exige estimar o que o adversário ainda faria, e isso é busca,
   que a IA2 pôs fora de escopo.
@@ -192,7 +192,7 @@ E o limiar fica assim:
 | 75% | 71,5% a 78,5% | **sim** |
 | 72% | 68,4% a 75,6% | **não** |
 
-- `[P]` **IA11** — A força relativa é medida em **600 partidas**, e o resultado é reportado como
+- `[D]` **IA11** — A força relativa é medida em **600 partidas**, e o resultado é reportado como
   **intervalo**, não como ponto. A E6 é considerada cumprida quando o **limite inferior** do
   intervalo passa de 70% — e não quando a média passa.
 
@@ -203,9 +203,9 @@ E o limiar fica assim:
 
 ---
 
-## 7. Pendências
+## 7. Decisões
 
-Onze propostas. Nenhuma confirmada.
+Onze decisões, confirmadas em bloco em 2026-08-04.
 
 | # | Assunto | Proposta |
 |---|---|---|
@@ -223,9 +223,16 @@ Onze propostas. Nenhuma confirmada.
 
 ### Onde eu erraria, se errasse
 
+Isto foi escrito **antes** da confirmação e fica como estava, porque é a previsão que a medição
+vai testar. As onze passaram em bloco, inclusive as duas que eu sinalizei — e o valor de ter
+sinalizado só aparece se o registro sobreviver ao "ok".
+
 **A IA9 e a IA10 são as duas propostas de mesa**, e são onde a calibragem diz que eu erro — 5 das
 5 quedas do projeto foram no `rules.md`, o único documento sobre o seu domínio. As outras nove são
 sobre software ou caem de regra escrita.
+
+Se a força relativa da E6 não sair, **estas duas são as primeiras a revisar** — não porque a
+medição vá apontar para elas, mas porque são as únicas cujo argumento não vem de regra escrita.
 
 Duas que valem um olhar além delas:
 

@@ -52,7 +52,7 @@ necessário até a fatia que o consome existir.
 
 | Documento | Propósito | Status |
 |---|---|---|
-| [ia-strategy.md](ia-strategy.md) | A política do oponente: forma da decisão, heurísticas e como medi-las | Rascunho anotado |
+| [ia-strategy.md](ia-strategy.md) | A política do oponente: forma da decisão, heurísticas e como medi-las | Confirmado |
 
 Ele existe separado da spec da H15 por uma razão de tipo, não de tamanho. Uma spec é
 **descartável** — pronta a história, os testes viram a especificação viva. Isso vale para
