@@ -93,6 +93,7 @@ O essencial para não errar:
 npm run verificar        # lint, formato, tipos, fronteiras, rastreio, teste
 npm run dev              # servidor de desenvolvimento
 npm run teste:observar   # Vitest em watch
+node scripts/medir-forca-da-ia.ts   # forca relativa da IA, fora do verificar
 npx vitest --project nucleo   # só engine/ia/tests, sem custo de DOM
 ```
 
@@ -176,9 +177,43 @@ outros sete campos são o que `iniciarPartida` produz. A rota `/fim`, esqueleto 
 **200 de 200 terminam**, em 6 rodadas na mediana, com placar máximo de 4585. As **66 regras do
 `rules.md` têm teste que as cita** — verificado por script.
 
-**A próxima é a H15** — o oponente por heurística (RF5.1, RF5.2, RF5.3) —, e ela não tem spec. A
-IA aleatória **não** é descartada nela: a E7 fixou que ela vira a linha de base contra a qual a
-heurística é medida, e o gatilho do limiar de 70% no `roadmap.md` §3 espera esse número.
+**A H15 fechou o Marco V, e o número saiu com folga: 97,8% de força relativa em 600 partidas,
+intervalo de 95% entre 96,7% e 99,0%.** A E6 pede 70% e a IA11 exige o limite inferior. A IA
+aleatória não foi descartada — virou `porSorteio`, a linha de base da medição, como a E7 mandou.
+
+**A próxima é a H16 e o Marco VI**, o de produto: abandono com confirmação, regras na aplicação,
+celular e teclado, acabamento visual.
+
+**A H15 trocou o sorteio por heurística, e o que ela ensinou não veio de teste falhando.** A
+`ia-strategy.md` nasceu como documento de fundação **fora das ondas** (IA1–IA11), e a razão é de
+tipo, não de tamanho: spec é descartável porque os testes viram a especificação viva, e isso vale
+para **regra**, que tem resposta certa, não para **heurística**, que é política com custo. Um teste
+prende *"prefere baixar a descartar"* e não prende **por quê**.
+
+**Três achados da H15, e nenhum deles é um teste vermelho:**
+
+- **O navegador achou a trava do lixo, e as 600 partidas não.** O saldo da IA9 é ilimitado por
+  baixo no tamanho do lixo: medido, **+11** com lixo de 0 a 9 cartas e **−140** entre 60 e 69.
+  Passado o ponto em que vira negativo, o lixo só cresce e a IA nunca mais o pega — trava que se
+  realimenta, vista chegando a 70 cartas. Contra a aleatória isso **não acontece**, porque ela
+  pega o lixo em metade das compras e ele não passa de 16. É a lição da H14 com outro nome:
+  simulação que prevê o app precisa copiar o app, e desta vez o que faltava copiar não era a
+  semeadura — era o **oponente**.
+- **A margem larga é informação sobre a linha de base.** Um limiar que 97,8% cumpre não separa
+  esta heurística da próxima. O 70% da E6 nasceu como palpite e a medição diz que ele era baixo
+  demais para servir de comparação entre políticas.
+- **O fator `dobro` da IA5 é inerte na decisão**, e foi a mutação que **passa** que mostrou. Ele
+  multiplica a única família positiva de parcelas — `baixar` e `aumentar` —, que só competem entre
+  si; nenhuma comparação inverte quando ele muda. A IA5 está certa sobre a R11.3 e não muda
+  escolha nenhuma até existir parcela positiva fora daquela família.
+
+> **Duas mutações passavam por motivo que importava, e as duas viraram critério.** A `CA-S147-2`
+> passava com o bônus do curinga **zerado**, porque a fixture tinha sequência de copas e o
+> desempate alfabético da S150 escolhia copas sozinho — a mesma armadilha da H12, agora com nome:
+> **fixture em que duas causas dão a mesma resposta**. E a `CA-S145-3`, que era a defesa inteira da
+> S145, não pegava o defeito da `CA-S140-4`: em 30 partidas sorteadas nenhum `aumentar` que zere a
+> mão chega perto de uma canastra limpa. Uma decisão que se defende com "existe um teste que
+> confere" precisa que o teste **visite o caso temido**, e não só que ele exista.
 
 Dezesseis coisas que valem saber antes de mexer no que estas onze fatias deixaram:
 
