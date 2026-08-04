@@ -22,6 +22,9 @@ export default defineConfig({
         test: {
           name: 'interface',
           environment: 'jsdom',
+          // O `<dialog>` do jsdom não tem `showModal` (S154). O remendo mora na
+          // infraestrutura de teste, e não num `if` dentro do código de produção.
+          setupFiles: ['./src/testes/jsdom-dialog.ts'],
           include: ['src/ui/**/*.test.{ts,tsx}', 'src/estado/**/*.test.{ts,tsx}'],
         },
       },
@@ -30,7 +33,7 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'html'],
       include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/main.tsx', 'src/**/*.test.{ts,tsx}', 'src/engine/testing/**'],
+      exclude: ['src/main.tsx', 'src/**/*.test.{ts,tsx}', 'src/engine/testing/**', 'src/testes/**'],
       // testing-strategy.md E4: piso de linhas na engine.
       // A metrica que bloqueia o CI e cobertura por regra (E3), nao esta.
       thresholds: {

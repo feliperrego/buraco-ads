@@ -14,7 +14,7 @@ import TelaPartida from '../telas/TelaPartida.tsx'
  * navegação termina, não por qual mecanismo.
  */
 export default function RotaPartida() {
-  const { partida, jogar, seguirParaProximaRodada } = usePartidaEmCurso()
+  const { partida, jogar, seguirParaProximaRodada, abandonar } = usePartidaEmCurso()
   const navegar = useNavigate()
 
   useEffect(() => {
@@ -51,6 +51,7 @@ export default function RotaPartida() {
       movimentos={movimentosValidos(visao)}
       aoJogar={jogar}
       aoSeguir={seguir}
+      aoAbandonar={abandonar}
     />
   )
 }

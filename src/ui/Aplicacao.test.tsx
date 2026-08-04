@@ -1,5 +1,5 @@
 import { createMemoryHistory } from '@tanstack/react-router'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import Aplicacao from './Aplicacao.tsx'
 import { PAUSA_DA_IA_MS } from '../estado/turno-da-ia.ts'
@@ -68,7 +68,13 @@ describe('S37 — a partida continua depois do turno da IA', () => {
       expect(screen.getByRole('region', { name: /vez e fase/i }).textContent).toMatch(
         /vez do adversário/i,
       )
-      expect(screen.queryAllByRole('button')).toHaveLength(0)
+      // S153 — o botão de abandonar (RF1.3) responde sempre, inclusive na vez do
+      // adversário, então a âncora conta os botões **das regiões** da mesa. Era
+      // `queryAllByRole('button')` até a H16, e a asserção era mais específica
+      // que o critério: o que ela prova é que a mesa ficou inerte.
+      expect(
+        screen.getAllByRole('region').flatMap((regiao) => within(regiao).queryAllByRole('button')),
+      ).toHaveLength(0)
 
       // As pausas são avançadas **uma por vez**. A S33 aplica um comando por
       // passagem, e o temporizador seguinte só é agendado depois de o React

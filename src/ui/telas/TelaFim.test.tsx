@@ -39,3 +39,14 @@ describe('S135 e RF1.5 — vencedor, placar e nova partida', () => {
     expect(aoJogarDeNovo).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('S153 — abandonar não existe fora da partida', () => {
+  it('CA-S153-2 — a tela de fim não oferece abandonar', () => {
+    render(<TelaFim vencedor={0} placar={[3200, 900]} aoJogarDeNovo={vi.fn()} />)
+
+    // Âncora positiva, e ela é a decisão da S153: a `/fim` continua com **um**
+    // caminho, o da RF1.5, e não ganha saída nova junto com a H16.
+    expect(screen.getByRole('button', { name: /nova partida/i })).toBeDefined()
+    expect(screen.queryByRole('button', { name: /abandonar/i })).toBeNull()
+  })
+})

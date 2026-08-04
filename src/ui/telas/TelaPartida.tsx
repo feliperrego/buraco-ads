@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PONTOS_PARA_VENCER, categoriaDe, totalDe, valorDa } from '../../engine/index.ts'
 import type {
   Carta,
@@ -33,6 +33,8 @@ type Props = {
    * tela de fim.
    */
   readonly aoSeguir: () => void
+  /** S153/S155 — RF1.3. A tela confirma; quem zera e navega é quem chamou. */
+  readonly aoAbandonar: () => void
 }
 
 function nomeDa(carta: Carta): string {
@@ -406,7 +408,47 @@ function contem(cartas: ReadonlySet<string>, ids: readonly string[]): boolean {
   return ids.every((id) => cartas.has(id))
 }
 
-export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir }: Props) {
+/**
+ * S154 — a confirmação da RF1.3, em `<dialog>` nativo.
+ *
+ * O `showModal()` é chamado por `ref` porque é ele — e não o atributo `open` —
+ * que traz foco preso e `Esc`, as duas coisas que a RNF3.4 vai cobrar na H18 e
+ * que uma `div` própria faria a gente escrever. A alternativa recusada foi o
+ * `confirm()` do navegador: os rótulos dele vêm no idioma do sistema, e a RNF3.2
+ * fixa português como idioma único.
+ *
+ * O `onClose` cobre o caminho que não passa por botão nenhum — o `Esc` —, e ele
+ * cai no **cancelar**: sair sem escolher não descarta progresso.
+ */
+function ConfirmarAbandono({
+  aoConfirmar,
+  aoCancelar,
+}: {
+  readonly aoConfirmar: () => void
+  readonly aoCancelar: () => void
+}) {
+  const dialogo = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    dialogo.current?.showModal()
+  }, [])
+
+  return (
+    <dialog ref={dialogo} aria-label="Abandonar a partida" onClose={aoCancelar}>
+      <p>Abandonar agora descarta o progresso desta partida. Não dá para voltar atrás.</p>
+
+      <button type="button" onClick={aoConfirmar}>
+        Abandonar
+      </button>
+      <button type="button" onClick={aoCancelar}>
+        Continuar jogando
+      </button>
+    </dialog>
+  )
+}
+
+export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAbandonar }: Props) {
+  const [confirmandoAbandono, setConfirmandoAbandono] = useState(false)
   // T5 — a máquina de estados de seleção vive em `ui/`, separada do domínio. A
   // engine não sabe o que é "carta selecionada": para ela só existem comandos.
   const [selecionadas, setSelecionadas] = useState<readonly string[]>([])
@@ -454,6 +496,26 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir }: Pr
   return (
     <>
       <h1>Partida</h1>
+
+      {/* S153 — RF1.3. Vive **só** aqui: na inicial não há o que abandonar, e na
+          `/fim` a partida já acabou. */}
+      <button
+        type="button"
+        onClick={() => {
+          setConfirmandoAbandono(true)
+        }}
+      >
+        Abandonar partida
+      </button>
+
+      {confirmandoAbandono ? (
+        <ConfirmarAbandono
+          aoConfirmar={aoAbandonar}
+          aoCancelar={() => {
+            setConfirmandoAbandono(false)
+          }}
+        />
+      ) : null}
 
       <section aria-label="Placar">
         <p>

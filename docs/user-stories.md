@@ -172,6 +172,11 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 - `[D]` H19 (acabamento visual) fica **por último**, depois de a partida
   funcionar de ponta a ponta.
 
+> **H16 fechada em 2026-08-04.** A RF1.3 é um `<dialog>` nativo, e a escolha se pagou no
+> navegador: foco preso e `Esc` funcionam sem uma linha nossa, e o `Esc` cai no **cancelar** —
+> sair sem escolher não descarta progresso. A RF1.4 avisa com partida em andamento e não avisa
+> sem, conferido nos dois lados num navegador de verdade.
+
 > Cada história do Marco I ao V entrega uma interface funcional e feia. Isso é deliberado: uma
 > tela bonita construída sobre regras erradas precisa ser refeita, enquanto uma tela feia
 > sobre regras corretas só precisa de estilo. E as decisões visuais ficam melhores quando já

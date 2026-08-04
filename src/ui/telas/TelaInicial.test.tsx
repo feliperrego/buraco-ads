@@ -16,3 +16,14 @@ describe('RF1.2 — a tela inicial tem uma ação só', () => {
     expect(screen.getByRole('button', { name: /iniciar partida/i })).toBeDefined()
   })
 })
+
+describe('S153 — abandonar não existe fora da partida', () => {
+  it('CA-S153-2 — a tela inicial não oferece abandonar', () => {
+    render(<TelaInicial aoIniciar={vi.fn()} />)
+
+    // Âncora positiva: a tela **tem** botão, e é o de iniciar. Sem ela, "não há
+    // abandonar" seria verdade numa tela vazia (CA-S1-1, CA-S27-1).
+    expect(screen.getByRole('button', { name: /iniciar partida/i })).toBeDefined()
+    expect(screen.queryByRole('button', { name: /abandonar/i })).toBeNull()
+  })
+})

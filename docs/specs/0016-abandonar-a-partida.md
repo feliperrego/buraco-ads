@@ -1,6 +1,6 @@
 # Spec 0016 — H16: abandonar a partida
 
-> Status: **rascunho anotado** — 6 decisões, todas pendentes
+> Status: **confirmada** — 6 decisões, confirmadas em bloco em 2026-08-04
 > História: `H16` — _"Abandono a partida com confirmação, e sou avisado antes de fechar a janela"_
 > Fecha: RF1.3, RF1.4
 > Abre o Marco VI
@@ -26,7 +26,7 @@ em jogo: abandonar não é jogada, é sair.
 
 ## 2. Onde mora o botão
 
-- `[P]` **S153** — O botão _"Abandonar partida"_ vive na **tela de partida**, e em nenhuma
+- `[D]` **S153** — O botão _"Abandonar partida"_ vive na **tela de partida**, e em nenhuma
   outra. Na `/fim` não existe: a partida acabou, e o que aquela tela oferece é _"Nova partida"_
   (S133). Na inicial não há o que abandonar.
 
@@ -47,7 +47,7 @@ A RF1.3 exige confirmação **antes de descartar o progresso**. Três formas:
 | **B — `confirm()`**  | modal do navegador                          | texto não é nosso, estilo não é nosso, e a RNF3.2 pede português — o rótulo dos botões vem do idioma do sistema, não do nosso                              |
 | **C — `div` própria** | painel sobreposto escrito à mão             | foco, `Esc` e clique fora viram código nosso, e a H18 teria de refazê-los para a RNF3.4                                                                    |
 
-- `[P]` **S154** — Forma **A**, `<dialog>` com `showModal()`. O argumento decisivo é a **RNF3.4**:
+- `[D]` **S154** — Forma **A**, `<dialog>` com `showModal()`. O argumento decisivo é a **RNF3.4**:
   a navegação por teclado é requisito, e o `<dialog>` modal já entrega foco preso e `Esc` — as
   duas coisas que a forma **C** faria a H18 escrever de novo.
 
@@ -64,7 +64,7 @@ A RF1.3 exige confirmação **antes de descartar o progresso**. Três formas:
 Abandonar faz duas coisas: apaga a partida e leva o jogador à tela inicial. Elas moram em
 camadas diferentes, e misturá-las é o erro fácil.
 
-- `[P]` **S155** — `abandonar` é ação nova do reducer, e ela **só** zera a partida. A navegação
+- `[D]` **S155** — `abandonar` é ação nova do reducer, e ela **só** zera a partida. A navegação
   para `/` é da `ui/`, como já é no botão _"Ver o resultado"_ da S134. O reducer continua sem
   conhecer rota.
 
@@ -83,12 +83,12 @@ A RF1.4 é a API `beforeunload`. Ela tem duas particularidades que mudam o desen
 2. O texto é do navegador. Como no `confirm()`, não é nosso — mas aqui não há alternativa, e a
    RNF3.2 não é violada por algo que a plataforma não deixa traduzir.
 
-- `[P]` **S156** — O ouvinte de `beforeunload` mora em `estado/`, num efeito do
+- `[D]` **S156** — O ouvinte de `beforeunload` mora em `estado/`, num efeito do
   `ProvedorDaPartida`, e é **registrado e removido** conforme a partida existir. Não fica sempre
   registrado com um `if` dentro: um ouvinte que existe sempre é indistinguível, em teste, de um
   ouvinte que avisa sempre.
 
-- `[P]` **S157** — "Partida em andamento" é `partida !== null && vencedorDa(partida) === null`.
+- `[D]` **S157** — "Partida em andamento" é `partida !== null && vencedorDa(partida) === null`.
   A rodada encerrada **no meio** da partida conta como em andamento — o placar acumulado se
   perde igual. O que não conta é a partida decidida, porque ali não há progresso a proteger.
 
@@ -103,7 +103,7 @@ A RF1.4 é a API `beforeunload`. Ela tem duas particularidades que mudam o desen
 Os dois requisitos desta fatia são fáceis de testar **errado**, e pelo mesmo motivo: os dois têm
 um caso negativo que passa de graça.
 
-- `[P]` **S158** — Cada um dos dois ganha o **par**: o aviso presente com partida em andamento
+- `[D]` **S158** — Cada um dos dois ganha o **par**: o aviso presente com partida em andamento
   **e ausente** na tela inicial e na partida decidida; o diálogo abrindo no clique **e** a
   partida sobrevivendo ao cancelamento. Sem o par, "não avisa quando não deve" é verdade num
   componente que nunca avisa.
@@ -160,7 +160,7 @@ um caso negativo que passa de graça.
 
 ## 9. Decisões
 
-Seis propostas. Nenhuma confirmada.
+Seis decisões, confirmadas em bloco em 2026-08-04.
 
 | #        | Assunto  | Proposta                                                                                              |
 | -------- | -------- | ----------------------------------------------------------------------------------------------------- |
@@ -170,6 +170,59 @@ Seis propostas. Nenhuma confirmada.
 | **S156** | Estado   | O ouvinte de `beforeunload` é **registrado e removido**, nunca sempre presente com `if` dentro         |
 | **S157** | Regra    | "Em andamento" = `partida !== null && vencedorDa(partida) === null`, reusando a `vencedorDa` da H13    |
 | **S158** | Teste    | Cada requisito ganha o **par** positivo/negativo; o caso temido é o **cancelar**                      |
+
+---
+
+## 10. O que a fatia mediu
+
+Escrito depois da implementação.
+
+### 10.1 O passo 3 rodou, e o que passou de graça tinha âncora
+
+**15 testes vermelhos** antes da primeira linha de implementação. Dois passaram de graça, e os
+dois são a `CA-S153-2` — negativos puros, sobre telas que já existiam. Cada um tem sua âncora
+positiva verde ao lado, que é o que a regra do acordo pede.
+
+**Seis mutações propositais, seis mordem.** A que mais importa é a menor: trocar o *"continuar
+jogando"* por abandono reprova **um** teste, a `CA-S155-2` — exatamente o caso temido que a S158
+mandou visitar. Sem ele, um botão que abandonasse direto passaria em tudo o mais.
+
+### 10.2 O jsdom não implementa `<dialog>`, e o remendo não foi para o código
+
+A S154 escolheu o elemento nativo pelo que o **navegador** faz com ele. O jsdom não tem
+`showModal` nem `close`, então o caminho fácil seria um `if (typeof dialogo.showModal ===
+'function')` dentro do componente — uma checagem que existe só por causa do ambiente de teste,
+escrita no que vai para o ar.
+
+O remendo mora em `src/testes/jsdom-dialog.ts`, ligado como `setupFiles` do projeto de interface.
+E ele **não prova** o que a S154 comprou: foco preso e `Esc` continuam sendo comportamento de
+plataforma. Quem os verificou foi rodar o app — e os dois estão lá:
+
+| Verificado no navegador | |
+|---|---|
+| foco dentro do diálogo ao abrir | **sim** |
+| `Esc` fecha **sem** abandonar | **sim**, rota continua `/partida` |
+| cancelar mantém a mesa idêntica | **sim**, lixo byte a byte igual |
+| `beforeunload` **com** partida | `defaultPrevented = true` |
+| `beforeunload` **sem** partida | `defaultPrevented = false` |
+| confirmar leva a `/` e a partida nova nasce em `0 × 0` | **sim** |
+| erros de console | nenhum |
+
+O par da RF1.4 — avisa com partida, não avisa sem — foi conferido num navegador de verdade, e é
+o que nenhum teste em jsdom alcança sozinho.
+
+### 10.3 Quatro testes antigos quebraram por acoplamento, pela quarta fatia seguida
+
+`CA-S1-1`, `CA-S18-1`, `CA-S27-1`, `CA-S49-1` e a `CA-S37-1` afirmavam
+`queryAllByRole('button')).toHaveLength(0)` — "nenhum botão na página" — quando o critério delas
+fala da **mesa inerte**. O botão de abandonar é o primeiro elemento da interface que responde
+**sempre**, inclusive na vez do adversário, e por isso ele as quebrou.
+
+O conserto foi contar os botões **das regiões**, que é o que os critérios sempre disseram. O sinal
+para reconhecer o caso continua o mesmo desde a H7: **o teste que quebra não é sobre a fatia
+nova**.
+
+---
 
 ### Onde eu erraria, se errasse
 

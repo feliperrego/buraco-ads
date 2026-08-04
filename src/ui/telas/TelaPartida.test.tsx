@@ -31,6 +31,20 @@ function nomeLegivel(uma: Carta): string {
   return `${uma.valor} de ${uma.naipe.toLowerCase()}`
 }
 
+/**
+ * S153 — a partir da H16 a tela tem **um** botão que não é da mesa: o de
+ * abandonar (RF1.3). Ele responde sempre, inclusive na vez do adversário, e é
+ * por isso que os critérios sobre a mesa inerte contam os botões **das regiões**
+ * em vez de contar os da página.
+ *
+ * É a quarta vez que um teste antigo quebra assim — H7, H13, H15 e agora —, e o
+ * sinal é o mesmo: a asserção era mais específica que o critério. "Nenhum botão
+ * na página" nunca foi o que a CA-S1-1 quis dizer.
+ */
+function botoesDaMesa(): readonly HTMLElement[] {
+  return screen.getAllByRole('region').flatMap((regiao) => within(regiao).queryAllByRole('button'))
+}
+
 const ONZE_VALORES: readonly Valor[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J']
 
 function visaoInicial(ajustes: Partial<VisaoDoJogador> = {}): VisaoDoJogador {
@@ -73,14 +87,20 @@ function descartesDe(visao: VisaoDoJogador): readonly Comando[] {
 describe('S1 e S18 — quando a mesa não responde', () => {
   it('CA-S1-1 — sem movimentos disponíveis, nenhum elemento da mesa responde a clique', () => {
     render(
-      <TelaPartida visao={visaoInicial()} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />,
+      <TelaPartida
+        visao={visaoInicial()}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
     )
 
     // A âncora positiva vem primeiro, e é o que dá sentido ao resto: sem ela,
     // um componente que não renderiza nada passaria neste critério de graça.
     expect(screen.getAllByRole('region').length).toBeGreaterThan(0)
 
-    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    expect(botoesDaMesa()).toHaveLength(0)
     expect(screen.queryAllByRole('link')).toHaveLength(0)
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
   })
@@ -90,17 +110,31 @@ describe('S1 e S18 — quando a mesa não responde', () => {
 
     // A S20 já garante que `movimentosValidos` devolve vazio aqui. A tela não
     // reimplementa isso: ela simplesmente não tem o que oferecer.
-    render(<TelaPartida visao={visao} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />)
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
 
     expect(screen.getAllByRole('region').length).toBeGreaterThan(0)
-    expect(screen.queryAllByRole('button')).toHaveLength(0)
+    expect(botoesDaMesa()).toHaveLength(0)
   })
 })
 
 describe('RF3.3 e R4.3 — o que a mesa mostra', () => {
   it('CA-S1-2 — a contagem do monte mostra 60 e o lixo indica vazio', () => {
     render(
-      <TelaPartida visao={visaoInicial()} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />,
+      <TelaPartida
+        visao={visaoInicial()}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
     )
 
     expect(screen.getByRole('region', { name: /monte/i }).textContent).toContain('60')
@@ -116,6 +150,7 @@ describe('RF3.3 e R4.3 — o que a mesa mostra', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -135,6 +170,7 @@ describe('RF3.3 e R4.3 — o que a mesa mostra', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -155,6 +191,7 @@ describe('S27 — descartar exige selecionar e confirmar', () => {
         movimentos={descartesDe(visao)}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -162,7 +199,7 @@ describe('S27 — descartar exige selecionar e confirmar', () => {
     // afirmar que o confirmar está ausente. Sem isto, uma tela que não renderiza
     // botão nenhum passaria neste critério de graça — foi o que aconteceu na
     // primeira execução deste teste.
-    expect(screen.getAllByRole('button')).toHaveLength(visao.mao.length)
+    expect(botoesDaMesa()).toHaveLength(visao.mao.length)
 
     expect(screen.queryByRole('button', { name: /descartar/i })).toBeNull()
   })
@@ -177,6 +214,7 @@ describe('S27 — descartar exige selecionar e confirmar', () => {
         movimentos={descartesDe(visao)}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -222,6 +260,7 @@ describe('S48 e S49 — seleção por conjunto', () => {
         movimentos={[...descartesDe(visao), baixar]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -243,6 +282,7 @@ describe('S48 e S49 — seleção por conjunto', () => {
         movimentos={[...descartesDe(visao), baixarDe(SEQUENCIA)]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -264,11 +304,12 @@ describe('S48 e S49 — seleção por conjunto', () => {
         movimentos={[...descartesDe(visao), baixarDe(SEQUENCIA)]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
     // Âncora positiva: antes de selecionar, a mão inteira responde.
-    expect(screen.getAllByRole('button')).toHaveLength(visao.mao.length)
+    expect(botoesDaMesa()).toHaveLength(visao.mao.length)
 
     fireEvent.click(screen.getByRole('button', { name: /^5 de copas$/i }))
 
@@ -301,6 +342,7 @@ describe('R6.1 — o jogo baixado fica visível na mesa', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -358,6 +400,7 @@ describe('S60 — dois comandos para a mesma seleção', () => {
         movimentos={[...descartesDe(visao), SEM_CURINGA, COM_CURINGA]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -382,6 +425,7 @@ describe('S60 — dois comandos para a mesma seleção', () => {
         movimentos={[...descartesDe(visao), SEM_CURINGA, COM_CURINGA]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -415,6 +459,7 @@ describe('R1.3 — o papel do curinga é visível na mesa', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -491,6 +536,7 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
         movimentos={[...descartesDe(visao), AUMENTAR_BAIXO, AUMENTAR_ALTO]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -519,6 +565,7 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
         movimentos={[...descartesDe(visao), AUMENTAR_BAIXO, AUMENTAR_ALTO]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -543,7 +590,15 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
       meusJogos: [crescido],
     })
 
-    render(<TelaPartida visao={visao} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />)
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
 
     const mesa = screen.getByRole('region', { name: /meus jogos/i })
     const mao = screen.getByRole('region', { name: /minha mão/i })
@@ -580,6 +635,7 @@ describe('S74 — o rótulo nomeia o jogo alvo', () => {
         movimentos={[...descartesDe(visao), segundo]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -611,6 +667,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[{ tipo: 'comprarDoMonte' }, PEGAR]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -629,6 +686,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[PEGAR]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -652,6 +710,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[PEGAR]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -672,6 +731,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -687,6 +747,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[PEGAR]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -712,6 +773,7 @@ describe('S83 — o lixo fica acionável sem deixar de ser visível', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -757,7 +819,13 @@ describe('RF3.5 — os jogos dos dois jogadores, com categoria', () => {
   it('CA-S92-2 — sem jogos, o painel do adversário diz que a mesa dele está vazia', () => {
     // A âncora do outro lado, e ela já passava: o defeito só aparecia com jogos.
     render(
-      <TelaPartida visao={visaoInicial()} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />,
+      <TelaPartida
+        visao={visaoInicial()}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
     )
 
     expect(screen.getByRole('region', { name: /jogos do adversário/i }).textContent).toMatch(
@@ -774,6 +842,7 @@ describe('RF3.5 — os jogos dos dois jogadores, com categoria', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -795,6 +864,7 @@ describe('RF3.5 — os jogos dos dois jogadores, com categoria', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -814,6 +884,7 @@ describe('S93 — o rótulo de categoria na mesa', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -831,6 +902,7 @@ describe('S93 — o rótulo de categoria na mesa', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -851,6 +923,7 @@ describe('S93 — o rótulo de categoria na mesa', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -908,6 +981,7 @@ describe('S101 — limpar a canastra', () => {
         movimentos={[...descartesDe(visao), LIMPAR]}
         aoJogar={aoJogar}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -944,6 +1018,7 @@ describe('S101 — limpar a canastra', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -968,6 +1043,7 @@ describe('S108 — o painel de mortos', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -984,6 +1060,7 @@ describe('S108 — o painel de mortos', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1010,6 +1087,7 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1028,6 +1106,7 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1046,6 +1125,7 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1065,6 +1145,7 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
         movimentos={descartesDe(visaoInicial())}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1073,7 +1154,15 @@ describe('S117 — a rodada encerrada aparece na tela', () => {
     ).toBeGreaterThan(0)
 
     cleanup()
-    render(<TelaPartida visao={visao} movimentos={[]} aoJogar={vi.fn()} aoSeguir={vi.fn()} />)
+    render(
+      <TelaPartida
+        visao={visao}
+        movimentos={[]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
+      />,
+    )
 
     expect(
       within(screen.getByRole('region', { name: /minha mão/i })).queryAllByRole('button'),
@@ -1111,6 +1200,7 @@ describe('S126 — o painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1134,6 +1224,7 @@ describe('S126 — o painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1165,6 +1256,7 @@ describe('S126 — o painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1183,6 +1275,7 @@ describe('S126 — o painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1210,6 +1303,7 @@ describe('S134 — o botão do painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1231,6 +1325,7 @@ describe('S134 — o botão do painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1251,6 +1346,7 @@ describe('S134 — o botão do painel de apuração', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={aoSeguir}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1281,6 +1377,7 @@ describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1298,6 +1395,7 @@ describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1311,6 +1409,7 @@ describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1328,6 +1427,7 @@ describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
         movimentos={[]}
         aoJogar={vi.fn()}
         aoSeguir={vi.fn()}
+        aoAbandonar={vi.fn()}
       />,
     )
 
@@ -1335,5 +1435,86 @@ describe('S142 e S143 — o fim sem batida, e o morto que virou monte', () => {
 
     expect(painel.textContent).toMatch(/nenhum morto/i)
     expect(painel.textContent).not.toMatch(/virou monte/i)
+  })
+})
+
+/**
+ * Critérios de interface da spec 0016 §7 — a H16.
+ *
+ * S158 — cada requisito ganha o **par**. O caso temido aqui é o **cancelar**: é
+ * ele que separa "confirmação" de "botão com um passo a mais", e sem ele a
+ * `CA-S154-1` passaria num botão que abandona direto.
+ */
+describe('S153 e S154 — abandonar a partida, com confirmação', () => {
+  function renderizada(aoAbandonar = vi.fn()) {
+    render(
+      <TelaPartida
+        visao={visaoInicial()}
+        movimentos={[{ tipo: 'comprarDoMonte' }]}
+        aoJogar={vi.fn()}
+        aoSeguir={vi.fn()}
+        aoAbandonar={aoAbandonar}
+      />,
+    )
+
+    return aoAbandonar
+  }
+
+  it('CA-S153-1 — a tela de partida oferece o botão de abandonar', () => {
+    renderizada()
+
+    expect(screen.getByRole('button', { name: /abandonar partida/i })).toBeDefined()
+  })
+
+  it('CA-S154-1 — clicar abre o diálogo, e nada é abandonado ainda', () => {
+    const aoAbandonar = renderizada()
+
+    // Âncora negativa antes: sem ela, "o diálogo aparece" não prova que ele não
+    // estava lá o tempo todo.
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: /abandonar partida/i }))
+
+    expect(screen.getByRole('dialog')).toBeDefined()
+    expect(aoAbandonar).not.toHaveBeenCalled()
+  })
+
+  it('CA-S154-2 — o diálogo pergunta em português e nomeia as duas saídas', () => {
+    renderizada()
+    fireEvent.click(screen.getByRole('button', { name: /abandonar partida/i }))
+
+    const dialogo = within(screen.getByRole('dialog'))
+
+    expect(dialogo.getByRole('button', { name: /^abandonar$/i })).toBeDefined()
+    expect(dialogo.getByRole('button', { name: /continuar jogando/i })).toBeDefined()
+    expect(screen.getByRole('dialog').textContent).toMatch(/progresso/i)
+  })
+
+  it('CA-S155-1 — confirmar avisa quem cuida de zerar e navegar', () => {
+    const aoAbandonar = renderizada()
+
+    fireEvent.click(screen.getByRole('button', { name: /abandonar partida/i }))
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^abandonar$/i }),
+    )
+
+    expect(aoAbandonar).toHaveBeenCalledTimes(1)
+  })
+
+  it('CA-S155-2 — cancelar fecha o diálogo e não abandona nada', () => {
+    // O caso temido da S158. Um botão que abandonasse direto passaria em todos
+    // os critérios acima e reprovaria só neste.
+    const aoAbandonar = renderizada()
+
+    fireEvent.click(screen.getByRole('button', { name: /abandonar partida/i }))
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: /continuar jogando/i }),
+    )
+
+    expect(aoAbandonar).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).toBeNull()
+
+    // E a mesa continua jogável: o diálogo não deixou resto.
+    expect(screen.getByRole('button', { name: /comprar do monte/i })).toBeDefined()
   })
 })

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useReducer } from 'react'
 import type { ReactNode } from 'react'
 import type { Comando } from '../engine/index.ts'
-import { Contexto, INICIAL, reduzir, sortearSemente } from './partida-em-curso.ts'
+import { Contexto, INICIAL, emAndamento, reduzir, sortearSemente } from './partida-em-curso.ts'
 import type { ContextoDaPartida } from './partida-em-curso.ts'
 import { IA, PAUSA_DA_IA_MS, comandoDaIa } from './turno-da-ia.ts'
 
@@ -46,6 +46,30 @@ export default function ProvedorDaPartida({ children }: { children: ReactNode })
     // de novo, e a IA decide o próximo. Comprar e descartar saem de duas voltas.
   }, [partida])
 
+  // RF1.4/S156 — o aviso antes de fechar a janela, e ele **entra e sai** com a
+  // partida. Um ouvinte permanente que decidisse na hora com um `if` passaria em
+  // qualquer teste que dispare o evento, e a CA-S156-2 existe para separar os
+  // dois casos: sem partida, não há ouvinte nenhum registrado.
+  //
+  // O `preventDefault` é o que a plataforma pede hoje. Se o navegador mostra o
+  // aviso depende de ter havido interação com a página — isso não está sob nosso
+  // controle e nenhum teste em jsdom o alcança.
+  useEffect(() => {
+    if (!emAndamento(partida)) {
+      return
+    }
+
+    const avisar = (evento: BeforeUnloadEvent) => {
+      evento.preventDefault()
+    }
+
+    window.addEventListener('beforeunload', avisar)
+
+    return () => {
+      window.removeEventListener('beforeunload', avisar)
+    }
+  }, [partida])
+
   const valor = useMemo<ContextoDaPartida>(
     () => ({
       partida: estado.partida,
@@ -60,6 +84,9 @@ export default function ProvedorDaPartida({ children }: { children: ReactNode })
       // proíbe a engine de sortear, e a S8 mantém o reducer puro.
       seguirParaProximaRodada: () => {
         despachar({ tipo: 'novaRodada', semente: sortearSemente() })
+      },
+      abandonar: () => {
+        despachar({ tipo: 'abandonar' })
       },
     }),
     [estado.partida],

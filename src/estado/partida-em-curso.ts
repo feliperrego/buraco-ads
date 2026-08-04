@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import { aplicar, iniciarPartida, novaRodada } from '../engine/index.ts'
+import { aplicar, iniciarPartida, novaRodada, vencedorDa } from '../engine/index.ts'
 import type { Comando, Partida } from '../engine/index.ts'
 
 /**
@@ -21,6 +21,9 @@ export type AcaoDaPartida =
   // S129/S130 — a rodada seguinte não é comando, e a semente dela vem daqui pelo
   // mesmo caminho da primeira: o reducer precisa ser puro (S8).
   | { readonly tipo: 'novaRodada'; readonly semente: number }
+  // S155 — abandonar **só** zera a partida. A navegação para `/` é da `ui/`, e o
+  // reducer continua sem conhecer rota.
+  | { readonly tipo: 'abandonar' }
 
 export type EstadoDaPartida = {
   readonly partida: Partida | null
@@ -40,6 +43,11 @@ export function reduzir(estado: EstadoDaPartida, acao: AcaoDaPartida): EstadoDaP
         ? estado
         : { partida: novaRodada(estado.partida, acao.semente) }
 
+    case 'abandonar':
+      // RF1.3 — e **só** isso. A confirmação é da `ui/` (S154) e a navegação
+      // também (S155): o reducer não conhece diálogo nem rota.
+      return INICIAL
+
     case 'jogar': {
       if (estado.partida === null) {
         return estado
@@ -56,6 +64,21 @@ export function reduzir(estado: EstadoDaPartida, acao: AcaoDaPartida): EstadoDaP
   }
 }
 
+/**
+ * S157 — o que conta como **partida em andamento**, para a RF1.4.
+ *
+ * A rodada encerrada no meio da partida conta: o placar acumulado se perde igual
+ * se a janela fechar ali. O que não conta é a partida decidida, porque não há
+ * progresso a proteger depois do vencedor.
+ *
+ * Reusa a `vencedorDa` da H13 em vez de reler o placar contra `PONTOS_PARA_VENCER`.
+ * Duas definições de "acabou" é o defeito que a S140 mediu com outro nome — e
+ * esta seria a terceira, junto com a `haVencedor` da tela.
+ */
+export function emAndamento(partida: Partida | null): boolean {
+  return partida !== null && vencedorDa(partida) === null
+}
+
 /** S8 — a única fonte de aleatoriedade do sistema, e ela vive fora da engine. */
 export function sortearSemente(): number {
   return Math.floor(Math.random() * 2 ** 32)
@@ -66,6 +89,8 @@ export type ContextoDaPartida = {
   readonly iniciar: () => void
   readonly jogar: (comando: Comando) => void
   readonly seguirParaProximaRodada: () => void
+  /** S155 — RF1.3. Zera a partida; quem navega é a `ui/`. */
+  readonly abandonar: () => void
 }
 
 export const Contexto = createContext<ContextoDaPartida | null>(null)
