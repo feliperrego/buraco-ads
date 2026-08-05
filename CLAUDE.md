@@ -93,6 +93,7 @@ O essencial para não errar:
 npm run verificar        # lint, formato, tipos, fronteiras, rastreio, teste
 npm run dev              # servidor de desenvolvimento
 npm run teste:observar   # Vitest em watch
+npm run e2e              # um teste de ponta a ponta, por teclado e em celular
 node scripts/medir-forca-da-ia.ts   # forca relativa da IA, fora do verificar
 npx vitest --project nucleo   # só engine/ia/tests, sem custo de DOM
 ```
@@ -181,8 +182,18 @@ outros sete campos são o que `iniciarPartida` produz. A rota `/fim`, esqueleto 
 intervalo de 95% entre 96,7% e 99,0%.** A E6 pede 70% e a IA11 exige o limite inferior. A IA
 aleatória não foi descartada — virou `porSorteio`, a linha de base da medição, como a E7 mandou.
 
-**A próxima é a H16 e o Marco VI**, o de produto: abandono com confirmação, regras na aplicação,
-celular e teclado, acabamento visual.
+**O Marco VI fechou, e com ele as dezenove histórias.** O jogo está inteiro: abandono com
+confirmação em `<dialog>` nativo e aviso antes de fechar a janela (H16), as 66 regras dentro da
+aplicação com cobertura verificada por script (H17), teclado e celular medidos em 360 px (H18), e
+acabamento visual (H19).
+
+**A H19 cobrou a promessa mais antiga do projeto, e ela se pagou: os 381 testes de comportamento
+passaram sem um único ajuste** depois de a interface inteira ganhar estilo. A RNF2.2 disse em
+julho que o critério seria comportamento e nunca aparência; a H19 é a única fatia que mexe só na
+aparência, e portanto a única capaz de cobrar.
+
+**O que sobra são duas dívidas registradas, nenhuma bloqueante:** a trava do lixo da IA9
+(`roadmap.md` §3) e o julgamento de gosto sobre a mesa, que a S175 diz explicitamente não medir.
 
 **A H15 trocou o sorteio por heurística, e o que ela ensinou não veio de teste falhando.** A
 `ia-strategy.md` nasceu como documento de fundação **fora das ondas** (IA1–IA11), e a razão é de
@@ -302,6 +313,29 @@ Dezesseis coisas que valem saber antes de mexer no que estas onze fatias deixara
 > errado, é **acrescentar uma decisão depois** e atualizar só o lugar que estava aberto na tela.
 > Desde 2026-08-03 o `verificar-identificadores.py` compara os três, com os três ramos vistos
 > reprovando. Números em documento vivo nascem de script — inclusive os desta seção.
+
+**O Marco VI acrescentou quatro lições, e três delas vieram do navegador:**
+
+- **A H16 escolheu `<dialog>` nativo pela RNF3.4 e a plataforma entregou**: foco preso e `Esc`
+  sem uma linha nossa, confirmados no navegador. O jsdom **não** implementa `showModal`, e o
+  remendo foi para `src/testes/jsdom-dialog.ts` — infraestrutura de teste, não um `if` dentro do
+  componente. O que ele não prova é justamente o que a decisão comprou.
+- **A H17 pôs a tela de regras sob o `verificar-rastreabilidade.py`**, que passou a cobrar um
+  arquivo de **código**: cada bloco cita em comentário os `Rn` que resume, e a tela cobre as 66.
+  A S160 é explícita sobre o limite disso — **cobertura não é fidelidade**.
+- **A H18 corrigiu duas decisões por medição.** A partida completa no Playwright custa ~17
+  minutos de relógio (700 ms por comando da IA); ficou em 20 turnos. E *"todos os elementos
+  visíveis"* reprovaria qualquer página longa — o defeito real é **transbordo horizontal**.
+- **A H19 achou dois defeitos que a suíte não tinha como achar**, os dois na carta selecionada:
+  branca no branco, e depois vermelha sobre verde a 1,9:1. Nos dois o nome acessível estava
+  intacto e **a suíte estava certa em passar**. O segundo ensinou mais, e a lição é sobre o
+  teste: a `CA-S175-1` rodava **antes** de qualquer seleção. Estado que muda cor precisa ser
+  visitado, ou a medição só alcança o estado fácil.
+
+> **Quatro testes antigos quebraram por acoplamento na H16, e é a quarta fatia seguida.** Eles
+> afirmavam *"nenhum botão na página"* quando o critério fala da **mesa inerte** — e o botão de
+> abandonar é o primeiro elemento que responde sempre, inclusive na vez do adversário. O sinal
+> para reconhecer o caso é o mesmo desde a H7: **o teste que quebra não é sobre a fatia nova.**
 
 **As quatro camadas estão de pé e exercitadas**, e desde a H3 as fronteiras deixaram de ser
 hipotéticas: `engine/` (puro, determinístico), `ia/` (recebe só a projeção, nunca a `Partida`),
