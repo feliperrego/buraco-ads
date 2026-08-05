@@ -1,10 +1,247 @@
+/*
+ * S172 — o estilo do projeto, num arquivo só.
+ *
+ * São sete telas pequenas e um punhado de elementos repetidos: o conjunto cabe
+ * aqui e é mais fácil de manter coerente **vendo-o inteiro**. CSS Modules
+ * espalharia por sete arquivos; Tailwind seria dependência nova, e a pergunta do
+ * ADR-0004 continua sendo a mesma — resolve um problema que temos?
+ *
+ * S171 — nada aqui muda nome acessível, papel ou texto. As regras selecionam por
+ * elemento, classe e `data-*`; os 381 testes de comportamento passaram sem
+ * ajuste, e é isso que a RNF2.2 prometia.
+ */
+
 :root {
+  /*
+   * S173 — vira token o que se repete **e precisa combinar**. Token que aparece
+   * uma vez é indireção, não sistema.
+   */
+  --tinta: #16181d;
+  --tinta-fraca: #565b66;
+  --fundo: #f4f2ee;
+  --papel: #ffffff;
+  --borda: #cfc9bf;
+  --realce: #1d5c3f;
+  --realce-tinta: #ffffff;
+  --vermelho: #a4201f;
+  --perigo: #8a2b2b;
+
+  --espaco-1: 0.25rem;
+  --espaco-2: 0.5rem;
+  --espaco-3: 1rem;
+  --espaco-4: 1.5rem;
+
+  --texto-pequeno: 0.85rem;
+  --texto: 1rem;
+  --texto-titulo: 1.5rem;
+
+  --raio: 6px;
+
   font-family: system-ui, sans-serif;
   line-height: 1.5;
-  color-scheme: light dark;
+  color: var(--tinta);
+  background: var(--fundo);
+  /*
+   * O `light dark` saiu: com paleta declarada, deixar o navegador inverter as
+   * cores do sistema desfaria o contraste medido da CA-S175-1. Tema escuro é
+   * trabalho próprio, e nenhum requisito o pede.
+   */
+  color-scheme: light;
 }
 
 body {
   margin: 0;
-  padding: 2rem;
+  padding: var(--espaco-3);
+  background: var(--fundo);
+}
+
+main {
+  max-width: 46rem;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: var(--texto-titulo);
+  margin: 0 0 var(--espaco-3);
+}
+
+h2 {
+  font-size: var(--texto);
+  margin: var(--espaco-4) 0 var(--espaco-2);
+}
+
+h3 {
+  font-size: var(--texto);
+  margin: var(--espaco-3) 0 var(--espaco-1);
+}
+
+p {
+  margin: var(--espaco-2) 0;
+}
+
+a {
+  color: var(--realce);
+}
+
+/* S175 — o foco é visível em **todo** elemento interativo, e a RNF3.4 o exige
+   tanto quanto a H18 exigiu que ele fosse alcançável. */
+:focus-visible {
+  outline: 3px solid var(--realce);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: var(--tinta);
+  background: var(--papel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--espaco-2) var(--espaco-3);
+  margin: 0 var(--espaco-1) var(--espaco-1) 0;
+  cursor: pointer;
+  /* RNF3.1 — alvo de toque confortável no celular. */
+  min-height: 2.75rem;
+}
+
+button:hover {
+  border-color: var(--realce);
+}
+
+button[aria-pressed='true'] {
+  background: var(--realce);
+  color: var(--realce-tinta);
+  border-color: var(--realce);
+}
+
+section {
+  margin: var(--espaco-3) 0;
+}
+
+section > ul,
+section > ol {
+  margin: var(--espaco-2) 0;
+  padding-left: var(--espaco-4);
+}
+
+/* ------------------------------------------------------------------ cartas */
+
+/*
+ * S174 — a carta ganha forma de carta. O nome continua por extenso — "7 de
+ * copas" —, e não vira `7♥`: símbolo não se lê em voz alta, e a S171 proíbe
+ * mexer no nome.
+ */
+.cartas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-1);
+  list-style: none;
+  padding: 0;
+  margin: var(--espaco-2) 0;
+}
+
+.carta {
+  background: var(--papel);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--espaco-1) var(--espaco-2);
+  font-size: var(--texto-pequeno);
+}
+
+.carta button {
+  border: none;
+  background: none;
+  padding: var(--espaco-1);
+  margin: 0;
+  font-size: var(--texto-pequeno);
+  min-height: 2.25rem;
+}
+
+/*
+ * A cor **acompanha** o naipe, e não o carrega sozinha: o naipe continua escrito
+ * na carta. Daltonismo vermelho-verde é comum, e cor como única pista seria a
+ * RNF3.4 pela metade.
+ */
+.carta[data-naipe='COPAS'],
+.carta[data-naipe='OUROS'],
+.carta[data-naipe='COPAS'] button,
+.carta[data-naipe='OUROS'] button,
+.jogo[data-naipe='COPAS'],
+.jogo[data-naipe='OUROS'] {
+  color: var(--vermelho);
+}
+
+/*
+ * A **seleção vence o naipe**, e esta regra fica depois das de cor por naipe de
+ * propósito. A S27 marca a carta selecionada com `aria-pressed`, e aqui a
+ * marcação ganha forma visível.
+ *
+ * **O navegador achou dois defeitos aqui, e a suíte não achou nenhum.** Na
+ * primeira escrita a carta selecionada ficou branca no branco — o seletor de
+ * fundo vinha depois e zerava o realce, sobrando texto branco sobre papel. Na
+ * segunda, a carta de ouros selecionada ficou **vermelha sobre verde**: 1,9:1,
+ * porque a cor de naipe é mais específica que a de seleção.
+ *
+ * Os 381 testes continuaram verdes nas duas vezes, e com razão: nome acessível
+ * intacto, papel intacto, comportamento intacto. Texto invisível é aparência, e
+ * a RNF2.2 fixou que a suíte não olha isso. Quem olha é o passo 6.
+ */
+.carta button[aria-pressed='true'],
+.carta[data-naipe] button[aria-pressed='true'] {
+  background: var(--realce);
+  color: var(--realce-tinta);
+  border-color: var(--realce);
+  border-style: solid;
+  border-width: 1px;
+}
+
+.jogos {
+  list-style: none;
+  padding: 0;
+}
+
+.jogo {
+  background: var(--papel);
+  border: 1px solid var(--borda);
+  border-left: 4px solid currentcolor;
+  border-radius: var(--raio);
+  padding: var(--espaco-2);
+  margin-bottom: var(--espaco-1);
+  font-size: var(--texto-pequeno);
+}
+
+/* ----------------------------------------------------------------- diálogo */
+
+dialog {
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+  padding: var(--espaco-4);
+  max-width: 24rem;
+  color: var(--tinta);
+  background: var(--papel);
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+
+/* --------------------------------------------------------------- navegação */
+
+nav {
+  font-size: var(--texto-pequeno);
+  margin-bottom: var(--espaco-3);
+}
+
+/* Painéis de apoio — atalhos e apuração — em tinta mais fraca, porque são
+   referência e não a mesa. O contraste continua acima de 4.5:1 (CA-S175-1). */
+section[aria-label='Atalhos de teclado'] {
+  color: var(--tinta-fraca);
+  font-size: var(--texto-pequeno);
+}
+
+section[aria-label='Atalhos de teclado'] ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
 }

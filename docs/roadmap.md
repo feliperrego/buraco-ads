@@ -139,7 +139,7 @@ Os marcos de [user-stories.md](user-stories.md), sem datas:
 | **III** ✅ | H8–H12 | Uma rodada completa termina em batida e pontuação apurada |
 | **IV** ✅ | H13–H14 | Uma partida completa chega a 3000, inclusive com monte esgotado |
 | **V** ✅ | H15 | O oponente joga por heurística, não por sorteio |
-| **VI** | H16–H19 | Produto: abandono, regras, celular, acabamento |
+| **VI** ✅ | H16–H19 | Produto: abandono, regras, celular, acabamento |
 
 - `[D]` **Uma história por vez**, sem iteração de tamanho fixo. Cada história
   percorre o ciclo completo: spec em `docs/specs/` → critérios de aceite → testes → código →

@@ -88,7 +88,7 @@ testada, os testes passam a ser a especificação viva.
 | [0016-abandonar-a-partida.md](specs/0016-abandonar-a-partida.md) | H16 — abandonar a partida | **Implementada** — 13 novos e 5 ajustados |
 | [0017-regras-na-aplicacao.md](specs/0017-regras-na-aplicacao.md) | H17 — as regras dentro da aplicação | **Implementada** — 13 novos e 3 ajustados |
 | [0018-celular-e-teclado.md](specs/0018-celular-e-teclado.md) | H18 — celular e teclado | **Implementada** — 5 novos, 1 de ponta a ponta |
-| [0019-acabamento-visual.md](specs/0019-acabamento-visual.md) | H19 — acabamento visual | Rascunho anotado — 6 decisões pendentes |
+| [0019-acabamento-visual.md](specs/0019-acabamento-visual.md) | H19 — acabamento visual | **Implementada** — 381 testes verdes sem ajuste |
 
 ## Verificação
 

@@ -172,6 +172,15 @@ Objetivo: provar a integração engine → estado → interface com o mínimo po
 - `[D]` H19 (acabamento visual) fica **por último**, depois de a partida
   funcionar de ponta a ponta.
 
+> **H19 fechada em 2026-08-04 — o Marco VI e as dezenove histórias com ela.** O resultado que mais
+> vale: os **381 testes de comportamento passaram sem um único ajuste** depois de a interface
+> inteira ganhar estilo. A RNF2.2 prometeu em julho que o critério seria comportamento e nunca
+> aparência, e esta foi a única fatia capaz de cobrar a promessa.
+>
+> E o navegador achou dois defeitos que a suíte não tinha como achar, os dois na carta selecionada:
+> branca no branco, e depois vermelha sobre verde a 1,9:1. Nos dois o nome acessível estava intacto
+> — a suíte estava **certa** em passar.
+
 > **H18 fechada em 2026-08-04, e duas decisões precisaram de conserto — as duas de medição.** A
 > `CA-S170-1` pedia a partida completa no Playwright: medido, custa **~17 minutos de relógio**,
 > porque a RF5.3 põe 700 ms entre os comandos da IA. Ficou em 20 turnos, que rodam em 18 s. E a

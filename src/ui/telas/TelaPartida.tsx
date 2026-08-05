@@ -168,12 +168,12 @@ function ListaDeJogos({ jogos }: { readonly jogos: readonly Jogo[] }) {
   }
 
   return (
-    <ul>
+    <ul className="jogos">
       {jogos.map((jogo) => {
         const categoria = categoriaDe(jogo)
 
         return (
-          <li key={jogo.id}>
+          <li key={jogo.id} className="jogo" data-naipe={jogo.naipe}>
             {jogo.posicoes.map(nomeDaPosicao).join(', ')}
             {categoria === null ? null : ` — ${NOME_DA_CATEGORIA[categoria]}`}
           </li>
@@ -677,9 +677,11 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
         {visao.lixo.length === 0 ? (
           <p>Vazio</p>
         ) : (
-          <ol>
+          <ol className="cartas">
             {visao.lixo.map((carta) => (
-              <li key={carta.id}>{nomeDa(carta)}</li>
+              <li key={carta.id} className="carta" data-naipe={carta.naipe}>
+                {nomeDa(carta)}
+              </li>
             ))}
           </ol>
         )}
@@ -694,9 +696,9 @@ export default function TelaPartida({ visao, movimentos, aoJogar, aoSeguir, aoAb
       </section>
 
       <section aria-label="Minha mão" tabIndex={-1}>
-        <ul>
+        <ul className="cartas">
           {visao.mao.map((carta) => (
-            <li key={carta.id}>
+            <li key={carta.id} className="carta" data-naipe={carta.naipe}>
               {selecionaveis.has(carta.id) ? (
                 <button
                   type="button"
