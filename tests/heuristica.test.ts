@@ -479,3 +479,94 @@ describe('S152 — a T7 remedida com a decisão inteira', () => {
     expect(enumerados).toContainEqual(escolha)
   })
 })
+
+// ---------------------------------------------------------------------------
+// S178 — a trava do lixo (spec 0020)
+// ---------------------------------------------------------------------------
+
+/** O humano do roteiro do navegador: compra do monte e descarta. Nunca pega o lixo. */
+function guloso(visao: Parameters<typeof decidir>[0]): Comando | null {
+  const movimentos = movimentosValidos(visao)
+
+  return (
+    movimentos.find((comando) => comando.tipo === 'comprarDoMonte') ??
+    movimentos.find((comando) => comando.tipo === 'descartar') ??
+    movimentos[0] ??
+    null
+  )
+}
+
+describe('S178 — o lixo é vizinho de si mesmo', () => {
+  const MAO_LONGE = cartas('5♠ 6♠ 7♠ Q♣ J♣')
+
+  it('CA-S178-1 — lixo que se encadeia sozinho é pego, mesmo sem vizinha na mão', () => {
+    // Nenhuma carta de copas na mão: pela definição antiga **nenhuma** delas
+    // encaixava, e o saldo dava −30. Elas encaixam umas nas outras.
+    const partida = mesa({
+      mao: MAO_LONGE,
+      lixo: cartas('3♥ 4♥ 5♥ 6♥ 7♥ 8♥'),
+      fase: 'Compra',
+    })
+
+    expect(decidir(visaoDaVez(partida))?.tipo).toBe('pegarLixo')
+  })
+
+  it('CA-S178-2 — lixo do mesmo tamanho, com cartas espalhadas, não é pego', () => {
+    // O par: muda **só** quais cartas estão no lixo, não quantas.
+    const partida = mesa({
+      mao: MAO_LONGE,
+      lixo: cartas('3♥ 10♥ 9♦ A♦ K♠ 4♣'),
+      fase: 'Compra',
+    })
+
+    expect(decidir(visaoDaVez(partida))?.tipo).toBe('comprarDoMonte')
+  })
+
+  it('CA-S178-3 — a carta não é vizinha de si mesma, nem da própria cópia', () => {
+    const partida = mesa({ mao: MAO_LONGE, lixo: cartas('7♥'), fase: 'Compra' })
+    const visao = visaoDaVez(partida)
+
+    expect(encaixa(visao, cartaDe('COPAS', '7', 2))).toBe(false)
+
+    // Âncora positiva: a vizinha de verdade encaixa pelo lixo.
+    expect(encaixa(visao, cartaDe('COPAS', '8'))).toBe(true)
+  })
+})
+
+describe('S180 — a trava não volta', () => {
+  it('CA-S180-1 — contra quem nunca pega o lixo, ele não estoura', () => {
+    let maiorLixo = 0
+
+    for (let semente = 60; semente < 80; semente += 1) {
+      let partida = iniciarPartida(semente)
+
+      for (let passo = 0; passo < 20000 && partida.fase !== 'RodadaEncerrada'; passo += 1) {
+        const quem = partida.jogadorDaVez
+        const visao = visaoDe(partida, quem)
+
+        maiorLixo = Math.max(maiorLixo, visao.lixo.length)
+
+        const comando = quem === 0 ? guloso(visao) : decidir(visao)
+
+        if (comando === null) {
+          break
+        }
+
+        const resultado = aplicar(partida, comando)
+
+        if (resultado.tipo !== 'sucesso') {
+          break
+        }
+
+        partida = resultado.partida
+      }
+    }
+
+    console.log(`CA-S180-1: maior lixo em 20 rodadas contra o guloso — ${String(maiorLixo)}`)
+
+    // O teto é folgado de propósito: o que se prende é a **ausência da trava**,
+    // não o número. Medido em 70 antes do conserto e em 13 depois — e o arnês da
+    // S151 nunca viu isso, porque a aleatória pega o lixo em metade das compras.
+    expect(maiorLixo).toBeLessThanOrEqual(20)
+  })
+})

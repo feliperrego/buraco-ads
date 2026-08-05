@@ -192,8 +192,19 @@ passaram sem um único ajuste** depois de a interface inteira ganhar estilo. A R
 julho que o critério seria comportamento e nunca aparência; a H19 é a única fatia que mexe só na
 aparência, e portanto a única capaz de cobrar.
 
-**O que sobra são duas dívidas registradas, nenhuma bloqueante:** a trava do lixo da IA9
-(`roadmap.md` §3) e o julgamento de gosto sobre a mesa, que a S175 diz explicitamente não medir.
+**A trava do lixo da IA9 foi consertada em 2026-08-05 (spec 0020), e o diagnóstico registrado
+estava errado.** Não faltava piso no termo negativo: faltava o **lixo contar como vizinho de si
+mesmo**. A R4.2 manda o lixo inteiro de uma vez, e a fórmula avaliava cada carta como se ela
+chegasse sozinha — daí o erro crescer com o tamanho dele. Maior lixo **70 → 13**, força relativa
+**97,8% → 100%**. Pôr piso, a leitura do sintoma, levava só a 24.
+
+> **O 100% torna o limiar da E6 um teto.** Ele já era largo demais na H15; agora não distingue
+> política nenhuma de nenhuma outra. A linha de base útil, daqui em diante, é a **heurística
+> anterior**, não o sorteio.
+
+**O que sobra é uma dívida e um julgamento.** A IA pega o lixo em 92% das compras e não há limiar
+sobre o **tamanho da mão** que ela aceita — mão grande afasta o morto e a batida, e a medição
+contra a aleatória não vê isso. E o gosto sobre a mesa, que a S175 diz explicitamente não medir.
 
 **A H15 trocou o sorteio por heurística, e o que ela ensinou não veio de teste falhando.** A
 `ia-strategy.md` nasceu como documento de fundação **fora das ondas** (IA1–IA11), e a razão é de

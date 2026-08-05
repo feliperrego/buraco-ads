@@ -151,12 +151,22 @@ function saldoDoLixo(visao: VisaoDoJogador): number {
 }
 
 /**
- * S149 — a carta **encaixa** quando há, na mão ou nos meus jogos, outra do mesmo
- * naipe a uma ou duas casas dela (S41).
+ * S149 — a carta **encaixa** quando há, na mão, nos meus jogos **ou no próprio
+ * lixo**, outra do mesmo naipe a uma ou duas casas dela (S41).
  *
  * A distância mínima é **um**, e não zero: a carta idêntica não constrói
  * sequência nenhuma. Duas é o teto porque a sequência mínima tem três (R5.2) e
  * um buraco admite curinga (R5.5) — mais que isso não é encaixe, é esperança.
+ *
+ * **A terceira fonte é o conserto da S178, e ela é a causa da trava do lixo.** A
+ * definição original só olhava a minha mão e os meus jogos, e com isso avaliava
+ * cada carta do lixo como se ela fosse chegar **sozinha**. Mas a R4.2 manda o
+ * lixo inteiro de uma vez: as cartas dele chegam juntas e são vizinhas umas das
+ * outras. O erro crescia com o tamanho do lixo — que é exatamente a forma da
+ * trava, medida chegando a 70 cartas contra um oponente que nunca o pegava.
+ *
+ * O conserto **não** foi pôr piso no termo negativo (a alternativa C da spec
+ * 0020): aquilo trata o sintoma e só deixa a trava mais lenta — 24 em vez de 70.
  */
 export function encaixa(visao: VisaoDoJogador, carta: Carta): boolean {
   const naMao = visao.mao.some((outra) => vizinhas(outra.naipe, casasDe(outra.valor), carta))
@@ -165,11 +175,23 @@ export function encaixa(visao: VisaoDoJogador, carta: Carta): boolean {
     return true
   }
 
-  return visao.meusJogos.some((jogo) =>
+  const nosJogos = visao.meusJogos.some((jogo) =>
     // O valor **representado** (S55): o curinga ocupa a casa do que ele faz, não
     // a do `2` que ele é.
     jogo.posicoes.some((posicao) => vizinhas(jogo.naipe, casasDe(valorDa(posicao)), carta)),
   )
+
+  if (nosJogos) {
+    return true
+  }
+
+  // **Sem filtro pela própria carta, e isso é decisão medida.** A primeira
+  // escrita tinha um `outra.id !== carta.id`, e a mutação que o removeu **não
+  // reprovou nada**: `vizinhas` exige distância de ao menos uma casa, e nenhum
+  // valor do baralho é vizinho de si mesmo — conferido para os treze, incluindo
+  // o Ás, que ocupa duas casas. O filtro dizia a mesma coisa duas vezes, que é o
+  // defeito que a H9 mediu: duplicação de intenção, não de código.
+  return visao.lixo.some((outra) => vizinhas(outra.naipe, casasDe(outra.valor), carta))
 }
 
 function vizinhas(naipe: string, casas: readonly number[], carta: Carta): boolean {
